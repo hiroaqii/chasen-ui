@@ -72,14 +72,7 @@ pub const TextInput = struct {
     pub fn handleEvent(self: *const TextInput, event: chasen.Event) ?Msg {
         _ = self;
         return switch (event) {
-            .key_press => |key| switch (key.codepoint) {
-                '\r', '\n' => .submit,
-                8, 127 => .backspace,
-                else => |codepoint| if (isPrintable(codepoint))
-                    .{ .insert = codepoint }
-                else
-                    null,
-            },
+            .key_press => |key| keyToMsg(key),
             else => null,
         };
     }
@@ -134,20 +127,53 @@ pub const TextInput = struct {
     }
 
     fn visibleText(self: *const TextInput, width: u16) []const u8 {
+        if (width == 0) return "";
         if (self.value.items.len == 0) return "";
         const start = visibleStart(self.value.items, self.cursor, width);
         return self.value.items[start..];
     }
 
     fn visibleCursorCol(self: *const TextInput, width: u16) u16 {
+        if (width == 0) return 0;
         const start = visibleStart(self.value.items, self.cursor, width);
         const bytes = self.value.items[start..self.cursor];
-        return @intCast(@min(width, bytes.len));
+        return @intCast(@min(width - 1, bytes.len));
     }
 };
 
+fn keyToMsg(key: chasen.Key) ?TextInput.Msg {
+    if (key.matches(chasen.Key.enter, .{})) return .submit;
+    if (key.matches(chasen.Key.backspace, .{})) return .backspace;
+    if (key.matches(chasen.Key.delete, .{})) return .delete;
+    if (key.matches(chasen.Key.left, .{})) return .move_left;
+    if (key.matches(chasen.Key.right, .{})) return .move_right;
+    if (key.matches(chasen.Key.home, .{})) return .home;
+    if (key.matches(chasen.Key.end, .{})) return .end;
+
+    if (keyTextCodepoint(key)) |codepoint| {
+        return .{ .insert = codepoint };
+    }
+    return null;
+}
+
+fn keyTextCodepoint(key: chasen.Key) ?u21 {
+    if (key.mods.ctrl or key.mods.alt or key.mods.super or key.mods.hyper or key.mods.meta) {
+        return null;
+    }
+
+    const text = key.text orelse return null;
+    if (text.len == 0) return null;
+
+    const len = std.unicode.utf8ByteSequenceLength(text[0]) catch return null;
+    if (len != text.len) return null;
+
+    const codepoint = std.unicode.utf8Decode(text) catch return null;
+    if (!isPrintable(codepoint)) return null;
+    return codepoint;
+}
+
 fn isPrintable(codepoint: u21) bool {
-    return codepoint >= 0x20 and codepoint != 0x7f;
+    return codepoint >= 0x20 and codepoint != 0x7f and !(codepoint >= 0x80 and codepoint <= 0x9f);
 }
 
 fn previousScalarStart(bytes: []const u8, index: usize) usize {
@@ -164,10 +190,10 @@ fn nextScalarEnd(bytes: []const u8, index: usize) usize {
 }
 
 fn visibleStart(bytes: []const u8, cursor: usize, width: u16) usize {
-    if (cursor <= width) return 0;
+    if (width == 0) return cursor;
 
     var start = cursor;
-    var remaining = width;
+    var remaining = width - 1;
     while (start > 0 and remaining > 0) : (remaining -= 1) {
         start = previousScalarStart(bytes, start);
     }
@@ -220,12 +246,67 @@ test "TextInput maps printable key events to messages" {
     defer input.deinit();
 
     try std.testing.expectEqual(TextInput.Msg{ .insert = 'x' }, input.handleEvent(.{
-        .key_press = .{ .codepoint = 'x' },
+        .key_press = .{ .codepoint = 'x', .text = "x" },
     }).?);
     try std.testing.expectEqual(TextInput.Msg.backspace, input.handleEvent(.{
         .key_press = .{ .codepoint = 127 },
     }).?);
     try std.testing.expectEqual(TextInput.Msg.submit, input.handleEvent(.{
-        .key_press = .{ .codepoint = '\n' },
+        .key_press = .{ .codepoint = '\r' },
     }).?);
+}
+
+test "TextInput ignores special keys and modified text input" {
+    var input = try TextInput.init(std.testing.allocator, .{});
+    defer input.deinit();
+
+    try std.testing.expect(input.handleEvent(.{
+        .key_press = .{ .codepoint = chasen.Key.up },
+    }) == null);
+    try std.testing.expect(input.handleEvent(.{
+        .key_press = .{ .codepoint = 'x', .text = "x", .mods = .{ .ctrl = true } },
+    }) == null);
+    try std.testing.expect(input.handleEvent(.{
+        .key_press = .{ .codepoint = 0x80, .text = "\xc2\x80" },
+    }) == null);
+}
+
+test "TextInput maps navigation key events to messages" {
+    var input = try TextInput.init(std.testing.allocator, .{});
+    defer input.deinit();
+
+    try std.testing.expectEqual(TextInput.Msg.delete, input.handleEvent(.{
+        .key_press = .{ .codepoint = chasen.Key.delete },
+    }).?);
+    try std.testing.expectEqual(TextInput.Msg.move_left, input.handleEvent(.{
+        .key_press = .{ .codepoint = chasen.Key.left },
+    }).?);
+    try std.testing.expectEqual(TextInput.Msg.move_right, input.handleEvent(.{
+        .key_press = .{ .codepoint = chasen.Key.right },
+    }).?);
+    try std.testing.expectEqual(TextInput.Msg.home, input.handleEvent(.{
+        .key_press = .{ .codepoint = chasen.Key.home },
+    }).?);
+    try std.testing.expectEqual(TextInput.Msg.end, input.handleEvent(.{
+        .key_press = .{ .codepoint = chasen.Key.end },
+    }).?);
+}
+
+test "TextInput visible cursor column stays inside width" {
+    var input = try TextInput.init(std.testing.allocator, .{ .value = "abcde" });
+    defer input.deinit();
+
+    try std.testing.expectEqual(@as(u16, 0), input.visibleCursorCol(0));
+    try std.testing.expectEqual(@as(u16, 4), input.visibleCursorCol(5));
+    try std.testing.expectEqualStrings("bcde", input.visibleText(5));
+    input.cursor = 2;
+    try std.testing.expectEqual(@as(u16, 2), input.visibleCursorCol(5));
+    try std.testing.expectEqualStrings("abcde", input.visibleText(5));
+}
+
+test "TextInput visible start counts utf8 scalars instead of bytes" {
+    var input = try TextInput.init(std.testing.allocator, .{ .value = "aあいう" });
+    defer input.deinit();
+
+    try std.testing.expectEqualStrings("あいう", input.visibleText(4));
 }
