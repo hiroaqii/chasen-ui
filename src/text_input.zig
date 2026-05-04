@@ -137,7 +137,7 @@ pub const TextInput = struct {
         if (width == 0) return 0;
         const start = visibleStart(self.value.items, self.cursor, width);
         const bytes = self.value.items[start..self.cursor];
-        return @intCast(@min(width - 1, bytes.len));
+        return @min(width - 1, chasen.text.displayWidth(bytes));
     }
 };
 
@@ -192,12 +192,19 @@ fn nextScalarEnd(bytes: []const u8, index: usize) usize {
 fn visibleStart(bytes: []const u8, cursor: usize, width: u16) usize {
     if (width == 0) return cursor;
 
-    var start = cursor;
-    var remaining = width - 1;
-    while (start > 0 and remaining > 0) : (remaining -= 1) {
-        start = previousScalarStart(bytes, start);
+    const max_width_before_cursor = width - 1;
+    var iter = chasen.text.graphemeIterator(bytes);
+
+    while (iter.next()) |grapheme| {
+        const grapheme_end = grapheme.start + grapheme.len;
+        if (grapheme_end > cursor) break;
+
+        if (chasen.text.displayWidth(bytes[grapheme.start..cursor]) <= max_width_before_cursor) {
+            return grapheme.start;
+        }
     }
-    return start;
+
+    return cursor;
 }
 
 test "TextInput inserts codepoints at the cursor" {
@@ -304,9 +311,10 @@ test "TextInput visible cursor column stays inside width" {
     try std.testing.expectEqualStrings("abcde", input.visibleText(5));
 }
 
-test "TextInput visible start counts utf8 scalars instead of bytes" {
+test "TextInput visible start counts grapheme display width" {
     var input = try TextInput.init(std.testing.allocator, .{ .value = "aあいう" });
     defer input.deinit();
 
-    try std.testing.expectEqualStrings("あいう", input.visibleText(4));
+    try std.testing.expectEqualStrings("いう", input.visibleText(5));
+    try std.testing.expectEqual(@as(u16, 4), input.visibleCursorCol(5));
 }
