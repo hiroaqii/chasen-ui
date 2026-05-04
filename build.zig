@@ -9,7 +9,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const mod = b.addModule("chasen_dogu", .{
+    const mod = b.addModule("chasen_ui", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .imports = &.{

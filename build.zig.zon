@@ -6,7 +6,7 @@
     //
     // It is redundant to include "zig" in this name because it is already
     // within the Zig package namespace.
-    .name = .chasen_dogu,
+    .name = .chasen_ui,
     // This is a [Semantic Version](https://semver.org/).
     // In a future version of Zig it will be used for package deduplication.
     .version = "0.0.0",
@@ -22,7 +22,7 @@
     // original project's identity. Thus it is recommended to leave the comment
     // on the following line intact, so that it shows up in code reviews that
     // modify the field.
-    .fingerprint = 0xa569c72dafae1b87, // Changing this has security and trust implications.
+    .fingerprint = 0xab736f306b123b01, // Changing this has security and trust implications.
     // Tracks the earliest Zig version that the package considers to be a
     // supported use case.
     .minimum_zig_version = "0.16.0",
@@ -33,9 +33,9 @@
     // internet connectivity.
     .dependencies = .{
         // During early development, use the adjacent local chasen checkout so
-        // chasen core changes can be tested immediately from chasen-dogu.
+        // chasen core changes can be tested immediately from chasen-ui.
         // Switch this to a Git URL + hash dependency once chasen is published
-        // and chasen-dogu is ready to be consumed outside this workspace.
+        // and chasen-ui is ready to be consumed outside this workspace.
         .chasen = .{
             .path = "../chasen",
         },
