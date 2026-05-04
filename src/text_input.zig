@@ -1,38 +1,79 @@
 const std = @import("std");
 const chasen = @import("chasen");
 
+/// A single-line text input component.
+///
+/// `TextInput` owns its editable UTF-8 buffer and cursor position. Applications
+/// normally keep one instance in their model, call `handleEvent` from their app
+/// event handler, forward returned messages to `update`, and call `view` from
+/// their app view.
+///
+/// The component emits `.submit` for Enter but does not clear itself. This lets
+/// the application decide whether submit means form submission, search,
+/// validation, or some other action.
 pub const TextInput = struct {
+    /// Allocator used for the owned text buffer.
     allocator: std.mem.Allocator,
+    /// Current UTF-8 text buffer.
     value: std.ArrayList(u8) = .empty,
+    /// Cursor byte offset into `value`.
     cursor: usize = 0,
+    /// Text shown when the input is empty.
     placeholder: []const u8 = "",
 
+    /// Initial values used when constructing a `TextInput`.
     pub const Options = struct {
+        /// Initial input contents. The bytes are copied into the component.
         value: []const u8 = "",
+        /// Placeholder text borrowed by the component for its lifetime.
         placeholder: []const u8 = "",
     };
 
+    /// Messages understood by `TextInput.update`.
+    ///
+    /// Applications can either use `handleEvent` to create these messages from
+    /// Chasen key events, or construct them directly for custom bindings.
     pub const Msg = union(enum) {
+        /// Insert one Unicode scalar at the current cursor position.
         insert: u21,
+        /// Remove the scalar before the cursor.
         backspace,
+        /// Remove the scalar at the cursor.
         delete,
+        /// Move the cursor one scalar to the left.
         move_left,
+        /// Move the cursor one scalar to the right.
         move_right,
+        /// Move the cursor to the start of the buffer.
         home,
+        /// Move the cursor to the end of the buffer.
         end,
+        /// Remove all text and move the cursor to the start.
         clear,
+        /// Enter was pressed. `update` treats this as a no-op.
         submit,
     };
 
+    /// Rendering options for `TextInput.view`.
     pub const ViewOptions = struct {
+        /// Surface column where the input should be drawn.
         col: u16 = 0,
+        /// Surface row where the input should be drawn.
         row: u16 = 0,
+        /// Width of the clipped one-line input region.
         width: u16,
+        /// Style used for the current value.
         style: chasen.TextStyle = .{},
+        /// Style used when drawing the placeholder.
         placeholder_style: chasen.TextStyle = .{ .fg = .gray },
+        /// Whether `view` should place the terminal cursor inside the input.
         show_cursor: bool = true,
     };
 
+    /// Create a text input with copied initial contents.
+    ///
+    /// The caller owns the returned component and must call `deinit` exactly
+    /// once when the component is no longer needed.
     pub fn init(allocator: std.mem.Allocator, opts: Options) !TextInput {
         var input: TextInput = .{
             .allocator = allocator,
@@ -43,15 +84,25 @@ pub const TextInput = struct {
         return input;
     }
 
+    /// Release memory owned by this component.
     pub fn deinit(self: *TextInput) void {
         self.value.deinit(self.allocator);
         self.* = undefined;
     }
 
+    /// Return the current input contents.
+    ///
+    /// The returned slice is borrowed from the component and becomes invalid
+    /// after the next mutating `update` call or `deinit`.
     pub fn text(self: *const TextInput) []const u8 {
         return self.value.items;
     }
 
+    /// Apply a component message.
+    ///
+    /// Text editing messages mutate the owned buffer and cursor. `.submit` is
+    /// intentionally a no-op so the parent application can handle submission
+    /// policy itself.
     pub fn update(self: *TextInput, msg: Msg) !void {
         switch (msg) {
             .insert => |codepoint| try self.insertCodepoint(codepoint),
@@ -69,6 +120,13 @@ pub const TextInput = struct {
         }
     }
 
+    /// Convert a Chasen event into a `TextInput` message when the event belongs
+    /// to the component.
+    ///
+    /// Printable unmodified key input maps to `.insert`. Enter, Backspace,
+    /// Delete, Left, Right, Home, and End map to their editing messages.
+    /// Modified text input such as Ctrl-x or Alt-x is ignored so applications
+    /// can reserve those bindings for app-level shortcuts.
     pub fn handleEvent(self: *const TextInput, event: chasen.Event) ?Msg {
         _ = self;
         return switch (event) {
@@ -77,6 +135,11 @@ pub const TextInput = struct {
         };
     }
 
+    /// Draw the input into a one-line clipped child surface.
+    ///
+    /// `view` does not mutate component state. When the input is empty, it draws
+    /// the placeholder if one was provided. The visible text is clipped so the
+    /// cursor remains inside `opts.width`.
     pub fn view(self: *const TextInput, surface: *chasen.Surface, opts: ViewOptions) void {
         if (opts.width == 0) return;
 
