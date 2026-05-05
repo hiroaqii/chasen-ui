@@ -18,7 +18,7 @@ pub const TextInput = struct {
     value: std.ArrayList(u8) = .empty,
     /// Cursor byte offset into `value`.
     cursor: usize = 0,
-    /// Text shown when the input is empty.
+    /// Text shown when the input is empty. Borrowed; must outlive the component.
     placeholder: []const u8 = "",
 
     /// Initial values used when constructing a `TextInput`.
