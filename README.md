@@ -29,12 +29,14 @@ Component-specific usage lives in examples:
 
 - `examples/text_input/main.zig`
 - `examples/checkbox/main.zig`
+- `examples/settings/main.zig`
 
 Run examples from this repository:
 
 ```sh
 zig build run-text_input
 zig build run-checkbox
+zig build run-settings
 ```
 
 Build all examples:
@@ -56,4 +58,5 @@ Build individual examples:
 ```sh
 zig build check-text_input
 zig build check-checkbox
+zig build check-settings
 ```
