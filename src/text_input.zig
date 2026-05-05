@@ -123,10 +123,11 @@ pub const TextInput = struct {
     /// Convert a Chasen event into a `TextInput` message when the event belongs
     /// to the component.
     ///
-    /// Printable unmodified key input maps to `.insert`. Enter, Backspace,
-    /// Delete, Left, Right, Home, and End map to their editing messages.
-    /// Modified text input such as Ctrl-x or Alt-x is ignored so applications
-    /// can reserve those bindings for app-level shortcuts.
+    /// Printable key text without command-style modifiers maps to `.insert`.
+    /// Enter, Backspace, Delete, Left, Right, Home, and End map to their
+    /// editing messages. Ctrl, Alt, Super, Hyper, and Meta text input is
+    /// ignored so applications can reserve those bindings for app-level
+    /// shortcuts.
     pub fn handleEvent(self: *const TextInput, event: chasen.Event) ?Msg {
         _ = self;
         return switch (event) {
