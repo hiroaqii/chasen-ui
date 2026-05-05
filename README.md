@@ -10,6 +10,10 @@ The Zig module name is `chasen_ui`.
 - `TextInput`: owned UTF-8 single-line text input.
 - `Checkbox`: allocation-free boolean checkbox.
 
+## Helpers
+
+- `FocusList`: fixed-length list focus state for app-owned event routing.
+
 ## Component Pattern
 
 Components follow the same flow as Chasen apps:

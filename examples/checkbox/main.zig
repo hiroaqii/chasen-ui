@@ -10,9 +10,9 @@ const App = struct {
         ui.Checkbox.init(.{ .label = "Use compact layout" }),
         ui.Checkbox.init(.{ .label = "Show timestamps" }),
     },
-    // There is no focus manager yet. For multiple components, this example
-    // keeps the selected row in app state and routes input to that component.
-    selected: usize = 0,
+    // FocusList tracks which row is selected. Keep this length in sync with
+    // checkboxes. The app still owns event routing.
+    focus: ui.FocusList = ui.FocusList.init(3),
 
     pub const Msg = union(enum) {
         checkbox: ui.Checkbox.Msg,
@@ -25,13 +25,9 @@ const App = struct {
         switch (msg) {
             // Component messages still pass through the app update. The app
             // decides which checkbox receives the message.
-            .checkbox => |checkbox_msg| self.checkboxes[self.selected].update(checkbox_msg),
-            .move_up => {
-                if (self.selected > 0) self.selected -= 1;
-            },
-            .move_down => {
-                if (self.selected + 1 < self.checkboxes.len) self.selected += 1;
-            },
+            .checkbox => |checkbox_msg| self.checkboxes[self.focus.focused()].update(checkbox_msg),
+            .move_up => self.focus.movePrev(),
+            .move_down => self.focus.moveNext(),
             .quit => ctx.quit(),
         }
     }
@@ -48,7 +44,7 @@ const App = struct {
                 .col = 0,
                 .row = @intCast(3 + i),
                 .width = 40,
-                .show_cursor = i == self.selected,
+                .show_cursor = self.focus.isFocused(i),
             });
         }
 
@@ -73,7 +69,7 @@ const App = struct {
         // Component-level key handling is delegated to the selected checkbox,
         // then wrapped in the app's Msg type so update remains the only
         // mutation point.
-        if (self.checkboxes[self.selected].handleEvent(event)) |msg| {
+        if (self.checkboxes[self.focus.focused()].handleEvent(event)) |msg| {
             return .{ .checkbox = msg };
         }
         return null;
