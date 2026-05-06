@@ -1,5 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
+const selectable = @import("selectable.zig");
 
 /// A single radio option component.
 ///
@@ -113,16 +114,8 @@ pub const Radio = struct {
 };
 
 fn keyToMsg(key: chasen.Key) ?Radio.Msg {
-    if (key.matches(chasen.Key.enter, .{})) return .select;
-    if (isSpaceWithoutCommandModifiers(key)) return .select;
+    if (selectable.isActivationKey(key)) return .select;
     return null;
-}
-
-fn isSpaceWithoutCommandModifiers(key: chasen.Key) bool {
-    if (key.mods.ctrl or key.mods.alt or key.mods.super or key.mods.hyper or key.mods.meta) {
-        return false;
-    }
-    return key.matches(chasen.Key.space, .{});
 }
 
 fn availableWidth(surface: *chasen.Surface, col: u16) u16 {

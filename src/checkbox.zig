@@ -1,5 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
+const selectable = @import("selectable.zig");
 
 /// A single boolean checkbox component.
 ///
@@ -114,16 +115,8 @@ pub const Checkbox = struct {
 };
 
 fn keyToMsg(key: chasen.Key) ?Checkbox.Msg {
-    if (key.matches(chasen.Key.enter, .{})) return .toggle;
-    if (isSpaceWithoutCommandModifiers(key)) return .toggle;
+    if (selectable.isActivationKey(key)) return .toggle;
     return null;
-}
-
-fn isSpaceWithoutCommandModifiers(key: chasen.Key) bool {
-    if (key.mods.ctrl or key.mods.alt or key.mods.super or key.mods.hyper or key.mods.meta) {
-        return false;
-    }
-    return key.matches(chasen.Key.space, .{});
 }
 
 fn availableWidth(surface: *chasen.Surface, col: u16) u16 {

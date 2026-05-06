@@ -26,7 +26,7 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_mod_tests.step);
 
-    const example_names = [_][]const u8{ "text_input", "checkbox", "settings", "radio" };
+    const example_names = [_][]const u8{ "text_input", "checkbox", "settings", "radio", "button" };
     const check_examples_step = b.step("check-examples", "Build all examples");
 
     for (example_names) |name| {

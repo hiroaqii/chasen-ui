@@ -10,6 +10,9 @@ pub const Checkbox = checkbox.Checkbox;
 pub const radio = @import("radio.zig");
 pub const Radio = radio.Radio;
 
+pub const button = @import("button.zig");
+pub const Button = button.Button;
+
 pub const focus_list = @import("focus_list.zig");
 pub const FocusList = focus_list.FocusList;
 
