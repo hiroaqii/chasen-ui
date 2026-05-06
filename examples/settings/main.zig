@@ -23,7 +23,7 @@ const Field = enum {
             .notifications => .username,
             .compact_layout => .notifications,
             .save => .compact_layout,
-            .reset => .save,
+            .reset => .compact_layout,
         };
     }
 
@@ -32,7 +32,7 @@ const Field = enum {
             .username => .notifications,
             .notifications => .compact_layout,
             .compact_layout => .save,
-            .save => .reset,
+            .save => .save,
             .reset => .reset,
         };
     }
@@ -219,6 +219,9 @@ const App = struct {
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
         // App-level shortcuts and navigation get first chance. This keeps
         // cross-component focus policy outside the individual components.
+        //
+        // Left/Right are reserved for the Save/Reset button row in this
+        // example, so they are not forwarded to TextInput for cursor movement.
         switch (event) {
             .key_press => |key| {
                 if (key.matches(chasen.Key.escape, .{})) return .quit;
