@@ -14,6 +14,7 @@ The Zig module name is `chasen_ui`.
 - `List`: allocation-free vertical list with local focus state.
 - `Spinner`: allocation-free frame-based spinner.
 - `ProgressBar`: allocation-free horizontal progress bar.
+- `Divider`: allocation-free horizontal or vertical divider.
 
 ## Helpers
 
@@ -43,6 +44,7 @@ Component-specific usage lives in examples:
 - `examples/list/main.zig`
 - `examples/spinner/main.zig`
 - `examples/progress_bar/main.zig`
+- `examples/divider/main.zig`
 - `examples/settings/main.zig`
 
 Run examples from this repository:
@@ -55,6 +57,7 @@ zig build run-button
 zig build run-list
 zig build run-spinner
 zig build run-progress_bar
+zig build run-divider
 zig build run-settings
 ```
 
@@ -82,5 +85,6 @@ zig build check-button
 zig build check-list
 zig build check-spinner
 zig build check-progress_bar
+zig build check-divider
 zig build check-settings
 ```

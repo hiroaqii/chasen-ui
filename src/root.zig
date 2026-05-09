@@ -25,6 +25,9 @@ pub const Spinner = spinner.Spinner;
 pub const progress_bar = @import("progress_bar.zig");
 pub const ProgressBar = progress_bar.ProgressBar;
 
+pub const divider = @import("divider.zig");
+pub const Divider = divider.Divider;
+
 test "chasen-ui imports chasen core" {
     try std.testing.expect(@hasDecl(chasen, "Surface"));
     try std.testing.expect(@hasDecl(chasen, "Ctx"));
