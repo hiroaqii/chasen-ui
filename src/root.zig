@@ -22,6 +22,9 @@ pub const List = list.List;
 pub const spinner = @import("spinner.zig");
 pub const Spinner = spinner.Spinner;
 
+pub const progress_bar = @import("progress_bar.zig");
+pub const ProgressBar = progress_bar.ProgressBar;
+
 test "chasen-ui imports chasen core" {
     try std.testing.expect(@hasDecl(chasen, "Surface"));
     try std.testing.expect(@hasDecl(chasen, "Ctx"));
