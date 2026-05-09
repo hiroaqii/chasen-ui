@@ -28,6 +28,9 @@ pub const ProgressBar = progress_bar.ProgressBar;
 pub const divider = @import("divider.zig");
 pub const Divider = divider.Divider;
 
+pub const label = @import("label.zig");
+pub const Label = label.Label;
+
 test "chasen-ui imports chasen core" {
     try std.testing.expect(@hasDecl(chasen, "Surface"));
     try std.testing.expect(@hasDecl(chasen, "Ctx"));

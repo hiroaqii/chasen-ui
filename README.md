@@ -15,6 +15,7 @@ The Zig module name is `chasen_ui`.
 - `Spinner`: allocation-free frame-based spinner.
 - `ProgressBar`: allocation-free horizontal progress bar.
 - `Divider`: allocation-free horizontal or vertical divider.
+- `Label`: allocation-free single-line text label.
 
 ## Helpers
 
@@ -22,16 +23,24 @@ The Zig module name is `chasen_ui`.
 
 ## Component Pattern
 
-Components follow the same flow as Chasen apps:
+Interactive components follow the same flow as Chasen apps:
 
 ```text
 app handleEvent -> component handleEvent -> app Msg -> app update -> component update
 ```
 
-Applications own policy. Components translate events into component messages,
-update their own local state when asked, and draw their current state in `view`.
+Display-only components have a smaller shape:
 
-Borrowed labels and placeholders must outlive the component.
+```text
+app view -> component view
+```
+
+Applications own policy. Interactive components may translate events into
+component messages and update their own local state when asked. Display-only
+components draw borrowed or app-owned values in `view`.
+
+Borrowed labels, placeholders, frame lists, and other borrowed values must
+outlive the component.
 
 ## Examples
 
@@ -45,6 +54,7 @@ Component-specific usage lives in examples:
 - `examples/spinner/main.zig`
 - `examples/progress_bar/main.zig`
 - `examples/divider/main.zig`
+- `examples/label/main.zig`
 - `examples/settings/main.zig`
 
 Run examples from this repository:
@@ -58,6 +68,7 @@ zig build run-list
 zig build run-spinner
 zig build run-progress_bar
 zig build run-divider
+zig build run-label
 zig build run-settings
 ```
 
@@ -86,5 +97,6 @@ zig build check-list
 zig build check-spinner
 zig build check-progress_bar
 zig build check-divider
+zig build check-label
 zig build check-settings
 ```
