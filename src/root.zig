@@ -16,6 +16,9 @@ pub const Button = button.Button;
 pub const focus_list = @import("focus_list.zig");
 pub const FocusList = focus_list.FocusList;
 
+pub const list = @import("list.zig");
+pub const List = list.List;
+
 test "chasen-ui imports chasen core" {
     try std.testing.expect(@hasDecl(chasen, "Surface"));
     try std.testing.expect(@hasDecl(chasen, "Ctx"));

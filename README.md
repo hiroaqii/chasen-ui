@@ -11,6 +11,7 @@ The Zig module name is `chasen_ui`.
 - `Checkbox`: allocation-free boolean checkbox.
 - `Radio`: allocation-free radio option.
 - `Button`: allocation-free action button.
+- `List`: allocation-free vertical list with local focus state.
 
 ## Helpers
 
@@ -37,6 +38,7 @@ Component-specific usage lives in examples:
 - `examples/checkbox/main.zig`
 - `examples/radio/main.zig`
 - `examples/button/main.zig`
+- `examples/list/main.zig`
 - `examples/settings/main.zig`
 
 Run examples from this repository:
@@ -46,6 +48,7 @@ zig build run-text_input
 zig build run-checkbox
 zig build run-radio
 zig build run-button
+zig build run-list
 zig build run-settings
 ```
 
@@ -70,5 +73,6 @@ zig build check-text_input
 zig build check-checkbox
 zig build check-radio
 zig build check-button
+zig build check-list
 zig build check-settings
 ```
