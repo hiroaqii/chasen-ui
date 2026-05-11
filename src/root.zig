@@ -34,6 +34,9 @@ pub const Label = label.Label;
 pub const paragraph = @import("paragraph.zig");
 pub const Paragraph = paragraph.Paragraph;
 
+pub const status_line = @import("status_line.zig");
+pub const StatusLine = status_line.StatusLine;
+
 test "chasen-ui imports chasen core" {
     try std.testing.expect(@hasDecl(chasen, "Surface"));
     try std.testing.expect(@hasDecl(chasen, "Ctx"));

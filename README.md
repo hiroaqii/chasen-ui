@@ -17,6 +17,7 @@ The Zig module name is `chasen_ui`.
 - `Divider`: allocation-free horizontal or vertical divider.
 - `Label`: allocation-free single-line text label.
 - `Paragraph`: allocation-free multi-line text paragraph.
+- `StatusLine`: allocation-free one-line status component.
 
 ## Helpers
 
@@ -57,6 +58,7 @@ Component-specific usage lives in examples:
 - `examples/divider/main.zig`
 - `examples/label/main.zig`
 - `examples/paragraph/main.zig`
+- `examples/status_line/main.zig`
 - `examples/settings/main.zig`
 
 Run examples from this repository:
@@ -72,6 +74,7 @@ zig build run-progress_bar
 zig build run-divider
 zig build run-label
 zig build run-paragraph
+zig build run-status_line
 zig build run-settings
 ```
 
@@ -102,5 +105,6 @@ zig build check-progress_bar
 zig build check-divider
 zig build check-label
 zig build check-paragraph
+zig build check-status_line
 zig build check-settings
 ```
