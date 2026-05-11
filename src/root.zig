@@ -31,6 +31,9 @@ pub const Divider = divider.Divider;
 pub const label = @import("label.zig");
 pub const Label = label.Label;
 
+pub const paragraph = @import("paragraph.zig");
+pub const Paragraph = paragraph.Paragraph;
+
 test "chasen-ui imports chasen core" {
     try std.testing.expect(@hasDecl(chasen, "Surface"));
     try std.testing.expect(@hasDecl(chasen, "Ctx"));
