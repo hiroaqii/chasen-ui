@@ -37,6 +37,9 @@ pub const Paragraph = paragraph.Paragraph;
 pub const status_line = @import("status_line.zig");
 pub const StatusLine = status_line.StatusLine;
 
+pub const select = @import("select.zig");
+pub const Select = select.Select;
+
 test "chasen-ui imports chasen core" {
     try std.testing.expect(@hasDecl(chasen, "Surface"));
     try std.testing.expect(@hasDecl(chasen, "Ctx"));
