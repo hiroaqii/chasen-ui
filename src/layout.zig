@@ -78,6 +78,12 @@ pub const StackOptions = struct {
     horizontal: HorizontalAlign = .left,
 };
 
+/// Options for laying out fixed-size rectangles horizontally.
+pub const RowOptions = struct {
+    gap: u16 = 0,
+    vertical: VerticalAlign = .top,
+};
+
 /// Return `rect` shrunk by `insets`.
 pub fn inset(rect: chasen.Rect, insets: Insets) chasen.Rect {
     const horizontal = saturatingAdd(insets.left, insets.right);
@@ -135,6 +141,40 @@ pub fn stack(out: []chasen.Rect, rect: chasen.Rect, sizes: []const chasen.Size, 
         });
 
         cursor = saturatingAdd(cursor, height);
+        if (i + 1 < count) {
+            cursor = saturatingAdd(cursor, opts.gap);
+        }
+    }
+
+    return out[0..count];
+}
+
+/// Lay out fixed-size child rectangles from left to right within `rect`.
+///
+/// Each requested size is clamped to the remaining parent width and parent
+/// height. `gap` cells are skipped between returned rectangles.
+pub fn row(out: []chasen.Rect, rect: chasen.Rect, sizes: []const chasen.Size, opts: RowOptions) []chasen.Rect {
+    const count = @min(out.len, sizes.len);
+    var cursor: u16 = 0;
+
+    for (out[0..count], sizes[0..count], 0..) |*slot, size, i| {
+        const left = @min(rect.width, cursor);
+        const available_width = rect.width - left;
+        const width = @min(size.width, available_width);
+        const height = @min(size.height, rect.height);
+        const band = chasen.Rect{
+            .col = rect.col +| left,
+            .row = rect.row,
+            .width = width,
+            .height = rect.height,
+        };
+
+        slot.* = alignRect(band, .{ .width = width, .height = height }, .{
+            .horizontal = .left,
+            .vertical = opts.vertical,
+        });
+
+        cursor = saturatingAdd(cursor, width);
         if (i + 1 < count) {
             cursor = saturatingAdd(cursor, opts.gap);
         }
@@ -364,6 +404,37 @@ test "stack clamps to parent width and remaining height" {
     try std.testing.expectEqual(@as(usize, 2), result.len);
     try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 5, .height = 2 }, result[0]);
     try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 6, .width = 4, .height = 0 }, result[1]);
+}
+
+test "row positions fixed-size rectangles with gaps" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 12, .height = 6 };
+    var areas: [3]chasen.Rect = undefined;
+    const result = row(&areas, rect, &.{
+        .{ .width = 4, .height = 2 },
+        .{ .width = 2, .height = 4 },
+        .{ .width = 3, .height = 1 },
+    }, .{
+        .gap = 1,
+        .vertical = .middle,
+    });
+
+    try std.testing.expectEqual(@as(usize, 3), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 5, .width = 4, .height = 2 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 7, .row = 4, .width = 2, .height = 4 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 10, .row = 5, .width = 3, .height = 1 }, result[2]);
+}
+
+test "row clamps to parent height and remaining width" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 5, .height = 3 };
+    var areas: [2]chasen.Rect = undefined;
+    const result = row(&areas, rect, &.{
+        .{ .width = 3, .height = 9 },
+        .{ .width = 4, .height = 2 },
+    }, .{ .gap = 2 });
+
+    try std.testing.expectEqual(@as(usize, 2), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 3, .height = 3 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 7, .row = 3, .width = 0, .height = 2 }, result[1]);
 }
 
 test "splitVertical handles fixed and fill segments" {
