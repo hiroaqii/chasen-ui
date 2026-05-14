@@ -31,6 +31,9 @@ pub const Rating = rating.Rating;
 pub const badge = @import("badge.zig");
 pub const Badge = badge.Badge;
 
+pub const alert = @import("alert.zig");
+pub const Alert = alert.Alert;
+
 pub const divider = @import("divider.zig");
 pub const Divider = divider.Divider;
 

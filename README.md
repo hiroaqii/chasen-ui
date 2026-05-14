@@ -17,6 +17,7 @@ The Zig module name is `chasen_ui`.
 - `ProgressBar`: allocation-free horizontal progress bar.
 - `Rating`: allocation-free display-only rating indicator.
 - `Badge`: allocation-free compact marker/text badge.
+- `Alert`: allocation-free display-only alert.
 - `Divider`: allocation-free horizontal or vertical divider.
 - `Label`: allocation-free single-line text label.
 - `Paragraph`: allocation-free multi-line text paragraph.
@@ -62,6 +63,7 @@ Component-specific usage lives in examples:
 - `examples/animated_feedback/main.zig`
 - `examples/rating/main.zig`
 - `examples/badge/main.zig`
+- `examples/alert/main.zig`
 - `examples/divider/main.zig`
 - `examples/label/main.zig`
 - `examples/paragraph/main.zig`
@@ -82,6 +84,7 @@ zig build run-progress_bar
 zig build run-animated_feedback
 zig build run-rating
 zig build run-badge
+zig build run-alert
 zig build run-divider
 zig build run-label
 zig build run-paragraph
@@ -117,6 +120,7 @@ zig build check-progress_bar
 zig build check-animated_feedback
 zig build check-rating
 zig build check-badge
+zig build check-alert
 zig build check-divider
 zig build check-label
 zig build check-paragraph

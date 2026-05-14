@@ -142,4 +142,29 @@ pub fn build(b: *std.Build) void {
         const run_badge = b.addRunArtifact(badge_exe);
         badge_run_step.dependOn(&run_badge.step);
     }
+
+    const alert_check_step = b.step("check-alert", "Build the alert example");
+    const alert_run_step = b.step("run-alert", "Run the alert example");
+
+    if (graphics_dep != null) {
+        const alert_exe = b.addExecutable(.{
+            .name = "alert",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("examples/alert/main.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "chasen", .module = chasen_dep.module("chasen") },
+                    .{ .name = "chasen_ui", .module = mod },
+                    .{ .name = "chasen_graphics", .module = graphics_dep.?.module("chasen_graphics") },
+                },
+            }),
+        });
+
+        alert_check_step.dependOn(&alert_exe.step);
+        check_examples_step.dependOn(&alert_exe.step);
+
+        const run_alert = b.addRunArtifact(alert_exe);
+        alert_run_step.dependOn(&run_alert.step);
+    }
 }
