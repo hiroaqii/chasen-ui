@@ -1,6 +1,8 @@
 const std = @import("std");
 const chasen = @import("chasen");
 
+pub const layout = @import("layout.zig");
+
 pub const text_input = @import("text_input.zig");
 pub const TextInput = text_input.TextInput;
 
