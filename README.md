@@ -8,6 +8,7 @@ The Zig module name is `chasen_ui`.
 ## Components
 
 - `TextInput`: owned UTF-8 single-line text input.
+- `PasswordInput`: owned UTF-8 single-line masked text input.
 - `Select`: allocation-free one-line option picker.
 - `Checkbox`: allocation-free boolean checkbox.
 - `Radio`: allocation-free radio option.
@@ -55,6 +56,7 @@ outlive the component.
 Component-specific usage lives in examples:
 
 - `examples/text_input/main.zig`
+- `examples/password_input/main.zig`
 - `examples/select/main.zig`
 - `examples/checkbox/main.zig`
 - `examples/radio/main.zig`
@@ -77,6 +79,7 @@ Run examples from this repository:
 
 ```sh
 zig build run-text_input
+zig build run-password_input
 zig build run-select
 zig build run-checkbox
 zig build run-radio
@@ -114,6 +117,7 @@ Build individual examples:
 
 ```sh
 zig build check-text_input
+zig build check-password_input
 zig build check-select
 zig build check-checkbox
 zig build check-radio
