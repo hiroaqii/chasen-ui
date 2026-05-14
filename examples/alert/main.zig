@@ -16,16 +16,34 @@ const App = struct {
     };
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
+        const size = sfc.size();
+        const alert_area = chasen.Rect{
+            .col = 0,
+            .row = 3,
+            .width = @min(size.width, 54),
+            .height = size.height -| @min(size.height, 3),
+        };
+        var alert_rows_buf: [4]chasen.Rect = undefined;
+        const alert_rows = ui.layout.stack(&alert_rows_buf, alert_area, &.{
+            .{ .width = 54, .height = 2 },
+            .{ .width = 54, .height = 2 },
+            .{ .width = 54, .height = 1 },
+            .{ .width = 54, .height = 2 },
+        }, .{ .gap = 2 });
+
         _ = sfc.textAt(0, 0, "Alert Example", .{ .bold = true });
         _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
+        // The stack helper keeps repeated alert row math out of the example
+        // while the app still chooses each alert's meaning, marker, and text.
         // chasen-graphics provides severity-like glyphs as plain data. Alert
         // receives a marker and text only; it does not know what "warning"
         // means or when this message should disappear.
         self.alert.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 54,
+            .col = alert_rows[0].col,
+            .row = alert_rows[0].row,
+            .width = alert_rows[0].width,
+            .height = alert_rows[0].height,
             .marker = graphics.glyph.status.warn,
             .title = "Configuration warning",
             .body = "Theme file is missing; using defaults.",
@@ -37,9 +55,10 @@ const App = struct {
         // Success and failure are app concepts. The component only draws the
         // marker/title/body selected by the app for this view.
         self.alert.view(sfc, .{
-            .col = 0,
-            .row = 7,
-            .width = 54,
+            .col = alert_rows[1].col,
+            .row = alert_rows[1].row,
+            .width = alert_rows[1].width,
+            .height = alert_rows[1].height,
             .marker = graphics.glyph.status.ok,
             .title = "Saved",
             .body = "Profile changes were written.",
@@ -51,9 +70,10 @@ const App = struct {
         // Body-only alerts are useful when the surrounding UI already supplies
         // the heading or severity. In that case the body starts at column zero.
         self.alert.view(sfc, .{
-            .col = 0,
-            .row = 11,
-            .width = 54,
+            .col = alert_rows[2].col,
+            .row = alert_rows[2].row,
+            .width = alert_rows[2].width,
+            .height = alert_rows[2].height,
             .body = "Press Esc after reviewing these messages.",
             .body_style = .{ .dim = true },
         });
@@ -61,9 +81,10 @@ const App = struct {
         // ASCII fallback glyphs use the same API. The app chooses the glyph
         // set that fits the terminal or style it is targeting.
         self.alert.view(sfc, .{
-            .col = 0,
-            .row = 14,
-            .width = 54,
+            .col = alert_rows[3].col,
+            .row = alert_rows[3].row,
+            .width = alert_rows[3].width,
+            .height = alert_rows[3].height,
             .marker = graphics.glyph.status.err_ascii,
             .title = "Connection failed",
             .body = "Retry is managed by app state, not Alert.",

@@ -198,13 +198,13 @@ const App = struct {
         _ = sfc.textAt(help_row.col, help_row.row, "Up/Down: fields  Left/Right: buttons  Enter/Space: action  Esc: quit", .{ .fg = .gray });
 
         // Labels are drawn by the app. The TextInput only draws the editable
-        // one-line input area at the region we assign to it. The split helper
+        // one-line input area at the region we assign to it. The row helper
         // keeps label/input column math out of the component.
         var username_cols_buf: [2]chasen.Rect = undefined;
-        const username_cols = ui.layout.splitHorizontal(&username_cols_buf, username_row, &.{
-            .{ .length = 16 },
-            .{ .length = 32 },
-        });
+        const username_cols = ui.layout.row(&username_cols_buf, username_row, &.{
+            .{ .width = 16, .height = 1 },
+            .{ .width = 32, .height = 1 },
+        }, .{});
         const username_label = username_cols[0];
         const username_input = username_cols[1];
 
@@ -235,12 +235,11 @@ const App = struct {
 
         // The buttons are visually horizontal, so Left/Right handles movement
         // within this row while Up/Down enters or leaves the row.
-        var button_cols_buf: [3]chasen.Rect = undefined;
-        const button_cols = ui.layout.splitHorizontal(&button_cols_buf, buttons_row, &.{
-            .{ .length = 8 },
-            .{ .length = 2 },
-            .{ .length = 9 },
-        });
+        var button_cols_buf: [2]chasen.Rect = undefined;
+        const button_cols = ui.layout.row(&button_cols_buf, buttons_row, &.{
+            .{ .width = 8, .height = 1 },
+            .{ .width = 9, .height = 1 },
+        }, .{ .gap = 2 });
         self.save_button.view(sfc, .{
             .col = button_cols[0].col,
             .row = button_cols[0].row,
@@ -249,9 +248,9 @@ const App = struct {
             .show_cursor = self.selected == .save,
         });
         self.reset_button.view(sfc, .{
-            .col = button_cols[2].col,
-            .row = button_cols[2].row,
-            .width = button_cols[2].width,
+            .col = button_cols[1].col,
+            .row = button_cols[1].row,
+            .width = button_cols[1].width,
             .focused = self.selected == .reset,
             .show_cursor = self.selected == .reset,
         });
