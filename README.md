@@ -15,6 +15,7 @@ The Zig module name is `chasen_ui`.
 - `Radio`: allocation-free radio option.
 - `Button`: allocation-free action button.
 - `List`: allocation-free vertical list with local focus state.
+- `SelectableList`: allocation-free vertical list with local focus and selection state.
 - `Spinner`: allocation-free frame-based spinner.
 - `ProgressBar`: allocation-free horizontal progress bar.
 - `Rating`: allocation-free display-only rating indicator.
@@ -64,6 +65,7 @@ Component-specific usage lives in examples:
 - `examples/radio/main.zig`
 - `examples/button/main.zig`
 - `examples/list/main.zig`
+- `examples/selectable_list/main.zig`
 - `examples/spinner/main.zig`
 - `examples/progress_bar/main.zig`
 - `examples/animated_feedback/main.zig`
@@ -88,6 +90,7 @@ zig build run-checkbox
 zig build run-radio
 zig build run-button
 zig build run-list
+zig build run-selectable_list
 zig build run-spinner
 zig build run-progress_bar
 zig build run-animated_feedback
@@ -127,6 +130,7 @@ zig build check-checkbox
 zig build check-radio
 zig build check-button
 zig build check-list
+zig build check-selectable_list
 zig build check-spinner
 zig build check-progress_bar
 zig build check-animated_feedback

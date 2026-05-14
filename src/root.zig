@@ -27,6 +27,9 @@ pub const FocusList = focus_list.FocusList;
 pub const list = @import("list.zig");
 pub const List = list.List;
 
+pub const selectable_list = @import("selectable_list.zig");
+pub const SelectableList = selectable_list.SelectableList;
+
 pub const spinner = @import("spinner.zig");
 pub const Spinner = spinner.Spinner;
 
