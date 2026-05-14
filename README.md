@@ -22,6 +22,7 @@ The Zig module name is `chasen_ui`.
 - `Label`: allocation-free single-line text label.
 - `Paragraph`: allocation-free multi-line text paragraph.
 - `StatusLine`: allocation-free one-line status component.
+- `Help`: allocation-free one-line shortcut help component.
 
 ## Helpers
 
@@ -69,6 +70,7 @@ Component-specific usage lives in examples:
 - `examples/label/main.zig`
 - `examples/paragraph/main.zig`
 - `examples/status_line/main.zig`
+- `examples/help/main.zig`
 - `examples/settings/main.zig`
 
 Run examples from this repository:
@@ -90,6 +92,7 @@ zig build run-divider
 zig build run-label
 zig build run-paragraph
 zig build run-status_line
+zig build run-help
 zig build run-settings
 ```
 
@@ -126,5 +129,6 @@ zig build check-divider
 zig build check-label
 zig build check-paragraph
 zig build check-status_line
+zig build check-help
 zig build check-settings
 ```
