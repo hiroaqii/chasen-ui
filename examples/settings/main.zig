@@ -7,8 +7,9 @@ const ui = @import("chasen_ui");
 // the cross-component policy: which field is focused, what Save means, and what
 // Reset clears.
 //
-// The layout is intentionally hand-written so the component flow stays visible.
-// Up/Down moves between form rows. Left/Right only moves across the horizontal
+// The layout is intentionally small: layout helpers calculate a few rectangles
+// while the app still decides which component goes in each region. Up/Down
+// moves between form rows. Left/Right only moves across the horizontal
 // Save/Reset button row.
 const Field = enum {
     username,
@@ -164,17 +165,55 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Settings Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Up/Down: fields  Left/Right: buttons  Enter/Space: action  Esc: quit", .{ .fg = .gray });
+        const root = surfaceRect(sfc);
+        var page_rows_buf: [4]chasen.Rect = undefined;
+        const page_rows = ui.layout.splitVertical(&page_rows_buf, root, &.{
+            .{ .length = 1 },
+            .{ .length = 1 },
+            .{ .length = 1 },
+            .{ .fill = 1 },
+        });
+
+        const title_row = page_rows[0];
+        const help_row = page_rows[1];
+
+        var form_rows_buf: [8]chasen.Rect = undefined;
+        const form_rows = ui.layout.splitVertical(&form_rows_buf, page_rows[3], &.{
+            .{ .length = 1 },
+            .{ .length = 1 },
+            .{ .length = 1 },
+            .{ .length = 1 },
+            .{ .length = 1 },
+            .{ .length = 1 },
+            .{ .length = 1 },
+            .{ .length = 1 },
+        });
+        const username_row = form_rows[0];
+        const notifications_row = form_rows[2];
+        const compact_row = form_rows[3];
+        const buttons_row = form_rows[5];
+        const status_row = form_rows[7];
+
+        _ = sfc.textAt(title_row.col, title_row.row, "Settings Example", .{ .bold = true });
+        _ = sfc.textAt(help_row.col, help_row.row, "Up/Down: fields  Left/Right: buttons  Enter/Space: action  Esc: quit", .{ .fg = .gray });
 
         // Labels are drawn by the app. The TextInput only draws the editable
-        // one-line input area at the region we assign to it.
-        _ = sfc.textAt(0, 3, "Username", .{});
+        // one-line input area at the region we assign to it. The split helper
+        // keeps label/input column math out of the component.
+        var username_cols_buf: [2]chasen.Rect = undefined;
+        const username_cols = ui.layout.splitHorizontal(&username_cols_buf, username_row, &.{
+            .{ .length = 16 },
+            .{ .length = 32 },
+        });
+        const username_label = username_cols[0];
+        const username_input = username_cols[1];
+
+        _ = sfc.textAt(username_label.col, username_label.row, "Username", .{});
         if (self.username) |*username| {
             username.view(sfc, .{
-                .col = 16,
-                .row = 3,
-                .width = 32,
+                .col = username_input.col,
+                .row = username_input.row,
+                .width = username_input.width,
                 .show_cursor = self.selected == .username,
             });
         }
@@ -182,37 +221,43 @@ const App = struct {
         // Checkbox focus is represented by cursor placement. The app decides
         // which checkbox receives the selected/focused state.
         self.notifications.view(sfc, .{
-            .col = 0,
-            .row = 5,
+            .col = notifications_row.col,
+            .row = notifications_row.row,
             .width = 48,
             .show_cursor = self.selected == .notifications,
         });
         self.compact_layout.view(sfc, .{
-            .col = 0,
-            .row = 6,
+            .col = compact_row.col,
+            .row = compact_row.row,
             .width = 48,
             .show_cursor = self.selected == .compact_layout,
         });
 
         // The buttons are visually horizontal, so Left/Right handles movement
         // within this row while Up/Down enters or leaves the row.
+        var button_cols_buf: [3]chasen.Rect = undefined;
+        const button_cols = ui.layout.splitHorizontal(&button_cols_buf, buttons_row, &.{
+            .{ .length = 8 },
+            .{ .length = 2 },
+            .{ .length = 9 },
+        });
         self.save_button.view(sfc, .{
-            .col = 0,
-            .row = 8,
-            .width = 8,
+            .col = button_cols[0].col,
+            .row = button_cols[0].row,
+            .width = button_cols[0].width,
             .focused = self.selected == .save,
             .show_cursor = self.selected == .save,
         });
         self.reset_button.view(sfc, .{
-            .col = 10,
-            .row = 8,
-            .width = 9,
+            .col = button_cols[2].col,
+            .row = button_cols[2].row,
+            .width = button_cols[2].width,
             .focused = self.selected == .reset,
             .show_cursor = self.selected == .reset,
         });
 
         if (self.saved) |saved| {
-            _ = sfc.textAt(0, 10, saved, .{ .fg = .{ .index = 2 } });
+            _ = sfc.textAt(status_row.col, status_row.row, saved, .{ .fg = .{ .index = 2 } });
         }
     }
 
@@ -260,6 +305,16 @@ const App = struct {
         };
     }
 };
+
+fn surfaceRect(surface: *const chasen.Surface) chasen.Rect {
+    const size = surface.size();
+    return .{
+        .col = 0,
+        .row = 0,
+        .width = size.width,
+        .height = size.height,
+    };
+}
 
 pub fn main(init: std.process.Init) !void {
     try chasen.run(init, App{});
