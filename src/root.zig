@@ -28,6 +28,9 @@ pub const ProgressBar = progress_bar.ProgressBar;
 pub const rating = @import("rating.zig");
 pub const Rating = rating.Rating;
 
+pub const badge = @import("badge.zig");
+pub const Badge = badge.Badge;
+
 pub const divider = @import("divider.zig");
 pub const Divider = divider.Divider;
 

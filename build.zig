@@ -117,4 +117,29 @@ pub fn build(b: *std.Build) void {
         const run_rating = b.addRunArtifact(rating_exe);
         rating_run_step.dependOn(&run_rating.step);
     }
+
+    const badge_check_step = b.step("check-badge", "Build the badge example");
+    const badge_run_step = b.step("run-badge", "Run the badge example");
+
+    if (graphics_dep != null) {
+        const badge_exe = b.addExecutable(.{
+            .name = "badge",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("examples/badge/main.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "chasen", .module = chasen_dep.module("chasen") },
+                    .{ .name = "chasen_ui", .module = mod },
+                    .{ .name = "chasen_graphics", .module = graphics_dep.?.module("chasen_graphics") },
+                },
+            }),
+        });
+
+        badge_check_step.dependOn(&badge_exe.step);
+        check_examples_step.dependOn(&badge_exe.step);
+
+        const run_badge = b.addRunArtifact(badge_exe);
+        badge_run_step.dependOn(&run_badge.step);
+    }
 }
