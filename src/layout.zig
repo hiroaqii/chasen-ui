@@ -42,6 +42,36 @@ pub const SplitSpec = struct {
     fill: u16 = 0,
 };
 
+/// Horizontal alignment within a rectangle.
+pub const HorizontalAlign = enum {
+    left,
+    center,
+    right,
+};
+
+/// Vertical alignment within a rectangle.
+pub const VerticalAlign = enum {
+    top,
+    middle,
+    bottom,
+};
+
+/// Two-axis alignment within a rectangle.
+pub const Alignment = struct {
+    horizontal: HorizontalAlign = .left,
+    vertical: VerticalAlign = .top,
+
+    pub const top_left: Alignment = .{ .horizontal = .left, .vertical = .top };
+    pub const top_center: Alignment = .{ .horizontal = .center, .vertical = .top };
+    pub const top_right: Alignment = .{ .horizontal = .right, .vertical = .top };
+    pub const middle_left: Alignment = .{ .horizontal = .left, .vertical = .middle };
+    pub const middle_center: Alignment = .{ .horizontal = .center, .vertical = .middle };
+    pub const middle_right: Alignment = .{ .horizontal = .right, .vertical = .middle };
+    pub const bottom_left: Alignment = .{ .horizontal = .left, .vertical = .bottom };
+    pub const bottom_center: Alignment = .{ .horizontal = .center, .vertical = .bottom };
+    pub const bottom_right: Alignment = .{ .horizontal = .right, .vertical = .bottom };
+};
+
 /// Return `rect` shrunk by `insets`.
 pub fn inset(rect: chasen.Rect, insets: Insets) chasen.Rect {
     const horizontal = saturatingAdd(insets.left, insets.right);
@@ -52,6 +82,22 @@ pub fn inset(rect: chasen.Rect, insets: Insets) chasen.Rect {
     return .{
         .col = rect.col +| @min(rect.width, insets.left),
         .row = rect.row +| @min(rect.height, insets.top),
+        .width = width,
+        .height = height,
+    };
+}
+
+/// Return a child rectangle of `size` aligned within `rect`.
+///
+/// Requested size is clamped to `rect`, so the result never exceeds the parent
+/// rectangle. `alignRect` only calculates geometry; callers still decide whether to
+/// create a child surface or pass the resulting fields into component options.
+pub fn alignRect(rect: chasen.Rect, size: chasen.Size, alignment: Alignment) chasen.Rect {
+    const width = @min(size.width, rect.width);
+    const height = @min(size.height, rect.height);
+    return .{
+        .col = rect.col +| horizontalOffset(rect.width, width, alignment.horizontal),
+        .row = rect.row +| verticalOffset(rect.height, height, alignment.vertical),
         .width = width,
         .height = height,
     };
@@ -175,6 +221,24 @@ fn saturatingAdd(a: u16, b: u16) u16 {
     return a +| b;
 }
 
+fn horizontalOffset(parent_width: u16, child_width: u16, alignment: HorizontalAlign) u16 {
+    const remaining = parent_width -| @min(parent_width, child_width);
+    return switch (alignment) {
+        .left => 0,
+        .center => remaining / 2,
+        .right => remaining,
+    };
+}
+
+fn verticalOffset(parent_height: u16, child_height: u16, alignment: VerticalAlign) u16 {
+    const remaining = parent_height -| @min(parent_height, child_height);
+    return switch (alignment) {
+        .top => 0,
+        .middle => remaining / 2,
+        .bottom => remaining,
+    };
+}
+
 test "Insets constructors build common values" {
     try std.testing.expectEqual(Insets{ .top = 2, .right = 2, .bottom = 2, .left = 2 }, Insets.all(2));
     try std.testing.expectEqual(Insets{ .top = 1, .right = 3, .bottom = 1, .left = 3 }, Insets.axes(1, 3));
@@ -200,6 +264,35 @@ test "inset collapses when insets exceed size" {
         .width = 0,
         .height = 0,
     }, inset(rect, Insets.all(9)));
+}
+
+test "align positions a child rectangle inside a parent" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 6 };
+
+    try std.testing.expectEqual(chasen.Rect{
+        .col = 5,
+        .row = 5,
+        .width = 4,
+        .height = 2,
+    }, alignRect(rect, .{ .width = 4, .height = 2 }, .middle_center));
+
+    try std.testing.expectEqual(chasen.Rect{
+        .col = 8,
+        .row = 7,
+        .width = 4,
+        .height = 2,
+    }, alignRect(rect, .{ .width = 4, .height = 2 }, .bottom_right));
+}
+
+test "align clamps child size to parent size" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 4, .height = 2 };
+
+    try std.testing.expectEqual(chasen.Rect{
+        .col = 2,
+        .row = 3,
+        .width = 4,
+        .height = 2,
+    }, alignRect(rect, .{ .width = 10, .height = 8 }, .bottom_right));
 }
 
 test "splitVertical handles fixed and fill segments" {
