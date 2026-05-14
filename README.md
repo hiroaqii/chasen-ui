@@ -26,7 +26,7 @@ The Zig module name is `chasen_ui`.
 ## Helpers
 
 - `FocusList`: fixed-length list focus state for app-owned event routing.
-- `layout`: small rectangle helpers for inset, split, and alignment calculations.
+- `layout`: small rectangle helpers for inset, split, alignment, and stack calculations.
 
 ## Component Pattern
 
