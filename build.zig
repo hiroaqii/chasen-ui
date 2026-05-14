@@ -57,4 +57,39 @@ pub fn build(b: *std.Build) void {
         );
         run_example_step.dependOn(&run_example.step);
     }
+
+    const animated_feedback_check_step = b.step("check-animated_feedback", "Build the animated_feedback example");
+    const animated_feedback_run_step = b.step("run-animated_feedback", "Run the animated_feedback example");
+
+    const anim_dep = b.lazyDependency("chasen_anim", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const graphics_dep = b.lazyDependency("chasen_graphics", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    if (anim_dep != null and graphics_dep != null) {
+        const animated_feedback_exe = b.addExecutable(.{
+            .name = "animated_feedback",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("examples/animated_feedback/main.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "chasen", .module = chasen_dep.module("chasen") },
+                    .{ .name = "chasen_ui", .module = mod },
+                    .{ .name = "chasen_anim", .module = anim_dep.?.module("chasen_anim") },
+                    .{ .name = "chasen_graphics", .module = graphics_dep.?.module("chasen_graphics") },
+                },
+            }),
+        });
+
+        animated_feedback_check_step.dependOn(&animated_feedback_exe.step);
+        check_examples_step.dependOn(&animated_feedback_exe.step);
+
+        const run_animated_feedback = b.addRunArtifact(animated_feedback_exe);
+        animated_feedback_run_step.dependOn(&run_animated_feedback.step);
+    }
 }

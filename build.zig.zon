@@ -39,6 +39,18 @@
         .chasen = .{
             .path = "../chasen",
         },
+        // Used by integration examples. The chasen-ui module itself remains
+        // independent of animation helpers.
+        .chasen_anim = .{
+            .path = "../chasen-anim",
+            .lazy = true,
+        },
+        // Used by integration examples for glyph/block presets. Components
+        // still accept plain borrowed labels through their ViewOptions.
+        .chasen_graphics = .{
+            .path = "../chasen-graphics",
+            .lazy = true,
+        },
     },
     // Specifies the set of files and directories that are included in this package.
     // Only files and directories listed here are included in the `hash` that
