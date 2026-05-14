@@ -25,6 +25,9 @@ pub const Spinner = spinner.Spinner;
 pub const progress_bar = @import("progress_bar.zig");
 pub const ProgressBar = progress_bar.ProgressBar;
 
+pub const rating = @import("rating.zig");
+pub const Rating = rating.Rating;
+
 pub const divider = @import("divider.zig");
 pub const Divider = divider.Divider;
 

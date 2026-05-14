@@ -92,4 +92,29 @@ pub fn build(b: *std.Build) void {
         const run_animated_feedback = b.addRunArtifact(animated_feedback_exe);
         animated_feedback_run_step.dependOn(&run_animated_feedback.step);
     }
+
+    const rating_check_step = b.step("check-rating", "Build the rating example");
+    const rating_run_step = b.step("run-rating", "Run the rating example");
+
+    if (graphics_dep != null) {
+        const rating_exe = b.addExecutable(.{
+            .name = "rating",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("examples/rating/main.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "chasen", .module = chasen_dep.module("chasen") },
+                    .{ .name = "chasen_ui", .module = mod },
+                    .{ .name = "chasen_graphics", .module = graphics_dep.?.module("chasen_graphics") },
+                },
+            }),
+        });
+
+        rating_check_step.dependOn(&rating_exe.step);
+        check_examples_step.dependOn(&rating_exe.step);
+
+        const run_rating = b.addRunArtifact(rating_exe);
+        rating_run_step.dependOn(&run_rating.step);
+    }
 }
