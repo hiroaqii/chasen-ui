@@ -2,26 +2,33 @@ const std = @import("std");
 const chasen = @import("chasen");
 const ui = @import("chasen_ui");
 
-// This example shows the display-only StatusLine component.
+const buffer_lines = [_][]const u8{
+    "pub fn total(items: []const Item) u32 {",
+    "    var sum: u32 = 0;",
+    "    for (items) |item| sum += item.price;",
+    "    return sum;",
+    "}",
+};
+
+// This example shows StatusLine in an editor-like screen.
 //
-// StatusLine draws one row with left, center, and right text slots. It is useful
-// for editor-style mode lines, footer hints, compact app state, or short command
-// summaries. It does not own app state, focus, events, or layout policy.
+// StatusLine draws compact app state into left, center, and right slots. The
+// app owns the editor state, cursor position, dirty flag, and keybindings.
 const App = struct {
-    top: ui.StatusLine = ui.StatusLine.init(.{
+    title: ui.StatusLine = ui.StatusLine.init(.{
         .left = "NORMAL",
-        .center = "status_line/main.zig",
-        .right = "Esc: quit",
+        .center = "src/invoice.zig",
+        .right = "modified",
     }),
     footer: ui.StatusLine = ui.StatusLine.init(.{
-        .left = "chasen-ui",
-        .center = "display-only component",
-        .right = "ready",
+        .left = "Ctrl+S save",
+        .center = "Ln 12, Col 8",
+        .right = "Esc quit",
     }),
-    narrow: ui.StatusLine = ui.StatusLine.init(.{
-        .left = "left",
-        .center = "center",
-        .right = "right",
+    sidebar: ui.StatusLine = ui.StatusLine.init(.{
+        .left = "git",
+        .center = "+3 -1",
+        .right = "main",
     }),
 
     pub const Msg = union(enum) {
@@ -29,41 +36,38 @@ const App = struct {
     };
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "StatusLine Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
-
-        // A status line can be used near the top of an app to show mode,
-        // current context, and a compact key hint.
-        self.top.view(sfc, .{
+        // Top status line: editor mode, current file, and dirty state.
+        self.title.view(sfc, .{
             .col = 0,
-            .row = 3,
+            .row = 0,
             .width = 60,
             .style = .{ .bold = true },
             .fill_style = .{ .bg = .{ .index = 8 } },
         });
 
-        _ = sfc.textAt(0, 5, "StatusLine only draws the supplied strings.", .{});
-        _ = sfc.textAt(0, 6, "The app decides what each slot means.", .{ .dim = true });
+        _ = sfc.textAt(0, 2, " 1  const std = @import(\"std\");", .{ .fg = .gray });
+        for (buffer_lines, 0..) |line, index| {
+            const row: u16 = @intCast(index + 3);
+            _ = sfc.textAt(0, row, "    ", .{ .fg = .gray });
+            _ = sfc.textAt(4, row, line, .{});
+        }
 
-        // When a narrow width causes slots to overlap, the component draws
-        // left -> center -> right. The right slot is therefore the most likely
-        // to remain visible for compact hints.
-        _ = sfc.textAt(0, 9, "Narrow region", .{ .bold = true });
-        self.narrow.view(sfc, .{
+        // A narrow status line can summarize a small panel.
+        self.sidebar.view(sfc, .{
             .col = 0,
             .row = 10,
-            .width = 12,
+            .width = 24,
             .style = .{ .dim = true },
+            .fill_style = .{ .bg = .{ .index = 0 } },
         });
 
-        // A footer status line is the same component. The app chooses its row
-        // and width; StatusLine does not know about the whole screen layout.
+        // Footer status line: command hints and cursor location.
         self.footer.view(sfc, .{
             .col = 0,
             .row = 14,
             .width = 60,
-            .style = .{ .fg = .gray },
-            .fill_style = .{ .bg = .{ .index = 0 } },
+            .style = .{ .fg = .{ .index = 15 } },
+            .fill_style = .{ .bg = .{ .index = 4 } },
         });
     }
 
