@@ -33,6 +33,9 @@ pub const SelectableList = selectable_list.SelectableList;
 pub const multi_select_list = @import("multi_select_list.zig");
 pub const MultiSelectList = multi_select_list.MultiSelectList;
 
+pub const menu = @import("menu.zig");
+pub const Menu = menu.Menu;
+
 pub const spinner = @import("spinner.zig");
 pub const Spinner = spinner.Spinner;
 
