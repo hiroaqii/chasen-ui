@@ -42,6 +42,9 @@ pub const Tabs = tabs.Tabs;
 pub const breadcrumbs = @import("breadcrumbs.zig");
 pub const Breadcrumbs = breadcrumbs.Breadcrumbs;
 
+pub const panel = @import("panel.zig");
+pub const Panel = panel.Panel;
+
 pub const spinner = @import("spinner.zig");
 pub const Spinner = spinner.Spinner;
 
