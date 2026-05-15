@@ -48,6 +48,9 @@ pub const Box = box.Box;
 pub const panel = @import("panel.zig");
 pub const Panel = panel.Panel;
 
+pub const modal = @import("modal.zig");
+pub const Modal = modal.Modal;
+
 pub const spinner = @import("spinner.zig");
 pub const Spinner = spinner.Spinner;
 
