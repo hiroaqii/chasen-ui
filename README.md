@@ -19,6 +19,7 @@ The Zig module name is `chasen_ui`.
 - `MultiSelectList`: allocation-free vertical list with local focus and multi-selection state.
 - `Menu`: allocation-free vertical command menu with local focus state.
 - `Tabs`: allocation-free one-line tab strip with local focus and active tab state.
+- `Breadcrumbs`: allocation-free display-only navigation trail.
 - `Spinner`: allocation-free frame-based spinner.
 - `ProgressBar`: allocation-free horizontal progress bar.
 - `Rating`: allocation-free display-only rating indicator.
@@ -72,6 +73,7 @@ Component-specific usage lives in examples:
 - `examples/multi_select_list/main.zig`
 - `examples/menu/main.zig`
 - `examples/tabs/main.zig`
+- `examples/breadcrumbs/main.zig`
 - `examples/spinner/main.zig`
 - `examples/progress_bar/main.zig`
 - `examples/animated_feedback/main.zig`
@@ -100,6 +102,7 @@ zig build run-selectable_list
 zig build run-multi_select_list
 zig build run-menu
 zig build run-tabs
+zig build run-breadcrumbs
 zig build run-spinner
 zig build run-progress_bar
 zig build run-animated_feedback
@@ -143,6 +146,7 @@ zig build check-selectable_list
 zig build check-multi_select_list
 zig build check-menu
 zig build check-tabs
+zig build check-breadcrumbs
 zig build check-spinner
 zig build check-progress_bar
 zig build check-animated_feedback
