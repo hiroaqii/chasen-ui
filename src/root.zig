@@ -54,6 +54,9 @@ pub const Modal = modal.Modal;
 pub const table = @import("table.zig");
 pub const Table = table.Table;
 
+pub const tree = @import("tree.zig");
+pub const Tree = tree.Tree;
+
 pub const spinner = @import("spinner.zig");
 pub const Spinner = spinner.Spinner;
 
