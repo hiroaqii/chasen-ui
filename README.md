@@ -94,6 +94,18 @@ zig build --help
 
 ## Development
 
+Source files are grouped by component role:
+
+```text
+src/input
+src/navigation
+src/display
+src/structure
+```
+
+`src/root.zig` re-exports the public API, so callers can continue to use
+top-level names such as `ui.TextInput`, `ui.Panel`, and `ui.Table`.
+
 Run tests and build one example:
 
 ```sh
