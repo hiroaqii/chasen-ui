@@ -57,6 +57,9 @@ pub const Table = table.Table;
 pub const tree = @import("tree.zig");
 pub const Tree = tree.Tree;
 
+pub const accordion = @import("accordion.zig");
+pub const Accordion = accordion.Accordion;
+
 pub const spinner = @import("spinner.zig");
 pub const Spinner = spinner.Spinner;
 

@@ -25,6 +25,7 @@ The Zig module name is `chasen_ui`.
 - `Modal`: allocation-free display-only modal overlay chrome.
 - `Table`: allocation-free display-only fixed-width table with optional grid chrome.
 - `Tree`: allocation-free display-only visible node outline.
+- `Accordion`: allocation-free display-only section header stack.
 - `Spinner`: allocation-free frame-based spinner.
 - `ProgressBar`: allocation-free horizontal progress bar.
 - `Rating`: allocation-free display-only rating indicator.
