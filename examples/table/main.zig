@@ -40,11 +40,8 @@ const App = struct {
         // Minimal is the default and preserves the original sample shape:
         // columns and a header separator, without spreadsheet-style borders.
         _ = sfc.textAt(0, 3, "minimal grid", .{ .bold = true, .fg = .{ .index = 6 } });
-        self.table.view(sfc, .{
-            .col = 0,
-            .row = 4,
-            .width = @min(size.width, self.table.naturalWidthFor(2, .minimal)),
-            .height = 5,
+        var minimal_area = sfc.child(.{ .col = 0, .row = 4, .width = @min(size.width, self.table.naturalWidthFor(2, .minimal)), .height = 5 });
+        self.table.view(&minimal_area, .{
             .column_gap = 2,
             .grid = .minimal,
             .header_style = .{ .bold = true, .fg = .{ .index = 6 } },
@@ -54,11 +51,8 @@ const App = struct {
 
         // None is useful when surrounding layout already supplies grouping.
         _ = sfc.textAt(0, 10, "no grid", .{ .bold = true, .fg = .{ .index = 6 } });
-        self.table.view(sfc, .{
-            .col = 0,
-            .row = 11,
-            .width = @min(size.width, self.table.naturalWidthFor(2, .none)),
-            .height = 3,
+        var no_grid_area = sfc.child(.{ .col = 0, .row = 11, .width = @min(size.width, self.table.naturalWidthFor(2, .none)), .height = 3 });
+        self.table.view(&no_grid_area, .{
             .column_gap = 2,
             .grid = .none,
             .show_header = false,
@@ -68,11 +62,8 @@ const App = struct {
         // Full draws spreadsheet-like borders and row/column separators. The
         // app still owns sorting, pagination, scrolling, and activation.
         _ = sfc.textAt(0, 15, "full grid", .{ .bold = true, .fg = .{ .index = 6 } });
-        self.table.view(sfc, .{
-            .col = 0,
-            .row = 16,
-            .width = @min(size.width, self.table.naturalWidthFor(0, .full)),
-            .height = size.height -| @min(size.height, 16),
+        var full_area = sfc.child(.{ .col = 0, .row = 16, .width = @min(size.width, self.table.naturalWidthFor(0, .full)), .height = size.height -| @min(size.height, 16) });
+        self.table.view(&full_area, .{
             .grid = .full,
             .grid_style = .rounded,
             .header_style = .{ .bold = true, .fg = .{ .index = 6 } },

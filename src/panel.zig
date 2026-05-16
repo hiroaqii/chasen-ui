@@ -42,18 +42,6 @@ pub const Panel = struct {
 
     /// Rendering options for `Panel.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the panel should start.
-        col: u16 = 0,
-        /// Surface row where the panel should start.
-        row: u16 = 0,
-        /// Optional panel width.
-        ///
-        /// When omitted, the panel uses the remaining surface width.
-        width: ?u16 = null,
-        /// Optional panel height.
-        ///
-        /// When omitted, the panel uses the remaining surface height.
-        height: ?u16 = null,
         /// Optional title drawn into the top border.
         title: []const u8 = "",
         /// Gap before and after title text when there is room.
@@ -74,18 +62,13 @@ pub const Panel = struct {
         return .{};
     }
 
-    /// Return the absolute content rectangle inside the panel.
+    /// Return the app-owned content rectangle inside the provided panel surface.
     ///
     /// The returned rectangle is the panel region after one-cell borders and
-    /// `padding` are removed. Width and height are resolved the same way as
-    /// `view`, so omitted dimensions use the remaining surface area.
+    /// `padding` are removed. The returned rectangle is relative to the panel
+    /// surface. Pass it to `surface.child(rect)` before drawing child content.
     pub fn contentRect(surface: *chasen.Surface, opts: ViewOptions) chasen.Rect {
-        return contentRectFor(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = opts.width orelse availableWidth(surface, opts.col),
-            .height = opts.height orelse availableHeight(surface, opts.row),
-        }, opts.padding);
+        return contentRectFor(.{ .col = 0, .row = 0, .width = surface.size().width, .height = surface.size().height }, opts.padding);
     }
 
     /// Return a content rectangle for an already resolved panel rectangle.
@@ -102,47 +85,41 @@ pub const Panel = struct {
         return layout.inset(inner, padding);
     }
 
-    /// Draw panel border and title.
+    /// Draw panel border and title into the provided surface.
     pub fn view(self: *const Panel, surface: *chasen.Surface, opts: ViewOptions) void {
         _ = self;
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse availableHeight(surface, opts.row);
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
         if (width == 0 or height == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
-
-        drawHorizontal(&child, 0, width, opts.border.top, opts.border_style);
+        drawHorizontal(surface, 0, width, opts.border.top, opts.border_style);
         if (height > 1) {
-            drawHorizontal(&child, height - 1, width, opts.border.bottom, opts.border_style);
+            drawHorizontal(surface, height - 1, width, opts.border.bottom, opts.border_style);
         }
 
-        drawText(&child, 0, 0, opts.border.top_left, opts.border_style);
+        drawText(surface, 0, 0, opts.border.top_left, opts.border_style);
         if (width > 1) {
-            drawText(&child, width - 1, 0, opts.border.top_right, opts.border_style);
+            drawText(surface, width - 1, 0, opts.border.top_right, opts.border_style);
         }
         if (height > 1) {
-            drawText(&child, 0, height - 1, opts.border.bottom_left, opts.border_style);
+            drawText(surface, 0, height - 1, opts.border.bottom_left, opts.border_style);
             if (width > 1) {
-                drawText(&child, width - 1, height - 1, opts.border.bottom_right, opts.border_style);
+                drawText(surface, width - 1, height - 1, opts.border.bottom_right, opts.border_style);
             }
         }
 
         if (height > 2) {
             var row: u16 = 1;
             while (row < height - 1) : (row += 1) {
-                drawText(&child, 0, row, opts.border.left, opts.border_style);
+                drawText(surface, 0, row, opts.border.left, opts.border_style);
                 if (width > 1) {
-                    drawText(&child, width - 1, row, opts.border.right, opts.border_style);
+                    drawText(surface, width - 1, row, opts.border.right, opts.border_style);
                 }
             }
         }
 
-        drawTitle(&child, width, opts);
+        drawTitle(surface, width, opts);
     }
 };
 
@@ -181,18 +158,6 @@ fn drawTitle(surface: *chasen.Surface, width: u16, opts: Panel.ViewOptions) void
 
 fn drawText(surface: *chasen.Surface, col: u16, row: u16, text: []const u8, style: chasen.TextStyle) void {
     _ = surface.textAt(col, row, text, style);
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
 }
 
 test "Panel initializes from options" {

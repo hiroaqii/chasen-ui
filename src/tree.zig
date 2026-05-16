@@ -49,18 +49,6 @@ pub const Tree = struct {
 
     /// Rendering options for `Tree.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the tree should start.
-        col: u16 = 0,
-        /// Surface row where the tree should start.
-        row: u16 = 0,
-        /// Optional tree region width.
-        ///
-        /// When omitted, the tree uses the remaining surface width.
-        width: ?u16 = null,
-        /// Optional tree region height.
-        ///
-        /// When omitted, the tree uses the remaining surface height.
-        height: ?u16 = null,
         /// Cells reserved for each depth level.
         indent_width: u16 = 2,
         /// Whether to draw ancestor guide glyphs.
@@ -97,22 +85,16 @@ pub const Tree = struct {
         return if (show_markers) indent +| 2 else indent;
     }
 
-    /// Draw the visible tree nodes into a clipped rectangular region.
+    /// Draw the visible tree nodes into the provided clipped surface region.
     pub fn view(self: *const Tree, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse availableHeight(surface, opts.row);
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
         if (width == 0 or height == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
 
         for (self.nodes, 0..) |node, index| {
             if (index >= height) break;
-            drawNode(&child, @intCast(index), node, opts, width);
+            drawNode(surface, @intCast(index), node, opts, width);
         }
     }
 };
@@ -149,18 +131,6 @@ fn drawNode(surface: *chasen.Surface, row: u16, node: Tree.Node, opts: Tree.View
 fn markerFor(node: Tree.Node, glyphs: Tree.Glyphs) []const u8 {
     if (!node.has_children) return glyphs.leaf;
     return if (node.expanded) glyphs.expanded else glyphs.collapsed;
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
 }
 
 test "Tree initializes from options" {

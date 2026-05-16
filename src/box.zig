@@ -14,18 +14,6 @@ pub const Box = struct {
 
     /// Rendering options for `Box.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the box should start.
-        col: u16 = 0,
-        /// Surface row where the box should start.
-        row: u16 = 0,
-        /// Optional box width.
-        ///
-        /// When omitted, the box uses the remaining surface width.
-        width: ?u16 = null,
-        /// Optional box height.
-        ///
-        /// When omitted, the box uses the remaining surface height.
-        height: ?u16 = null,
         /// Padding applied to calculate `contentRect`.
         padding: layout.Insets = .{},
         /// Whether to fill the full box region before app-owned content draws.
@@ -40,17 +28,12 @@ pub const Box = struct {
         return .{};
     }
 
-    /// Return the absolute content rectangle inside the box.
+    /// Return the app-owned content rectangle inside the provided box surface.
     ///
-    /// Width and height are resolved the same way as `view`, so omitted
-    /// dimensions use the remaining surface area.
+    /// The returned rectangle is relative to the box surface. Pass it to
+    /// `surface.child(rect)` before drawing child content.
     pub fn contentRect(surface: *chasen.Surface, opts: ViewOptions) chasen.Rect {
-        return contentRectFor(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = opts.width orelse availableWidth(surface, opts.col),
-            .height = opts.height orelse availableHeight(surface, opts.row),
-        }, opts.padding);
+        return contentRectFor(.{ .col = 0, .row = 0, .width = surface.size().width, .height = surface.size().height }, opts.padding);
     }
 
     /// Return a content rectangle for an already resolved box rectangle.
@@ -61,37 +44,17 @@ pub const Box = struct {
         return layout.inset(box_rect, padding);
     }
 
-    /// Fill the box region when requested.
+    /// Fill the provided box surface when requested.
     pub fn view(self: *const Box, surface: *chasen.Surface, opts: ViewOptions) void {
         _ = self;
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse availableHeight(surface, opts.row);
-        if (width == 0 or height == 0 or !opts.fill) return;
+        if (surface.size().width == 0 or surface.size().height == 0 or !opts.fill) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
-        child.fillAll(.{
+        surface.fillAll(.{
             .char = .{ .grapheme = " ", .width = 1 },
             .style = opts.fill_style.toVaxis(),
         });
     }
 };
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
-}
 
 test "Box initializes from options" {
     const box = Box.init(.{});

@@ -53,8 +53,6 @@ const App = struct {
                 .height = project_body.height,
             });
             self.project_summary.view(&project_body_area, .{
-                .width = project_body_area.size().width,
-                .height = project_body_area.size().height,
                 .style = .{ .fg = .gray },
             });
         }

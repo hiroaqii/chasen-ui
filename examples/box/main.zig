@@ -27,10 +27,6 @@ const App = struct {
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         const size = sfc.size();
         const box_opts = ui.Box.ViewOptions{
-            .col = 0,
-            .row = 3,
-            .width = @min(size.width, 62),
-            .height = @min(size.height -| @min(size.height, 3), 10),
             .padding = .{ .top = 1, .right = 2, .bottom = 1, .left = 2 },
             .fill = true,
             .fill_style = .{ .bg = .{ .index = 236 } },
@@ -39,34 +35,43 @@ const App = struct {
         _ = sfc.textAt(0, 0, "Box Example - borderless composition", .{ .bold = true });
         _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
-        self.box.view(sfc, box_opts);
+        var box_area = sfc.child(.{
+            .col = 0,
+            .row = 3,
+            .width = @min(size.width, 62),
+            .height = @min(size.height -| @min(size.height, 3), 10),
+        });
+        self.box.view(&box_area, box_opts);
 
-        const content = ui.Box.contentRect(sfc, box_opts);
+        const content = ui.Box.contentRect(&box_area, box_opts);
         if (content.width == 0 or content.height == 0) return;
+        var content_area = box_area.child(content);
 
         // The content is still normal app-owned drawing. Box does not know
         // that this area is a summary card, a form section, or a detail pane.
-        _ = sfc.textAt(content.col, content.row, "Summary", .{ .bold = true, .fg = .{ .index = 6 } });
-        _ = sfc.textAt(content.col, content.row + 1, "Container", .{ .fg = .gray });
-        _ = sfc.textAt(content.col + 12, content.row + 1, "Box", .{});
-        _ = sfc.textAt(content.col, content.row + 2, "Chrome", .{ .fg = .gray });
-        _ = sfc.textAt(content.col + 12, content.row + 2, "none", .{});
+        _ = content_area.textAt(0, 0, "Summary", .{ .bold = true, .fg = .{ .index = 6 } });
+        _ = content_area.textAt(0, 1, "Container", .{ .fg = .gray });
+        _ = content_area.textAt(12, 1, "Box", .{});
+        _ = content_area.textAt(0, 2, "Chrome", .{ .fg = .gray });
+        _ = content_area.textAt(12, 2, "none", .{});
 
         if (content.height > 5) {
-            self.paragraph.view(sfc, .{
-                .col = content.col,
-                .row = content.row + 4,
-                .width = content.width,
+            var paragraph_area = content_area.child(.{
+                .col = 0,
+                .row = 4,
+                .width = content_area.size().width,
                 .height = content.height - 5,
+            });
+            self.paragraph.view(&paragraph_area, .{
                 .style = .{ .fg = .gray },
             });
         }
 
         if (content.height > 0) {
-            var help_area = sfc.child(.{
-                .col = content.col,
-                .row = content.row + content.height - 1,
-                .width = content.width,
+            var help_area = content_area.child(.{
+                .col = 0,
+                .row = content.height - 1,
+                .width = content_area.size().width,
                 .height = 1,
             });
             self.help.view(&help_area, .{

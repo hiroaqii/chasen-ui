@@ -16,18 +16,6 @@ pub const Modal = struct {
 
     /// Rendering options for `Modal.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the modal overlay region should start.
-        col: u16 = 0,
-        /// Surface row where the modal overlay region should start.
-        row: u16 = 0,
-        /// Optional overlay region width.
-        ///
-        /// When omitted, the modal uses the remaining surface width.
-        width: ?u16 = null,
-        /// Optional overlay region height.
-        ///
-        /// When omitted, the modal uses the remaining surface height.
-        height: ?u16 = null,
         /// Requested dialog width, clamped to the overlay region.
         dialog_width: u16 = 48,
         /// Requested dialog height, clamped to the overlay region.
@@ -56,19 +44,16 @@ pub const Modal = struct {
         return .{};
     }
 
-    /// Return the resolved overlay rectangle.
-    pub fn overlayRect(surface: *chasen.Surface, opts: ViewOptions) chasen.Rect {
-        return .{
-            .col = opts.col,
-            .row = opts.row,
-            .width = opts.width orelse availableWidth(surface, opts.col),
-            .height = opts.height orelse availableHeight(surface, opts.row),
-        };
+    /// Return the overlay rectangle inside the provided modal surface.
+    pub fn overlayRect(surface: *chasen.Surface) chasen.Rect {
+        return .{ .col = 0, .row = 0, .width = surface.size().width, .height = surface.size().height };
     }
 
-    /// Return the absolute dialog rectangle centered within the overlay.
+    /// Return the dialog rectangle centered within the provided modal surface.
+    ///
+    /// The returned rectangle is relative to the modal surface.
     pub fn dialogRect(surface: *chasen.Surface, opts: ViewOptions) chasen.Rect {
-        return dialogRectFor(overlayRect(surface, opts), opts);
+        return dialogRectFor(overlayRect(surface), opts);
     }
 
     /// Return the dialog rectangle for an already resolved overlay rectangle.
@@ -79,7 +64,9 @@ pub const Modal = struct {
         }, .middle_center);
     }
 
-    /// Return the absolute content rectangle inside the centered dialog.
+    /// Return the content rectangle inside the centered dialog.
+    ///
+    /// The returned rectangle is relative to the modal surface.
     pub fn contentRect(surface: *chasen.Surface, opts: ViewOptions) chasen.Rect {
         return contentRectFor(dialogRect(surface, opts), opts.padding);
     }
@@ -101,19 +88,15 @@ pub const Modal = struct {
         return dialog_rect.width - 1 - start;
     }
 
-    /// Draw the modal backdrop and dialog chrome.
+    /// Draw the modal backdrop and dialog chrome into the provided surface.
     pub fn view(self: *const Modal, surface: *chasen.Surface, opts: ViewOptions) void {
         _ = self;
-        const overlay = overlayRect(surface, opts);
+        const overlay = overlayRect(surface);
         if (overlay.width == 0 or overlay.height == 0) return;
 
         if (opts.backdrop) {
             const backdrop_box = box.Box.init(.{});
             backdrop_box.view(surface, .{
-                .col = overlay.col,
-                .row = overlay.row,
-                .width = overlay.width,
-                .height = overlay.height,
                 .fill = true,
                 .fill_style = opts.backdrop_style,
             });
@@ -123,11 +106,8 @@ pub const Modal = struct {
         if (dialog.width == 0 or dialog.height == 0) return;
 
         const dialog_panel = panel.Panel.init(.{});
-        dialog_panel.view(surface, .{
-            .col = dialog.col,
-            .row = dialog.row,
-            .width = dialog.width,
-            .height = dialog.height,
+        var dialog_surface = surface.child(dialog);
+        dialog_panel.view(&dialog_surface, .{
             .title = opts.title,
             .title_gap = opts.title_gap,
             .padding = opts.padding,
@@ -137,18 +117,6 @@ pub const Modal = struct {
         });
     }
 };
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
-}
 
 test "Modal initializes from options" {
     const modal = Modal.init(.{});

@@ -84,18 +84,6 @@ pub const Table = struct {
 
     /// Rendering options for `Table.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the table should start.
-        col: u16 = 0,
-        /// Surface row where the table should start.
-        row: u16 = 0,
-        /// Optional table region width.
-        ///
-        /// When omitted, the table uses the remaining surface width.
-        width: ?u16 = null,
-        /// Optional table region height.
-        ///
-        /// When omitted, the table uses the remaining surface height.
-        height: ?u16 = null,
         /// Spaces between columns.
         column_gap: u16 = 2,
         /// Grid chrome drawn around and between table cells.
@@ -157,38 +145,32 @@ pub const Table = struct {
         };
     }
 
-    /// Draw the table into a clipped rectangular region.
+    /// Draw the table into the provided clipped surface region.
     pub fn view(self: *const Table, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse availableHeight(surface, opts.row);
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
         if (width == 0 or height == 0 or self.columns.len == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
-
         if (opts.grid == .full) {
-            drawFullGrid(&child, self.columns, self.rows, opts, width, height);
+            drawFullGrid(surface, self.columns, self.rows, opts, width, height);
             return;
         }
 
         var row: u16 = 0;
         if (opts.show_header) {
-            drawHeader(&child, row, self.columns, opts.column_gap, opts.header_style, width);
+            drawHeader(surface, row, self.columns, opts.column_gap, opts.header_style, width);
             row += 1;
         }
 
         if (opts.grid == .minimal and opts.show_header and opts.show_separator and row < height) {
-            drawSeparator(&child, row, self.columns, opts.column_gap, opts.separator_style, width);
+            drawSeparator(surface, row, self.columns, opts.column_gap, opts.separator_style, width);
             row += 1;
         }
 
         for (self.rows) |cells| {
             if (row >= height) break;
-            drawRow(&child, row, self.columns, cells, opts.column_gap, opts.cell_style, width);
+            drawRow(surface, row, self.columns, cells, opts.column_gap, opts.cell_style, width);
             row += 1;
         }
     }
@@ -455,18 +437,6 @@ fn alignedCol(text: []const u8, width: u16, alignment: Table.Align) u16 {
         .center => (width - text_width) / 2,
         .right => width - text_width,
     };
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
 }
 
 test "Table initializes from options" {

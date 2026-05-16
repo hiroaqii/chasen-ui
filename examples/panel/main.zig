@@ -28,10 +28,6 @@ const App = struct {
         const panel_width = @min(size.width, 64);
         const panel_height = @min(size.height -| @min(size.height, 3), 12);
         const panel_opts = ui.Panel.ViewOptions{
-            .col = 0,
-            .row = 3,
-            .width = panel_width,
-            .height = panel_height,
             .title = "Project Summary",
             .padding = .{ .top = 1, .right = 2, .bottom = 1, .left = 2 },
             .border = .rounded,
@@ -42,34 +38,38 @@ const App = struct {
         _ = sfc.textAt(0, 0, "Panel Example - app-composed content", .{ .bold = true });
         _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
-        self.panel.view(sfc, panel_opts);
+        var panel_area = sfc.child(.{ .col = 0, .row = 3, .width = panel_width, .height = panel_height });
+        self.panel.view(&panel_area, panel_opts);
 
-        const content = ui.Panel.contentRect(sfc, panel_opts);
+        const content = ui.Panel.contentRect(&panel_area, panel_opts);
         if (content.width == 0 or content.height == 0) return;
+        var content_area = panel_area.child(content);
 
         // The content rectangle is normal app-owned space. Panel does not draw
         // these labels, the paragraph, or the status line; it only gives the app
         // a predictable inner area after border and padding are removed.
-        _ = sfc.textAt(content.col, content.row, "Name", .{ .fg = .gray });
-        _ = sfc.textAt(content.col + 12, content.row, "chasen-ui", .{});
-        _ = sfc.textAt(content.col, content.row + 1, "Scope", .{ .fg = .gray });
-        _ = sfc.textAt(content.col + 12, content.row + 1, "structure component", .{});
+        _ = content_area.textAt(0, 0, "Name", .{ .fg = .gray });
+        _ = content_area.textAt(12, 0, "chasen-ui", .{});
+        _ = content_area.textAt(0, 1, "Scope", .{ .fg = .gray });
+        _ = content_area.textAt(12, 1, "structure component", .{});
 
         if (content.height > 4) {
-            self.paragraph.view(sfc, .{
-                .col = content.col,
-                .row = content.row + 3,
-                .width = content.width,
+            var paragraph_area = content_area.child(.{
+                .col = 0,
+                .row = 3,
+                .width = content_area.size().width,
                 .height = content.height - 4,
+            });
+            self.paragraph.view(&paragraph_area, .{
                 .style = .{ .fg = .gray },
             });
         }
 
         if (content.height > 0) {
-            var status_area = sfc.child(.{
-                .col = content.col,
-                .row = content.row + content.height - 1,
-                .width = content.width,
+            var status_area = content_area.child(.{
+                .col = 0,
+                .row = content.height - 1,
+                .width = content_area.size().width,
                 .height = 1,
             });
             self.status.view(&status_area, .{

@@ -35,11 +35,8 @@ const App = struct {
 
         // The component draws depth guides, markers, and labels only. The app
         // decides which nodes are visible and what expand/collapse means.
-        self.tree.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = @min(size.width, 42),
-            .height = size.height -| @min(size.height, 5),
+        var tree_area = sfc.child(.{ .col = 0, .row = 3, .width = @min(size.width, 42), .height = size.height -| @min(size.height, 5) });
+        self.tree.view(&tree_area, .{
             .indent_width = 3,
             .glyphs = .rounded,
             .guide_style = .{ .fg = .gray },

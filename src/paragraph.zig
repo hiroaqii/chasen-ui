@@ -21,14 +21,6 @@ pub const Paragraph = struct {
 
     /// Rendering options for `Paragraph.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the paragraph should start.
-        col: u16 = 0,
-        /// Surface row where the paragraph should start.
-        row: u16 = 0,
-        /// Optional width of the clipped paragraph region.
-        width: ?u16 = null,
-        /// Optional height of the clipped paragraph region.
-        height: ?u16 = null,
         /// Style used for paragraph text.
         style: chasen.TextStyle = .{},
     };
@@ -47,24 +39,14 @@ pub const Paragraph = struct {
         return countWrappedLines(self.text, width);
     }
 
-    /// Draw the paragraph into a clipped rectangular region.
+    /// Draw the paragraph into the provided clipped surface region.
     pub fn view(self: *const Paragraph, surface: *chasen.Surface, opts: ViewOptions) void {
-        // A missing width/height means "use the remaining parent surface".
-        // This matches the other display-only components and keeps layout
-        // policy in the app: callers can pass an explicit rectangle when they
-        // need tighter control.
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse availableHeight(surface, opts.row);
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
         if (width == 0 or height == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
-
-        drawWrappedText(&child, self.text, width, height, opts.style);
+        drawWrappedText(surface, self.text, width, height, opts.style);
     }
 };
 
@@ -159,18 +141,6 @@ fn drawLine(surface: *chasen.Surface, row: u16, line: []const u8, style: chasen.
 
 fn isLineBreak(bytes: []const u8) bool {
     return bytes.len == 1 and bytes[0] == '\n';
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
 }
 
 test "Paragraph initializes from options" {

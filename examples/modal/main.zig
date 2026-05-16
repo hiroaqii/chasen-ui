@@ -37,8 +37,6 @@ const App = struct {
         if (!self.show_modal) return;
 
         const modal_opts = ui.Modal.ViewOptions{
-            .width = size.width,
-            .height = size.height,
             .dialog_width = @min(size.width, 56),
             .dialog_height = @min(size.height, 11),
             .title = "Confirm Action",
@@ -50,30 +48,34 @@ const App = struct {
             .title_style = .{ .bold = true, .fg = .{ .index = 6 } },
         };
 
-        self.modal.view(sfc, modal_opts);
+        var modal_area = sfc.child(.{ .col = 0, .row = 0, .width = size.width, .height = size.height });
+        self.modal.view(&modal_area, modal_opts);
 
-        const content = ui.Modal.contentRect(sfc, modal_opts);
+        const content = ui.Modal.contentRect(&modal_area, modal_opts);
         if (content.width == 0 or content.height == 0) return;
+        var content_area = modal_area.child(content);
 
         // The dialog content is regular app-owned drawing. Modal gives the app
         // a centered, padded rectangle but does not own the buttons, focus, or
         // the meaning of confirmation.
-        _ = sfc.textAt(content.col, content.row, "Delete saved filter?", .{ .bold = true });
+        _ = content_area.textAt(0, 0, "Delete saved filter?", .{ .bold = true });
         if (content.height > 3) {
-            self.paragraph.view(sfc, .{
-                .col = content.col,
-                .row = content.row + 2,
-                .width = content.width,
+            var paragraph_area = content_area.child(.{
+                .col = 0,
+                .row = 2,
+                .width = content_area.size().width,
                 .height = content.height - 4,
+            });
+            self.paragraph.view(&paragraph_area, .{
                 .style = .{ .fg = .gray },
             });
         }
 
         if (content.height > 0) {
-            var help_area = sfc.child(.{
-                .col = content.col,
-                .row = content.row + content.height - 1,
-                .width = content.width,
+            var help_area = content_area.child(.{
+                .col = 0,
+                .row = content.height - 1,
+                .width = content_area.size().width,
                 .height = 1,
             });
             self.help.view(&help_area, .{
