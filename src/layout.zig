@@ -213,6 +213,13 @@ pub fn alignRect(rect: chasen.Rect, size: chasen.Size, alignment: Alignment) cha
     };
 }
 
+/// Return a child rectangle of `size` centered within `rect`.
+///
+/// This is a convenience wrapper around `alignRect(rect, size, .middle_center)`.
+pub fn center(rect: chasen.Rect, size: chasen.Size) chasen.Rect {
+    return alignRect(rect, size, .middle_center);
+}
+
 /// Stack fixed-size child rectangles from top to bottom within `rect`.
 ///
 /// Each requested size is clamped to the remaining parent height and parent
@@ -517,6 +524,28 @@ test "align clamps child size to parent size" {
         .width = 4,
         .height = 2,
     }, alignRect(rect, .{ .width = 10, .height = 8 }, .bottom_right));
+}
+
+test "center returns a middle-centered child rectangle" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 6 };
+
+    try std.testing.expectEqual(chasen.Rect{
+        .col = 5,
+        .row = 5,
+        .width = 4,
+        .height = 2,
+    }, center(rect, .{ .width = 4, .height = 2 }));
+}
+
+test "center clamps child size to parent size" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 4, .height = 2 };
+
+    try std.testing.expectEqual(chasen.Rect{
+        .col = 2,
+        .row = 3,
+        .width = 4,
+        .height = 2,
+    }, center(rect, .{ .width = 10, .height = 8 }));
 }
 
 test "stack positions fixed-size rectangles with gaps" {
