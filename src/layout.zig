@@ -86,12 +86,26 @@ pub const RowOptions = struct {
 
 /// Options for splitting a rectangle into equal-width columns.
 pub const ColumnsOptions = struct {
+    /// Cells skipped between adjacent columns before the remaining width is divided.
     gap: u16 = 0,
 };
 
 /// Options for splitting a rectangle into equal-height rows.
 pub const RowsOptions = struct {
+    /// Cells skipped between adjacent rows before the remaining height is divided.
     gap: u16 = 0,
+};
+
+/// Options for splitting a rectangle into a fixed row-major grid.
+pub const FixedGridOptions = struct {
+    /// Number of cells on the horizontal axis.
+    columns: u16,
+    /// Number of cells on the vertical axis.
+    rows: u16,
+    /// Cells skipped between adjacent columns before column widths are divided.
+    column_gap: u16 = 0,
+    /// Cells skipped between adjacent rows before row heights are divided.
+    row_gap: u16 = 0,
 };
 
 /// Result of taking one edge band from a rectangle.
@@ -318,6 +332,38 @@ pub fn rows(out: []chasen.Rect, rect: chasen.Rect, opts: RowsOptions) []chasen.R
     return out;
 }
 
+/// Split `rect` into a fixed row-major grid.
+///
+/// The returned slice is capped by `out.len` and by `columns * rows`.
+/// `columns == 0` or `rows == 0` returns an empty slice. Gaps are reserved
+/// before each axis is evenly divided. Extra cells from uneven division are
+/// assigned to earlier columns and rows.
+pub fn fixedGrid(out: []chasen.Rect, rect: chasen.Rect, opts: FixedGridOptions) []chasen.Rect {
+    if (opts.columns == 0 or opts.rows == 0 or out.len == 0) return out[0..0];
+
+    const cell_count = @as(usize, opts.columns) * @as(usize, opts.rows);
+    const count = @min(out.len, cell_count);
+    const column_plan = evenPlan(rect.width, opts.column_gap, opts.columns);
+    const row_plan = evenPlan(rect.height, opts.row_gap, opts.rows);
+
+    for (out[0..count], 0..) |*slot, index| {
+        const columns_count = @as(usize, opts.columns);
+        const grid_row: u16 = @intCast(index / columns_count);
+        const grid_col: u16 = @intCast(index % columns_count);
+        const column_band = evenBand(column_plan, grid_col);
+        const row_band = evenBand(row_plan, grid_row);
+
+        slot.* = .{
+            .col = rect.col +| column_band.start,
+            .row = rect.row +| row_band.start,
+            .width = column_band.length,
+            .height = row_band.length,
+        };
+    }
+
+    return out[0..count];
+}
+
 /// Split `rect` into vertical bands.
 ///
 /// Results are written into `out` and the returned slice is the portion filled.
@@ -384,40 +430,27 @@ fn divideEven(out: []chasen.Rect, rect: chasen.Rect, gap: u16, direction: Direct
         .vertical => rect.height,
         .horizontal => rect.width,
     };
-    const gaps = gapTotal(gap, out.len - 1);
-    const content_total = total -| @min(total, gaps);
-    const base: u16 = @intCast(@as(usize, content_total) / out.len);
-    var extra = @as(usize, content_total) - (@as(usize, base) * out.len);
-    var cursor: u16 = 0;
+    const count: u16 = @intCast(@min(out.len, @as(usize, std.math.maxInt(u16))));
+    const plan = evenPlan(total, gap, count);
 
-    for (out) |*slot| {
-        var length = base;
-        if (extra > 0) {
-            length +|= 1;
-            extra -= 1;
-        }
-
-        const start = @min(total, cursor);
-        const available = total - start;
-        const clamped_length = @min(length, available);
+    for (out, 0..) |*slot, index| {
+        const band_index: u16 = @intCast(@min(index, @as(usize, count - 1)));
+        const band = evenBand(plan, band_index);
 
         slot.* = switch (direction) {
             .vertical => .{
                 .col = rect.col,
-                .row = rect.row +| start,
+                .row = rect.row +| band.start,
                 .width = rect.width,
-                .height = clamped_length,
+                .height = band.length,
             },
             .horizontal => .{
-                .col = rect.col +| start,
+                .col = rect.col +| band.start,
                 .row = rect.row,
-                .width = clamped_length,
+                .width = band.length,
                 .height = rect.height,
             },
         };
-
-        cursor = saturatingAdd(cursor, clamped_length);
-        cursor = saturatingAdd(cursor, gap);
     }
 }
 
@@ -428,6 +461,54 @@ fn gapTotal(gap: u16, count: usize) u16 {
         total = saturatingAdd(total, gap);
     }
     return total;
+}
+
+const EvenPlan = struct {
+    total: u16,
+    gap: u16,
+    count: u16,
+    base: u16,
+    extra: u16,
+};
+
+const EvenBand = struct {
+    start: u16,
+    length: u16,
+};
+
+fn evenPlan(total: u16, gap: u16, count: u16) EvenPlan {
+    if (count == 0) {
+        return .{ .total = total, .gap = gap, .count = 0, .base = 0, .extra = 0 };
+    }
+
+    const gaps = gapTotal(gap, @as(usize, count - 1));
+    const content_total = total -| @min(total, gaps);
+    const base = content_total / count;
+    const extra = content_total - (base * count);
+
+    return .{
+        .total = total,
+        .gap = gap,
+        .count = count,
+        .base = base,
+        .extra = extra,
+    };
+}
+
+fn evenBand(plan: EvenPlan, index: u16) EvenBand {
+    if (plan.count == 0) return .{ .start = 0, .length = 0 };
+
+    const clamped_index = @min(index, plan.count - 1);
+    const extra_before = @min(clamped_index, plan.extra);
+    const start = saturatingAdd(clamped_index *| plan.base, extra_before) +| (clamped_index *| plan.gap);
+    const length = plan.base + @as(u16, if (clamped_index < plan.extra) 1 else 0);
+    const clamped_start = @min(plan.total, start);
+    const available = plan.total - clamped_start;
+
+    return .{
+        .start = clamped_start,
+        .length = @min(length, available),
+    };
 }
 
 const SplitPlan = struct {
@@ -746,6 +827,63 @@ test "columns collapse content when gaps exceed width" {
     try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 0, .height = 4 }, result[0]);
     try std.testing.expectEqual(chasen.Rect{ .col = 4, .row = 3, .width = 0, .height = 4 }, result[1]);
     try std.testing.expectEqual(chasen.Rect{ .col = 4, .row = 3, .width = 0, .height = 4 }, result[2]);
+}
+
+test "fixedGrid returns row-major equal cells" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 7 };
+    var areas: [6]chasen.Rect = undefined;
+    const result = fixedGrid(&areas, rect, .{ .columns = 3, .rows = 2 });
+
+    try std.testing.expectEqual(@as(usize, 6), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 4, .height = 4 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 6, .row = 3, .width = 3, .height = 4 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 9, .row = 3, .width = 3, .height = 4 }, result[2]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 7, .width = 4, .height = 3 }, result[3]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 6, .row = 7, .width = 3, .height = 3 }, result[4]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 9, .row = 7, .width = 3, .height = 3 }, result[5]);
+}
+
+test "fixedGrid reserves column and row gaps" {
+    const rect: chasen.Rect = .{ .col = 1, .row = 2, .width = 12, .height = 8 };
+    var areas: [4]chasen.Rect = undefined;
+    const result = fixedGrid(&areas, rect, .{ .columns = 2, .rows = 2, .column_gap = 1, .row_gap = 1 });
+
+    try std.testing.expectEqual(@as(usize, 4), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 1, .row = 2, .width = 6, .height = 4 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 8, .row = 2, .width = 5, .height = 4 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 1, .row = 7, .width = 6, .height = 3 }, result[2]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 8, .row = 7, .width = 5, .height = 3 }, result[3]);
+}
+
+test "fixedGrid returns only output capacity" {
+    const rect: chasen.Rect = .{ .col = 0, .row = 0, .width = 8, .height = 4 };
+    var areas: [3]chasen.Rect = undefined;
+    const result = fixedGrid(&areas, rect, .{ .columns = 2, .rows = 2 });
+
+    try std.testing.expectEqual(@as(usize, 3), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 0, .row = 0, .width = 4, .height = 2 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 4, .row = 0, .width = 4, .height = 2 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 0, .row = 2, .width = 4, .height = 2 }, result[2]);
+}
+
+test "fixedGrid returns empty for zero rows or columns" {
+    const rect: chasen.Rect = .{ .col = 0, .row = 0, .width = 8, .height = 4 };
+    var areas: [2]chasen.Rect = undefined;
+
+    try std.testing.expectEqual(@as(usize, 0), fixedGrid(&areas, rect, .{ .columns = 0, .rows = 2 }).len);
+    try std.testing.expectEqual(@as(usize, 0), fixedGrid(&areas, rect, .{ .columns = 2, .rows = 0 }).len);
+}
+
+test "fixedGrid collapses cells when gaps exceed size" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 2, .height = 1 };
+    var areas: [4]chasen.Rect = undefined;
+    const result = fixedGrid(&areas, rect, .{ .columns = 2, .rows = 2, .column_gap = 3, .row_gap = 2 });
+
+    try std.testing.expectEqual(@as(usize, 4), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 0, .height = 0 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 4, .row = 3, .width = 0, .height = 0 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 4, .width = 0, .height = 0 }, result[2]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 4, .row = 4, .width = 0, .height = 0 }, result[3]);
 }
 
 test "splitVertical handles fixed and fill segments" {
