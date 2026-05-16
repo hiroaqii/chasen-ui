@@ -7,39 +7,50 @@ The Zig module name is `chasen_ui`.
 
 ## Components
 
-- `TextInput`: owned UTF-8 single-line text input.
-- `TextArea`: owned UTF-8 multi-line text input.
-- `FormField`: allocation-free display-only form field chrome.
-- `PasswordInput`: owned UTF-8 single-line masked text input.
-- `NumberInput`: owned UTF-8 single-line integer input.
-- `Select`: allocation-free one-line option picker.
-- `Checkbox`: allocation-free boolean checkbox.
-- `Radio`: allocation-free radio option.
-- `Button`: allocation-free action button.
-- `List`: allocation-free vertical list with local focus state.
-- `SelectableList`: allocation-free vertical list with local focus and selection state.
-- `MultiSelectList`: allocation-free vertical list with local focus and multi-selection state.
-- `Menu`: allocation-free vertical command menu with local focus state.
-- `Tabs`: allocation-free one-line tab strip with local focus and active tab state.
-- `Breadcrumbs`: allocation-free display-only navigation trail.
-- `Box`: allocation-free display-only borderless container helper.
-- `Panel`: allocation-free display-only bordered container chrome.
-- `Modal`: allocation-free display-only modal overlay chrome.
-- `Table`: allocation-free display-only fixed-width table with optional grid chrome.
-- `Tree`: allocation-free display-only visible node outline.
-- `Accordion`: allocation-free display-only section header stack.
-- `Spinner`: allocation-free frame-based spinner.
-- `ProgressBar`: allocation-free horizontal progress bar.
-- `Gauge`: allocation-free compact metric gauge.
-- `Toast`: allocation-free display-only toast notification chrome.
-- `Rating`: allocation-free display-only rating indicator.
-- `Badge`: allocation-free compact marker/text badge.
-- `Alert`: allocation-free display-only alert.
-- `Divider`: allocation-free horizontal or vertical divider.
-- `Label`: allocation-free single-line text label.
-- `Paragraph`: allocation-free multi-line text paragraph.
-- `StatusLine`: allocation-free one-line status component.
-- `Help`: allocation-free one-line shortcut help component.
+### Input
+
+- `TextInput`
+- `TextArea`
+- `PasswordInput`
+- `NumberInput`
+- `Select`
+- `Checkbox`
+- `Radio`
+- `Button`
+- `FormField`
+
+### Navigation
+
+- `List`
+- `SelectableList`
+- `MultiSelectList`
+- `Menu`
+- `Tabs`
+- `Breadcrumbs`
+
+### Structure
+
+- `Box`
+- `Panel`
+- `Modal`
+- `Table`
+- `Tree`
+- `Accordion`
+
+### Display
+
+- `Spinner`
+- `ProgressBar`
+- `Gauge`
+- `Toast`
+- `Rating`
+- `Badge`
+- `Alert`
+- `Divider`
+- `Label`
+- `Paragraph`
+- `StatusLine`
+- `Help`
 
 ## Helpers
 
