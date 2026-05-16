@@ -75,6 +75,9 @@ pub const ProgressBar = progress_bar.ProgressBar;
 pub const gauge = @import("gauge.zig");
 pub const Gauge = gauge.Gauge;
 
+pub const toast = @import("toast.zig");
+pub const Toast = toast.Toast;
+
 pub const rating = @import("rating.zig");
 pub const Rating = rating.Rating;
 

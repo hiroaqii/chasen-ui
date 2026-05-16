@@ -50,6 +50,7 @@ pub fn build(b: *std.Build) void {
         "spinner",
         "progress_bar",
         "gauge",
+        "toast",
         "divider",
         "label",
         "paragraph",

@@ -31,6 +31,7 @@ The Zig module name is `chasen_ui`.
 - `Spinner`: allocation-free frame-based spinner.
 - `ProgressBar`: allocation-free horizontal progress bar.
 - `Gauge`: allocation-free compact metric gauge.
+- `Toast`: allocation-free display-only toast notification chrome.
 - `Rating`: allocation-free display-only rating indicator.
 - `Badge`: allocation-free compact marker/text badge.
 - `Alert`: allocation-free display-only alert.
