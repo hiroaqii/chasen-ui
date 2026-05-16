@@ -1,6 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
-const selectable = @import("selectable.zig");
+const selectable = @import("../navigation/selectable.zig");
 
 /// A small one-line option picker with local selected state.
 ///

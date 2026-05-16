@@ -1,6 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
-const layout = @import("layout.zig");
+const layout = @import("../layout.zig");
 const box = @import("box.zig");
 const panel = @import("panel.zig");
 

@@ -1,6 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
-const selectable = @import("selectable.zig");
+const selectable = @import("../navigation/selectable.zig");
 
 /// A single radio option component.
 ///

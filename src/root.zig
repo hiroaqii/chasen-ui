@@ -3,106 +3,106 @@ const chasen = @import("chasen");
 
 pub const layout = @import("layout.zig");
 
-pub const text_input = @import("text_input.zig");
+pub const text_input = @import("input/text_input.zig");
 pub const TextInput = text_input.TextInput;
 
-pub const text_area = @import("text_area.zig");
+pub const text_area = @import("input/text_area.zig");
 pub const TextArea = text_area.TextArea;
 
-pub const form_field = @import("form_field.zig");
+pub const form_field = @import("input/form_field.zig");
 pub const FormField = form_field.FormField;
 
-pub const password_input = @import("password_input.zig");
+pub const password_input = @import("input/password_input.zig");
 pub const PasswordInput = password_input.PasswordInput;
 
-pub const number_input = @import("number_input.zig");
+pub const number_input = @import("input/number_input.zig");
 pub const NumberInput = number_input.NumberInput;
 
-pub const checkbox = @import("checkbox.zig");
+pub const checkbox = @import("input/checkbox.zig");
 pub const Checkbox = checkbox.Checkbox;
 
-pub const radio = @import("radio.zig");
+pub const radio = @import("input/radio.zig");
 pub const Radio = radio.Radio;
 
-pub const button = @import("button.zig");
+pub const button = @import("input/button.zig");
 pub const Button = button.Button;
 
-pub const focus_list = @import("focus_list.zig");
+pub const focus_list = @import("navigation/focus_list.zig");
 pub const FocusList = focus_list.FocusList;
 
-pub const list = @import("list.zig");
+pub const list = @import("navigation/list.zig");
 pub const List = list.List;
 
-pub const selectable_list = @import("selectable_list.zig");
+pub const selectable_list = @import("navigation/selectable_list.zig");
 pub const SelectableList = selectable_list.SelectableList;
 
-pub const multi_select_list = @import("multi_select_list.zig");
+pub const multi_select_list = @import("navigation/multi_select_list.zig");
 pub const MultiSelectList = multi_select_list.MultiSelectList;
 
-pub const menu = @import("menu.zig");
+pub const menu = @import("navigation/menu.zig");
 pub const Menu = menu.Menu;
 
-pub const tabs = @import("tabs.zig");
+pub const tabs = @import("navigation/tabs.zig");
 pub const Tabs = tabs.Tabs;
 
-pub const breadcrumbs = @import("breadcrumbs.zig");
+pub const breadcrumbs = @import("navigation/breadcrumbs.zig");
 pub const Breadcrumbs = breadcrumbs.Breadcrumbs;
 
-pub const box = @import("box.zig");
+pub const box = @import("structure/box.zig");
 pub const Box = box.Box;
 
-pub const panel = @import("panel.zig");
+pub const panel = @import("structure/panel.zig");
 pub const Panel = panel.Panel;
 
-pub const modal = @import("modal.zig");
+pub const modal = @import("structure/modal.zig");
 pub const Modal = modal.Modal;
 
-pub const table = @import("table.zig");
+pub const table = @import("structure/table.zig");
 pub const Table = table.Table;
 
-pub const tree = @import("tree.zig");
+pub const tree = @import("structure/tree.zig");
 pub const Tree = tree.Tree;
 
-pub const accordion = @import("accordion.zig");
+pub const accordion = @import("navigation/accordion.zig");
 pub const Accordion = accordion.Accordion;
 
-pub const spinner = @import("spinner.zig");
+pub const spinner = @import("display/spinner.zig");
 pub const Spinner = spinner.Spinner;
 
-pub const progress_bar = @import("progress_bar.zig");
+pub const progress_bar = @import("display/progress_bar.zig");
 pub const ProgressBar = progress_bar.ProgressBar;
 
-pub const gauge = @import("gauge.zig");
+pub const gauge = @import("display/gauge.zig");
 pub const Gauge = gauge.Gauge;
 
-pub const toast = @import("toast.zig");
+pub const toast = @import("display/toast.zig");
 pub const Toast = toast.Toast;
 
-pub const rating = @import("rating.zig");
+pub const rating = @import("display/rating.zig");
 pub const Rating = rating.Rating;
 
-pub const badge = @import("badge.zig");
+pub const badge = @import("display/badge.zig");
 pub const Badge = badge.Badge;
 
-pub const alert = @import("alert.zig");
+pub const alert = @import("display/alert.zig");
 pub const Alert = alert.Alert;
 
-pub const divider = @import("divider.zig");
+pub const divider = @import("display/divider.zig");
 pub const Divider = divider.Divider;
 
-pub const label = @import("label.zig");
+pub const label = @import("display/label.zig");
 pub const Label = label.Label;
 
-pub const paragraph = @import("paragraph.zig");
+pub const paragraph = @import("display/paragraph.zig");
 pub const Paragraph = paragraph.Paragraph;
 
-pub const status_line = @import("status_line.zig");
+pub const status_line = @import("display/status_line.zig");
 pub const StatusLine = status_line.StatusLine;
 
-pub const select = @import("select.zig");
+pub const select = @import("input/select.zig");
 pub const Select = select.Select;
 
-pub const help = @import("help.zig");
+pub const help = @import("display/help.zig");
 pub const Help = help.Help;
 
 test "chasen-ui imports chasen core" {
