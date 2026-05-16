@@ -84,6 +84,16 @@ pub const RowOptions = struct {
     vertical: VerticalAlign = .top,
 };
 
+/// Options for splitting a rectangle into equal-width columns.
+pub const ColumnsOptions = struct {
+    gap: u16 = 0,
+};
+
+/// Options for splitting a rectangle into equal-height rows.
+pub const RowsOptions = struct {
+    gap: u16 = 0,
+};
+
 /// Result of taking one edge band from a rectangle.
 pub const TakeResult = struct {
     /// The requested edge band, clamped to the parent rectangle.
@@ -288,6 +298,26 @@ pub fn row(out: []chasen.Rect, rect: chasen.Rect, sizes: []const chasen.Size, op
     return out[0..count];
 }
 
+/// Split `rect` into equal-width columns.
+///
+/// The number of returned columns is `out.len`. `gap` cells are reserved
+/// between columns before the remaining width is distributed. Extra cells from
+/// uneven division are assigned to earlier columns.
+pub fn columns(out: []chasen.Rect, rect: chasen.Rect, opts: ColumnsOptions) []chasen.Rect {
+    divideEven(out, rect, opts.gap, .horizontal);
+    return out;
+}
+
+/// Split `rect` into equal-height rows.
+///
+/// The number of returned rows is `out.len`. `gap` cells are reserved between
+/// rows before the remaining height is distributed. Extra cells from uneven
+/// division are assigned to earlier rows.
+pub fn rows(out: []chasen.Rect, rect: chasen.Rect, opts: RowsOptions) []chasen.Rect {
+    divideEven(out, rect, opts.gap, .vertical);
+    return out;
+}
+
 /// Split `rect` into vertical bands.
 ///
 /// Results are written into `out` and the returned slice is the portion filled.
@@ -345,6 +375,59 @@ fn split(out: []chasen.Rect, rect: chasen.Rect, specs: []const SplitSpec, direct
 
         cursor +|= clamped_length;
     }
+}
+
+fn divideEven(out: []chasen.Rect, rect: chasen.Rect, gap: u16, direction: Direction) void {
+    if (out.len == 0) return;
+
+    const total = switch (direction) {
+        .vertical => rect.height,
+        .horizontal => rect.width,
+    };
+    const gaps = gapTotal(gap, out.len - 1);
+    const content_total = total -| @min(total, gaps);
+    const base: u16 = @intCast(@as(usize, content_total) / out.len);
+    var extra = @as(usize, content_total) - (@as(usize, base) * out.len);
+    var cursor: u16 = 0;
+
+    for (out) |*slot| {
+        var length = base;
+        if (extra > 0) {
+            length +|= 1;
+            extra -= 1;
+        }
+
+        const start = @min(total, cursor);
+        const available = total - start;
+        const clamped_length = @min(length, available);
+
+        slot.* = switch (direction) {
+            .vertical => .{
+                .col = rect.col,
+                .row = rect.row +| start,
+                .width = rect.width,
+                .height = clamped_length,
+            },
+            .horizontal => .{
+                .col = rect.col +| start,
+                .row = rect.row,
+                .width = clamped_length,
+                .height = rect.height,
+            },
+        };
+
+        cursor = saturatingAdd(cursor, clamped_length);
+        cursor = saturatingAdd(cursor, gap);
+    }
+}
+
+fn gapTotal(gap: u16, count: usize) u16 {
+    var total: u16 = 0;
+    var index: usize = 0;
+    while (index < count) : (index += 1) {
+        total = saturatingAdd(total, gap);
+    }
+    return total;
 }
 
 const SplitPlan = struct {
@@ -608,6 +691,61 @@ test "row clamps to parent height and remaining width" {
     try std.testing.expectEqual(@as(usize, 2), result.len);
     try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 3, .height = 3 }, result[0]);
     try std.testing.expectEqual(chasen.Rect{ .col = 7, .row = 3, .width = 0, .height = 2 }, result[1]);
+}
+
+test "columns split width evenly and distribute remainder" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 4 };
+    var areas: [3]chasen.Rect = undefined;
+    const result = columns(&areas, rect, .{});
+
+    try std.testing.expectEqual(@as(usize, 3), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 4, .height = 4 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 6, .row = 3, .width = 3, .height = 4 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 9, .row = 3, .width = 3, .height = 4 }, result[2]);
+}
+
+test "columns reserve gaps before splitting width" {
+    const rect: chasen.Rect = .{ .col = 1, .row = 2, .width = 12, .height = 3 };
+    var areas: [3]chasen.Rect = undefined;
+    const result = columns(&areas, rect, .{ .gap = 1 });
+
+    try std.testing.expectEqual(@as(usize, 3), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 1, .row = 2, .width = 4, .height = 3 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 6, .row = 2, .width = 3, .height = 3 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 10, .row = 2, .width = 3, .height = 3 }, result[2]);
+}
+
+test "rows split height evenly and distribute remainder" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 8, .height = 7 };
+    var areas: [3]chasen.Rect = undefined;
+    const result = rows(&areas, rect, .{});
+
+    try std.testing.expectEqual(@as(usize, 3), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 8, .height = 3 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 6, .width = 8, .height = 2 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 8, .width = 8, .height = 2 }, result[2]);
+}
+
+test "rows reserve gaps before splitting height" {
+    const rect: chasen.Rect = .{ .col = 1, .row = 2, .width = 8, .height = 9 };
+    var areas: [3]chasen.Rect = undefined;
+    const result = rows(&areas, rect, .{ .gap = 1 });
+
+    try std.testing.expectEqual(@as(usize, 3), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 1, .row = 2, .width = 8, .height = 3 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 1, .row = 6, .width = 8, .height = 2 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 1, .row = 9, .width = 8, .height = 2 }, result[2]);
+}
+
+test "columns collapse content when gaps exceed width" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 2, .height = 4 };
+    var areas: [3]chasen.Rect = undefined;
+    const result = columns(&areas, rect, .{ .gap = 2 });
+
+    try std.testing.expectEqual(@as(usize, 3), result.len);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 0, .height = 4 }, result[0]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 4, .row = 3, .width = 0, .height = 4 }, result[1]);
+    try std.testing.expectEqual(chasen.Rect{ .col = 4, .row = 3, .width = 0, .height = 4 }, result[2]);
 }
 
 test "splitVertical handles fixed and fill segments" {
