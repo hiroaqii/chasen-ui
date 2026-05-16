@@ -51,6 +51,9 @@ pub const Panel = panel.Panel;
 pub const modal = @import("modal.zig");
 pub const Modal = modal.Modal;
 
+pub const table = @import("table.zig");
+pub const Table = table.Table;
+
 pub const spinner = @import("spinner.zig");
 pub const Spinner = spinner.Spinner;
 

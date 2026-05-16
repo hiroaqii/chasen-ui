@@ -23,6 +23,7 @@ The Zig module name is `chasen_ui`.
 - `Box`: allocation-free display-only borderless container helper.
 - `Panel`: allocation-free display-only bordered container chrome.
 - `Modal`: allocation-free display-only modal overlay chrome.
+- `Table`: allocation-free display-only fixed-width table with optional grid chrome.
 - `Spinner`: allocation-free frame-based spinner.
 - `ProgressBar`: allocation-free horizontal progress bar.
 - `Rating`: allocation-free display-only rating indicator.
@@ -80,6 +81,7 @@ Component-specific usage lives in examples:
 - `examples/box/main.zig`
 - `examples/panel/main.zig`
 - `examples/modal/main.zig`
+- `examples/table/main.zig`
 - `examples/spinner/main.zig`
 - `examples/progress_bar/main.zig`
 - `examples/animated_feedback/main.zig`
@@ -112,6 +114,7 @@ zig build run-breadcrumbs
 zig build run-box
 zig build run-panel
 zig build run-modal
+zig build run-table
 zig build run-spinner
 zig build run-progress_bar
 zig build run-animated_feedback
@@ -159,6 +162,7 @@ zig build check-breadcrumbs
 zig build check-box
 zig build check-panel
 zig build check-modal
+zig build check-table
 zig build check-spinner
 zig build check-progress_bar
 zig build check-animated_feedback
