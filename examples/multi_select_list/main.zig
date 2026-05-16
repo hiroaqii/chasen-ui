@@ -43,7 +43,9 @@ const App = struct {
 
         _ = sfc.textAt(34, 3, "Selected accessories", .{ .bold = true, .fg = .{ .index = 2 } });
         _ = sfc.textAt(34, 4, "count", .{ .fg = .gray });
-        _ = sfc.textAt(42, 4, try std.fmt.allocPrint(sfc.frameAllocator(), "{d}", .{self.list.selectedCount()}), .{ .fg = .{ .index = 2 } });
+        // printAt formats into the frame arena before drawing, so this avoids
+        // the short-lived buffer lifetime issue of allocPrint(...) + textAt(...).
+        _ = try sfc.printAt(42, 4, .{ .fg = .{ .index = 2 } }, "{d}", .{self.list.selectedCount()});
 
         var row: u16 = 6;
         for (items, 0..) |item, index| {

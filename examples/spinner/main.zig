@@ -69,12 +69,15 @@ const App = struct {
         // Show both the raw frame index and elapsed seconds so the frame count
         // is not mistaken for a timestamp.
         const elapsed_seconds = @as(f64, @floatFromInt(self.elapsed_ns)) / @as(f64, @floatFromInt(std.time.ns_per_s));
-        const info = try std.fmt.allocPrint(
-            sfc.frameAllocator(),
+        // printAt formats into the frame arena before drawing, so this avoids
+        // the short-lived buffer lifetime issue of allocPrint(...) + textAt(...).
+        _ = try sfc.printAt(
+            0,
+            5,
+            .{ .dim = true },
             "frame index: {d}  elapsed: {d:.1}s  {s}",
             .{ self.frame_index, elapsed_seconds, status },
         );
-        _ = sfc.textAt(0, 5, info, .{ .dim = true });
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

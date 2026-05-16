@@ -87,12 +87,15 @@ const App = struct {
         const percent: u8 = @intFromFloat(@round(p * 100.0));
         const elapsed_seconds = @as(f64, @floatFromInt(self.elapsed_ns)) / @as(f64, @floatFromInt(std.time.ns_per_s));
         const status = if (self.running) "running" else "done";
-        const info = try std.fmt.allocPrint(
-            sfc.frameAllocator(),
+        // printAt formats into the frame arena before drawing, so this avoids
+        // the short-lived buffer lifetime issue of allocPrint(...) + textAt(...).
+        _ = try sfc.printAt(
+            0,
+            5,
+            .{ .dim = true },
             "{d}%  elapsed: {d:.1}s  {s}",
             .{ percent, elapsed_seconds, status },
         );
-        _ = sfc.textAt(0, 5, info, .{ .dim = true });
     }
 
     fn progress(self: *const App) f32 {

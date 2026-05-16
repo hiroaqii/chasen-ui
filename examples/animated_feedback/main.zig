@@ -101,12 +101,15 @@ const App = struct {
 
         const percent: u8 = @intFromFloat(@round(p * 100.0));
         const status = if (self.running) "running" else "paused";
-        const info = try std.fmt.allocPrint(
-            sfc.frameAllocator(),
+        // printAt formats into the frame arena before drawing, so this avoids
+        // the short-lived buffer lifetime issue of allocPrint(...) + textAt(...).
+        _ = try sfc.printAt(
+            0,
+            7,
+            .{ .dim = true },
             "frame: {d}  progress: {d}%  {s}",
             .{ self.frame_counter.frame, percent, status },
         );
-        _ = sfc.textAt(0, 7, info, .{ .dim = true });
     }
 
     fn progress(self: *const App) f32 {
