@@ -9,6 +9,9 @@ pub const TextInput = text_input.TextInput;
 pub const text_area = @import("text_area.zig");
 pub const TextArea = text_area.TextArea;
 
+pub const form_field = @import("form_field.zig");
+pub const FormField = form_field.FormField;
+
 pub const password_input = @import("password_input.zig");
 pub const PasswordInput = password_input.PasswordInput;
 

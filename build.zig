@@ -29,6 +29,7 @@ pub fn build(b: *std.Build) void {
     const example_names = [_][]const u8{
         "text_input",
         "text_area",
+        "form_field",
         "password_input",
         "number_input",
         "checkbox",
