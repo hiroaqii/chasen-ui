@@ -8,6 +8,7 @@ The Zig module name is `chasen_ui`.
 ## Components
 
 - `TextInput`: owned UTF-8 single-line text input.
+- `TextArea`: owned UTF-8 multi-line text input.
 - `PasswordInput`: owned UTF-8 single-line masked text input.
 - `NumberInput`: owned UTF-8 single-line integer input.
 - `Select`: allocation-free one-line option picker.
