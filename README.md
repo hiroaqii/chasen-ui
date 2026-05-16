@@ -64,6 +64,11 @@ Applications own policy. Interactive components may translate events into
 component messages and update their own local state when asked. Display-only
 components draw borrowed or app-owned values in `view`.
 
+Applications also own layout. Create a clipped region with
+`Surface.child(Rect)` and pass that child surface to the component. Component
+`ViewOptions` describe how to draw inside the provided surface; they do not
+carry placement fields such as `col`, `row`, `width`, or `height`.
+
 Borrowed labels, placeholders, frame lists, and other borrowed values must
 outlive the component.
 
