@@ -49,6 +49,7 @@ pub fn build(b: *std.Build) void {
         "accordion",
         "spinner",
         "progress_bar",
+        "gauge",
         "divider",
         "label",
         "paragraph",

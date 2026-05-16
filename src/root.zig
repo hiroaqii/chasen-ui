@@ -72,6 +72,9 @@ pub const Spinner = spinner.Spinner;
 pub const progress_bar = @import("progress_bar.zig");
 pub const ProgressBar = progress_bar.ProgressBar;
 
+pub const gauge = @import("gauge.zig");
+pub const Gauge = gauge.Gauge;
+
 pub const rating = @import("rating.zig");
 pub const Rating = rating.Rating;
 

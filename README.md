@@ -30,6 +30,7 @@ The Zig module name is `chasen_ui`.
 - `Accordion`: allocation-free display-only section header stack.
 - `Spinner`: allocation-free frame-based spinner.
 - `ProgressBar`: allocation-free horizontal progress bar.
+- `Gauge`: allocation-free compact metric gauge.
 - `Rating`: allocation-free display-only rating indicator.
 - `Badge`: allocation-free compact marker/text badge.
 - `Alert`: allocation-free display-only alert.
