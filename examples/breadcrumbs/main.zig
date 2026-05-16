@@ -33,10 +33,8 @@ const App = struct {
 
         // The component only draws the trail. The app decides what the route
         // means and which screen or document belongs to the current segment.
-        self.breadcrumbs.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 48,
+        var breadcrumbs_area = sfc.child(.{ .col = 0, .row = 3, .width = 48, .height = 1 });
+        self.breadcrumbs.view(&breadcrumbs_area, .{
             .item_style = .{ .fg = .gray },
             .current_style = .{ .bold = true, .fg = .{ .index = 2 } },
         });

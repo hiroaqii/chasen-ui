@@ -41,11 +41,8 @@ const App = struct {
         _ = sfc.textAt(0, 0, "List Example - app-owned selection", .{ .bold = true });
         _ = sfc.textAt(0, 1, "Up/Down: move  Enter/Space: select  Esc: quit", .{ .fg = .gray });
 
-        self.list.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 24,
-            .height = 6,
+        var list_area = sfc.child(.{ .col = 0, .row = 3, .width = 24, .height = 6 });
+        self.list.view(&list_area, .{
             .selected_index = self.selected_index,
             .focused_style = .{ .bold = true },
             .selected_style = .{ .fg = .{ .index = 2 } },

@@ -41,14 +41,6 @@ pub const MultiSelectList = struct {
 
     /// Rendering options for `MultiSelectList.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the list should be drawn.
-        col: u16 = 0,
-        /// Surface row where the list should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped list region.
-        width: ?u16 = null,
-        /// Optional height of the clipped list region.
-        height: ?u16 = null,
         /// Style used for unselected, unfocused item labels.
         item_style: chasen.TextStyle = .{},
         /// Style used for focused item labels.
@@ -121,18 +113,12 @@ pub const MultiSelectList = struct {
         };
     }
 
-    /// Draw the multi-select list into a vertical region.
+    /// Draw the multi-select list into the provided vertical surface region.
     pub fn view(self: *const MultiSelectList, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse availableHeight(surface, opts.row);
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
         if (width == 0 or height == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
 
         const visible_count = @min(@min(self.items.len, max_items), @as(usize, height));
         for (self.items[0..visible_count], 0..) |item, i| {
@@ -141,15 +127,15 @@ pub const MultiSelectList = struct {
             const selected = self.isSelected(i);
             const marker = if (selected) opts.selected_marker else opts.marker;
 
-            _ = child.textAt(0, row, marker, opts.marker_style);
+            _ = surface.textAt(0, row, marker, opts.marker_style);
             if (width > 4) {
-                _ = child.textAt(4, row, item, itemStyle(opts, focused, selected));
+                _ = surface.textAt(4, row, item, itemStyle(opts, focused, selected));
             }
         }
 
         if (opts.show_cursor and self.items.len > 0 and self.focusedIndex() < visible_count) {
             const cursor_row: u16 = @intCast(self.focusedIndex());
-            child.showCursor(@min(@as(u16, 4), width - 1), cursor_row);
+            surface.showCursor(@min(@as(u16, 4), width - 1), cursor_row);
         }
     }
 
@@ -188,18 +174,6 @@ fn maxSelectable(len: usize) usize {
 
 fn bit(index: usize) u64 {
     return @as(u64, 1) << @intCast(index);
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
 }
 
 test "MultiSelectList initializes with clamped selected mask" {

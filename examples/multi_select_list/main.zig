@@ -34,12 +34,8 @@ const App = struct {
 
         // The component stores checked items locally. The app reads the count
         // and can decide what selected accessories mean.
-        self.list.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 28,
-            .height = 6,
-        });
+        var list_area = sfc.child(.{ .col = 0, .row = 3, .width = 28, .height = 6 });
+        self.list.view(&list_area, .{});
 
         _ = sfc.textAt(34, 3, "Selected accessories", .{ .bold = true, .fg = .{ .index = 2 } });
         _ = sfc.textAt(34, 4, "count", .{ .fg = .gray });

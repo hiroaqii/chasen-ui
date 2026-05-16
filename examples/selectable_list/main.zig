@@ -34,11 +34,8 @@ const App = struct {
 
         // Selection storage is local to SelectableList. Meaning stays in the
         // app, which decides how to use the selected label below.
-        self.list.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 24,
-            .height = 6,
+        var list_area = sfc.child(.{ .col = 0, .row = 3, .width = 24, .height = 6 });
+        self.list.view(&list_area, .{
             .focused_style = .{ .bold = true },
             .selected_style = .{ .bold = true, .fg = .{ .index = 14 } },
             .focused_selected_style = .{ .bold = true, .fg = .{ .index = 14 } },

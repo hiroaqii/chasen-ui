@@ -43,11 +43,8 @@ const App = struct {
         _ = sfc.textAt(2, 3, "Command", .{ .fg = .gray });
         _ = sfc.textAt(20, 3, "Hint", .{ .fg = .gray });
 
-        self.menu.view(sfc, .{
-            .col = 0,
-            .row = 4,
-            .width = 34,
-            .height = 6,
+        var menu_area = sfc.child(.{ .col = 0, .row = 4, .width = 34, .height = 6 });
+        self.menu.view(&menu_area, .{
             .shortcut_col = 20,
             .focused_style = .{ .bold = true, .fg = .{ .index = 14 } },
         });

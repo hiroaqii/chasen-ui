@@ -72,7 +72,7 @@ pub const SelectableList = struct {
         return self.list.handleEvent(event);
     }
 
-    /// Draw the selectable list into a vertical region.
+    /// Draw the selectable list into the provided vertical surface region.
     pub fn view(self: *const SelectableList, surface: *chasen.Surface, opts: ViewOptions) void {
         var list_opts = opts;
         list_opts.selected_index = self.selectedIndex();

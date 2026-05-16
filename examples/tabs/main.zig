@@ -33,10 +33,8 @@ const App = struct {
 
         // Tabs stores focus and active index locally. The app reads activeIndex
         // and decides which panel content belongs below the tab strip.
-        self.tabs.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 46,
+        var tabs_area = sfc.child(.{ .col = 0, .row = 3, .width = 46, .height = 1 });
+        self.tabs.view(&tabs_area, .{
             .focused_style = .{ .bold = true },
             .active_style = .{ .fg = .{ .index = 2 } },
             .focused_active_style = .{ .bold = true, .fg = .{ .index = 2 } },

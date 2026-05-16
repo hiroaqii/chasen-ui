@@ -38,12 +38,6 @@ pub const Tabs = struct {
 
     /// Rendering options for `Tabs.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the tab strip should be drawn.
-        col: u16 = 0,
-        /// Surface row where the tab strip should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line tab strip region.
-        width: ?u16 = null,
         /// Gap between rendered tabs.
         gap: u16 = 1,
         /// Style used for inactive, unfocused tab labels.
@@ -130,21 +124,14 @@ pub const Tabs = struct {
         };
     }
 
-    /// Draw the tabs into a one-line region.
+    /// Draw the tabs into the provided one-line surface region.
     pub fn view(self: *const Tabs, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
-
         if (self.empty()) {
-            _ = child.textAt(0, 0, opts.empty_label, opts.empty_style);
-            if (opts.show_cursor) child.showCursor(0, 0);
+            _ = surface.textAt(0, 0, opts.empty_label, opts.empty_style);
+            if (opts.show_cursor) surface.showCursor(0, 0);
             return;
         }
 
@@ -158,12 +145,12 @@ pub const Tabs = struct {
             const active = self.activeIndex() == i;
             if (focused) focused_col = @min(col + 1, width - 1);
 
-            _ = child.textAt(col, 0, opts.left_marker, opts.marker_style);
+            _ = surface.textAt(col, 0, opts.left_marker, opts.marker_style);
             if (tab_width > 1) {
-                _ = child.textAt(col + 1, 0, item, itemStyle(opts, focused, active));
+                _ = surface.textAt(col + 1, 0, item, itemStyle(opts, focused, active));
             }
             if (tab_width > 2) {
-                _ = child.textAt(col + tab_width - 1, 0, opts.right_marker, opts.marker_style);
+                _ = surface.textAt(col + tab_width - 1, 0, opts.right_marker, opts.marker_style);
             }
 
             col += tab_width;
@@ -172,7 +159,7 @@ pub const Tabs = struct {
         }
 
         if (opts.show_cursor) {
-            if (focused_col) |cursor_col| child.showCursor(cursor_col, 0);
+            if (focused_col) |cursor_col| surface.showCursor(cursor_col, 0);
         }
     }
 };
@@ -201,12 +188,6 @@ fn tabWidth(opts: Tabs.ViewOptions, label: []const u8) u16 {
 fn clampedIndex(index: usize, len: usize) usize {
     if (len == 0) return 0;
     return @min(index, len - 1);
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "Tabs initializes with borrowed items and active index" {

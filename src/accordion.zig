@@ -40,18 +40,6 @@ pub const Accordion = struct {
 
     /// Rendering options for `Accordion.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the accordion should start.
-        col: u16 = 0,
-        /// Surface row where the accordion should start.
-        row: u16 = 0,
-        /// Optional accordion region width.
-        ///
-        /// When omitted, the accordion uses the remaining surface width.
-        width: ?u16 = null,
-        /// Optional accordion region height.
-        ///
-        /// When omitted, the accordion uses the remaining surface height.
-        height: ?u16 = null,
         /// Glyph set used for header markers.
         glyphs: Glyphs = .ascii,
         /// Text drawn between marker and title.
@@ -94,18 +82,13 @@ pub const Accordion = struct {
         return headerRowFor(self.sections, index);
     }
 
-    /// Return the absolute body rectangle for a section.
+    /// Return the app-owned body rectangle inside the provided accordion surface.
     ///
     /// Collapsed sections and out-of-range indexes return a zero-height
-    /// rectangle. The result is clipped to the same resolved region used by
-    /// `view`, so app-owned body rendering can use it directly.
-    pub fn bodyRect(self: *const Accordion, surface: *chasen.Surface, opts: ViewOptions, index: usize) chasen.Rect {
-        return bodyRectFor(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = opts.width orelse availableWidth(surface, opts.col),
-            .height = opts.height orelse availableHeight(surface, opts.row),
-        }, self.sections, index);
+    /// rectangle. The returned rectangle is relative to the accordion surface.
+    /// Pass it to `surface.child(rect)` before drawing section body content.
+    pub fn bodyRect(self: *const Accordion, surface: *chasen.Surface, index: usize) chasen.Rect {
+        return bodyRectFor(.{ .col = 0, .row = 0, .width = surface.size().width, .height = surface.size().height }, self.sections, index);
     }
 
     /// Return the body rectangle for an already resolved accordion region.
@@ -143,23 +126,17 @@ pub const Accordion = struct {
         return zeroBodyRect(bounds);
     }
 
-    /// Draw accordion section headers into a clipped rectangular region.
+    /// Draw accordion section headers into the provided clipped surface region.
     pub fn view(self: *const Accordion, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse availableHeight(surface, opts.row);
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
         if (width == 0 or height == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
 
         var row: u16 = 0;
         for (self.sections) |section| {
             if (row >= height) break;
-            drawHeader(&child, row, width, section, opts);
+            drawHeader(surface, row, width, section, opts);
 
             row +|= 1;
             if (section.expanded) row +|= section.body_height;
@@ -212,18 +189,6 @@ fn zeroBodyRect(bounds: chasen.Rect) chasen.Rect {
         .width = bounds.width,
         .height = 0,
     };
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
 }
 
 test "Accordion initializes with borrowed sections" {

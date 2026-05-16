@@ -28,10 +28,6 @@ const App = struct {
         const width = @min(size.width, 72);
         const height = size.height -| @min(size.height, 4);
         const opts = ui.Accordion.ViewOptions{
-            .col = 0,
-            .row = 3,
-            .width = width,
-            .height = height,
             .glyphs = .rounded,
             .expanded_marker_style = .{ .bold = true, .fg = .{ .index = 2 } },
             .collapsed_marker_style = .{ .fg = .gray },
@@ -42,30 +38,41 @@ const App = struct {
         _ = sfc.textAt(0, 0, "Accordion Example - app-owned sections", .{ .bold = true });
         _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
-        self.accordion.view(sfc, opts);
+        var accordion_area = sfc.child(.{ .col = 0, .row = 3, .width = width, .height = height });
+        self.accordion.view(&accordion_area, opts);
 
         // The app asks Accordion where each expanded body lives, then composes
         // regular drawing and other components inside those rectangles. The
         // component does not know what the body content means.
-        const project_body = self.accordion.bodyRect(sfc, opts, 0);
+        const project_body = self.accordion.bodyRect(&accordion_area, 0);
         if (project_body.height > 0) {
-            self.project_summary.view(sfc, .{
+            var project_body_area = accordion_area.child(.{
                 .col = project_body.col + 2,
                 .row = project_body.row,
                 .width = project_body.width -| 2,
                 .height = project_body.height,
+            });
+            self.project_summary.view(&project_body_area, .{
+                .width = project_body_area.size().width,
+                .height = project_body_area.size().height,
                 .style = .{ .fg = .gray },
             });
         }
 
-        const activity_body = self.accordion.bodyRect(sfc, opts, 2);
+        const activity_body = self.accordion.bodyRect(&accordion_area, 2);
         if (activity_body.height > 0) {
-            _ = sfc.textAt(activity_body.col + 2, activity_body.row, "09:41  Added Accordion component", .{});
+            var activity_body_area = accordion_area.child(.{
+                .col = activity_body.col + 2,
+                .row = activity_body.row,
+                .width = activity_body.width -| 2,
+                .height = activity_body.height,
+            });
+            _ = activity_body_area.textAt(0, 0, "09:41  Added Accordion component", .{});
             if (activity_body.height > 1) {
-                _ = sfc.textAt(activity_body.col + 2, activity_body.row + 1, "09:43  Wrote app-composed example", .{ .fg = .gray });
+                _ = activity_body_area.textAt(0, 1, "09:43  Wrote app-composed example", .{ .fg = .gray });
             }
             if (activity_body.height > 2) {
-                _ = sfc.textAt(activity_body.col + 2, activity_body.row + 2, "09:45  Kept expansion state outside UI", .{ .fg = .gray });
+                _ = activity_body_area.textAt(0, 2, "09:45  Kept expansion state outside UI", .{ .fg = .gray });
             }
         }
 

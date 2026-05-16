@@ -40,14 +40,6 @@ pub const Menu = struct {
 
     /// Rendering options for `Menu.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the menu should be drawn.
-        col: u16 = 0,
-        /// Surface row where the menu should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped menu region.
-        width: ?u16 = null,
-        /// Optional height of the clipped menu region.
-        height: ?u16 = null,
         /// Column where shortcut hints should start inside the menu region.
         shortcut_col: u16 = 18,
         /// Style used for unfocused item labels.
@@ -117,18 +109,12 @@ pub const Menu = struct {
         };
     }
 
-    /// Draw the menu into a vertical region.
+    /// Draw the menu into the provided vertical surface region.
     pub fn view(self: *const Menu, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse availableHeight(surface, opts.row);
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
         if (width == 0 or height == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
 
         const visible_count = @min(self.items.len, @as(usize, height));
         for (self.items[0..visible_count], 0..) |item, i| {
@@ -137,20 +123,20 @@ pub const Menu = struct {
             const marker = if (focused) opts.focused_marker else opts.marker;
             const label_style = if (focused) opts.focused_style else opts.item_style;
 
-            _ = child.textAt(0, row, marker, opts.marker_style);
+            _ = surface.textAt(0, row, marker, opts.marker_style);
             if (width > 2) {
-                _ = child.textAt(2, row, item.label, label_style);
+                _ = surface.textAt(2, row, item.label, label_style);
             }
             if (item.shortcut) |shortcut| {
                 if (opts.shortcut_col < width) {
-                    _ = child.textAt(opts.shortcut_col, row, shortcut, opts.shortcut_style);
+                    _ = surface.textAt(opts.shortcut_col, row, shortcut, opts.shortcut_style);
                 }
             }
         }
 
         if (opts.show_cursor and self.items.len > 0 and self.focusedIndex() < visible_count) {
             const cursor_row: u16 = @intCast(self.focusedIndex());
-            child.showCursor(@min(@as(u16, 2), width - 1), cursor_row);
+            surface.showCursor(@min(@as(u16, 2), width - 1), cursor_row);
         }
     }
 };
@@ -163,18 +149,6 @@ fn keyToMsg(menu: *const Menu, key: chasen.Key) ?Menu.Msg {
         return .{ .activate = menu.focusedIndex() };
     }
     return null;
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
 }
 
 test "Menu initializes with borrowed items and focus at first item" {

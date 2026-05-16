@@ -18,12 +18,6 @@ pub const Breadcrumbs = struct {
 
     /// Rendering options for `Breadcrumbs.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the breadcrumb trail should be drawn.
-        col: u16 = 0,
-        /// Surface row where the breadcrumb trail should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line breadcrumb region.
-        width: ?u16 = null,
         /// Separator drawn between segment labels.
         separator: []const u8 = " / ",
         /// Style used for non-current segment labels.
@@ -74,31 +68,24 @@ pub const Breadcrumbs = struct {
         return width;
     }
 
-    /// Draw the breadcrumb trail into a one-line region.
+    /// Draw the breadcrumb trail into the provided one-line surface region.
     pub fn view(self: *const Breadcrumbs, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
-
         if (self.empty()) {
-            _ = child.textAt(0, 0, opts.empty_label, opts.empty_style);
+            _ = surface.textAt(0, 0, opts.empty_label, opts.empty_style);
             return;
         }
 
         var col: u16 = 0;
         for (self.items, 0..) |item, index| {
             if (index > 0) {
-                if (!drawText(&child, &col, width, opts.separator, opts.separator_style)) break;
+                if (!drawText(surface, &col, width, opts.separator, opts.separator_style)) break;
             }
 
             const style = if (index == self.currentIndex()) opts.current_style else opts.item_style;
-            if (!drawText(&child, &col, width, item, style)) break;
+            if (!drawText(surface, &col, width, item, style)) break;
         }
     }
 };
@@ -112,12 +99,6 @@ fn drawText(surface: *chasen.Surface, col: *u16, width: u16, text: []const u8, s
     _ = surface.textAt(col.*, 0, text, style);
     col.* += text_width;
     return true;
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "Breadcrumbs initializes with borrowed items" {

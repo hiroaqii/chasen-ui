@@ -60,19 +60,15 @@ const App = struct {
         _ = sfc.textAt(0, 1, "Tab: focus  Left/Right/Up/Down: change  Enter/Space: save  Esc: quit", .{ .fg = .gray });
 
         _ = sfc.textAt(0, 3, "Theme", labelStyle(self.focus.isFocused(0)));
-        self.theme.view(sfc, .{
-            .col = 14,
-            .row = 3,
-            .width = 20,
+        var theme_area = sfc.child(.{ .col = 14, .row = 3, .width = 20, .height = 1 });
+        self.theme.view(&theme_area, .{
             .item_style = itemStyle(self.focus.isFocused(0)),
             .show_cursor = self.focus.isFocused(0),
         });
 
         _ = sfc.textAt(0, 5, "Density", labelStyle(self.focus.isFocused(1)));
-        self.density.view(sfc, .{
-            .col = 14,
-            .row = 5,
-            .width = 20,
+        var density_area = sfc.child(.{ .col = 14, .row = 5, .width = 20, .height = 1 });
+        self.density.view(&density_area, .{
             .item_style = itemStyle(self.focus.isFocused(1)),
             .show_cursor = self.focus.isFocused(1),
         });

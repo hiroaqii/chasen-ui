@@ -40,12 +40,6 @@ pub const Select = struct {
 
     /// Rendering options for `Select.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the select should be drawn.
-        col: u16 = 0,
-        /// Surface row where the select should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line select region.
-        width: ?u16 = null,
         /// Style used for the selected item label.
         item_style: chasen.TextStyle = .{},
         /// Style used for the previous/next markers.
@@ -119,33 +113,26 @@ pub const Select = struct {
         };
     }
 
-    /// Draw the select into a one-line region.
+    /// Draw the select into the provided one-line surface region.
     pub fn view(self: *const Select, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
-
-        _ = child.textAt(0, 0, opts.prev_marker, opts.marker_style);
+        _ = surface.textAt(0, 0, opts.prev_marker, opts.marker_style);
         if (width > 1) {
-            _ = child.textAt(width - 1, 0, opts.next_marker, opts.marker_style);
+            _ = surface.textAt(width - 1, 0, opts.next_marker, opts.marker_style);
         }
 
         const label = self.selectedLabel() orelse opts.empty_label;
         const label_style = if (self.empty()) opts.empty_style else opts.item_style;
         if (width > 4) {
-            _ = child.textAt(2, 0, label, label_style);
+            _ = surface.textAt(2, 0, label, label_style);
         } else if (width > 2) {
-            _ = child.textAt(1, 0, label, label_style);
+            _ = surface.textAt(1, 0, label, label_style);
         }
 
         if (opts.show_cursor) {
-            child.showCursor(0, 0);
+            surface.showCursor(0, 0);
         }
     }
 
@@ -173,12 +160,6 @@ fn keyToMsg(select: *const Select, key: chasen.Key) ?Select.Msg {
 fn clampedIndex(index: usize, len: usize) usize {
     if (len == 0) return 0;
     return @min(index, len - 1);
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "Select initializes with borrowed items and selected index" {
