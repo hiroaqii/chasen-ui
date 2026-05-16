@@ -84,6 +84,14 @@ pub const RowOptions = struct {
     vertical: VerticalAlign = .top,
 };
 
+/// Result of taking one edge band from a rectangle.
+pub const TakeResult = struct {
+    /// The requested edge band, clamped to the parent rectangle.
+    taken: chasen.Rect,
+    /// The remaining rectangle after `taken` is removed.
+    rest: chasen.Rect,
+};
+
 /// Return `rect` shrunk by `insets`.
 pub fn inset(rect: chasen.Rect, insets: Insets) chasen.Rect {
     const horizontal = saturatingAdd(insets.left, insets.right);
@@ -96,6 +104,96 @@ pub fn inset(rect: chasen.Rect, insets: Insets) chasen.Rect {
         .row = rect.row +| @min(rect.height, insets.top),
         .width = width,
         .height = height,
+    };
+}
+
+/// Take a band from the top edge of `rect`.
+///
+/// `height` is clamped to `rect.height`, so the result never underflows. Use
+/// `rest` for the body area after reserving a header.
+pub fn takeTop(rect: chasen.Rect, height: u16) TakeResult {
+    const taken_height = @min(height, rect.height);
+    return .{
+        .taken = .{
+            .col = rect.col,
+            .row = rect.row,
+            .width = rect.width,
+            .height = taken_height,
+        },
+        .rest = .{
+            .col = rect.col,
+            .row = rect.row +| taken_height,
+            .width = rect.width,
+            .height = rect.height - taken_height,
+        },
+    };
+}
+
+/// Take a band from the bottom edge of `rect`.
+///
+/// `height` is clamped to `rect.height`, so the result never underflows. Use
+/// `rest` for the body area above a footer.
+pub fn takeBottom(rect: chasen.Rect, height: u16) TakeResult {
+    const taken_height = @min(height, rect.height);
+    const rest_height = rect.height - taken_height;
+    return .{
+        .taken = .{
+            .col = rect.col,
+            .row = rect.row +| rest_height,
+            .width = rect.width,
+            .height = taken_height,
+        },
+        .rest = .{
+            .col = rect.col,
+            .row = rect.row,
+            .width = rect.width,
+            .height = rest_height,
+        },
+    };
+}
+
+/// Take a band from the left edge of `rect`.
+///
+/// `width` is clamped to `rect.width`, so the result never underflows. Use
+/// `rest` for the body area after reserving a sidebar.
+pub fn takeLeft(rect: chasen.Rect, width: u16) TakeResult {
+    const taken_width = @min(width, rect.width);
+    return .{
+        .taken = .{
+            .col = rect.col,
+            .row = rect.row,
+            .width = taken_width,
+            .height = rect.height,
+        },
+        .rest = .{
+            .col = rect.col +| taken_width,
+            .row = rect.row,
+            .width = rect.width - taken_width,
+            .height = rect.height,
+        },
+    };
+}
+
+/// Take a band from the right edge of `rect`.
+///
+/// `width` is clamped to `rect.width`, so the result never underflows. Use
+/// `rest` for the body area before a right-side inspector.
+pub fn takeRight(rect: chasen.Rect, width: u16) TakeResult {
+    const taken_width = @min(width, rect.width);
+    const rest_width = rect.width - taken_width;
+    return .{
+        .taken = .{
+            .col = rect.col +| rest_width,
+            .row = rect.row,
+            .width = taken_width,
+            .height = rect.height,
+        },
+        .rest = .{
+            .col = rect.col,
+            .row = rect.row,
+            .width = rest_width,
+            .height = rect.height,
+        },
     };
 }
 
@@ -344,6 +442,52 @@ test "inset collapses when insets exceed size" {
         .width = 0,
         .height = 0,
     }, inset(rect, Insets.all(9)));
+}
+
+test "takeTop returns a top band and remaining body" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 6 };
+    const result = takeTop(rect, 2);
+
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 10, .height = 2 }, result.taken);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 5, .width = 10, .height = 4 }, result.rest);
+}
+
+test "takeBottom returns a bottom band and remaining body" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 6 };
+    const result = takeBottom(rect, 2);
+
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 7, .width = 10, .height = 2 }, result.taken);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 10, .height = 4 }, result.rest);
+}
+
+test "takeLeft returns a left band and remaining body" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 6 };
+    const result = takeLeft(rect, 3);
+
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 3, .height = 6 }, result.taken);
+    try std.testing.expectEqual(chasen.Rect{ .col = 5, .row = 3, .width = 7, .height = 6 }, result.rest);
+}
+
+test "takeRight returns a right band and remaining body" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 6 };
+    const result = takeRight(rect, 3);
+
+    try std.testing.expectEqual(chasen.Rect{ .col = 9, .row = 3, .width = 3, .height = 6 }, result.taken);
+    try std.testing.expectEqual(chasen.Rect{ .col = 2, .row = 3, .width = 7, .height = 6 }, result.rest);
+}
+
+test "take helpers clamp oversized requests" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 4, .height = 2 };
+
+    try std.testing.expectEqual(TakeResult{
+        .taken = .{ .col = 2, .row = 3, .width = 4, .height = 2 },
+        .rest = .{ .col = 2, .row = 5, .width = 4, .height = 0 },
+    }, takeTop(rect, 9));
+
+    try std.testing.expectEqual(TakeResult{
+        .taken = .{ .col = 2, .row = 3, .width = 4, .height = 2 },
+        .rest = .{ .col = 6, .row = 3, .width = 0, .height = 2 },
+    }, takeLeft(rect, 9));
 }
 
 test "align positions a child rectangle inside a parent" {
