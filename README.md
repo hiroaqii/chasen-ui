@@ -94,7 +94,8 @@ zig build run-text_input
 ```
 
 Use the example directory name after `run-`, for example
-`zig build run-table`, `zig build run-tree`, or `zig build run-settings`.
+`zig build run-table`, `zig build run-layout_helpers`, or
+`zig build run-settings`.
 
 Build all examples, or list all available build steps:
 
