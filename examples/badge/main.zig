@@ -33,8 +33,10 @@ const App = struct {
         });
 
         _ = sfc.textAt(0, 5, "Queue", .{ .bold = true });
-        // Count formatting is app policy. The component gets the resulting
-        // borrowed text and draws it the same way as any other badge label.
+        // Count formatting is app policy. Because Badge needs the formatted
+        // value as a borrowed label, the app stores it in the frame arena
+        // before passing it to the component. Direct formatted drawing should
+        // use Surface.printAt instead.
         const count_text = try std.fmt.allocPrint(sfc.frameAllocator(), "{d} open", .{self.open_count});
         var queue_area = sfc.child(.{ .col = 14, .row = 5, .width = 16, .height = 1 });
         self.badge.view(&queue_area, .{
