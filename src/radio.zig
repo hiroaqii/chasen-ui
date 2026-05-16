@@ -34,12 +34,6 @@ pub const Radio = struct {
 
     /// Rendering options for `Radio.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the radio option should be drawn.
-        col: u16 = 0,
-        /// Surface row where the radio option should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line radio region.
-        width: ?u16 = null,
         /// Style used for the radio marker.
         style: chasen.TextStyle = .{},
         /// Style used for the selected marker.
@@ -88,27 +82,20 @@ pub const Radio = struct {
         };
     }
 
-    /// Draw the radio option into a one-line region.
+    /// Draw the radio option into the provided one-line surface region.
     pub fn view(self: *const Radio, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
 
         const marker = if (self.selected_value) "(o)" else "( )";
         const marker_style = if (self.selected_value) opts.selected_style else opts.style;
-        _ = child.textAt(0, 0, marker, marker_style);
+        _ = surface.textAt(0, 0, marker, marker_style);
         if (self.label.len > 0) {
-            _ = child.textAt(4, 0, self.label, opts.label_style);
+            _ = surface.textAt(4, 0, self.label, opts.label_style);
         }
 
         if (opts.show_cursor) {
-            child.showCursor(@min(@as(u16, 1), width - 1), 0);
+            surface.showCursor(@min(@as(u16, 1), width - 1), 0);
         }
     }
 };
@@ -116,12 +103,6 @@ pub const Radio = struct {
 fn keyToMsg(key: chasen.Key) ?Radio.Msg {
     if (selectable.isActivationKey(key)) return .select;
     return null;
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "Radio initializes from options" {

@@ -210,26 +210,30 @@ const App = struct {
 
         _ = sfc.textAt(username_label.col, username_label.row, "Username", .{});
         if (self.username) |*username| {
-            username.view(sfc, .{
-                .col = username_input.col,
-                .row = username_input.row,
-                .width = username_input.width,
+            var username_area = sfc.child(username_input);
+            username.view(&username_area, .{
                 .show_cursor = self.selected == .username,
             });
         }
 
         // Checkbox focus is represented by cursor placement. The app decides
         // which checkbox receives the selected/focused state.
-        self.notifications.view(sfc, .{
+        var notifications_area = sfc.child(.{
             .col = notifications_row.col,
             .row = notifications_row.row,
             .width = 48,
+            .height = 1,
+        });
+        self.notifications.view(&notifications_area, .{
             .show_cursor = self.selected == .notifications,
         });
-        self.compact_layout.view(sfc, .{
+        var compact_layout_area = sfc.child(.{
             .col = compact_row.col,
             .row = compact_row.row,
             .width = 48,
+            .height = 1,
+        });
+        self.compact_layout.view(&compact_layout_area, .{
             .show_cursor = self.selected == .compact_layout,
         });
 
@@ -240,17 +244,13 @@ const App = struct {
             .{ .width = 8, .height = 1 },
             .{ .width = 9, .height = 1 },
         }, .{ .gap = 2 });
-        self.save_button.view(sfc, .{
-            .col = button_cols[0].col,
-            .row = button_cols[0].row,
-            .width = button_cols[0].width,
+        var save_area = sfc.child(button_cols[0]);
+        self.save_button.view(&save_area, .{
             .focused = self.selected == .save,
             .show_cursor = self.selected == .save,
         });
-        self.reset_button.view(sfc, .{
-            .col = button_cols[1].col,
-            .row = button_cols[1].row,
-            .width = button_cols[1].width,
+        var reset_area = sfc.child(button_cols[1]);
+        self.reset_button.view(&reset_area, .{
             .focused = self.selected == .reset,
             .show_cursor = self.selected == .reset,
         });

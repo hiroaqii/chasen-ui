@@ -99,38 +99,29 @@ const App = struct {
         else
             null;
 
+        const username_rect = chasen.Rect{ .col = 0, .row = 3, .width = 36, .height = 3 };
+        var username_area = sfc.child(username_rect);
         const username_opts = ui.FormField.ViewOptions{
-            .col = 0,
-            .row = 3,
-            .width = 36,
-            .height = 3,
             .required = true,
             .error_text = username_error,
         };
-        self.username_field.view(sfc, username_opts);
-        const username_rect = self.username_field.contentRect(sfc, username_opts);
+        self.username_field.view(&username_area, username_opts);
+        const username_input_rect = self.username_field.contentRect(&username_area, username_opts);
         if (self.username) |*username| {
-            username.view(sfc, .{
-                .col = username_rect.col,
-                .row = username_rect.row,
-                .width = username_rect.width,
+            var username_input_area = username_area.child(username_input_rect);
+            username.view(&username_input_area, .{
                 .show_cursor = self.selected == .username,
             });
         }
 
-        const project_opts = ui.FormField.ViewOptions{
-            .col = 0,
-            .row = 7,
-            .width = 36,
-            .height = 3,
-        };
-        self.project_field.view(sfc, project_opts);
-        const project_rect = self.project_field.contentRect(sfc, project_opts);
+        const project_rect = chasen.Rect{ .col = 0, .row = 7, .width = 36, .height = 3 };
+        var project_area = sfc.child(project_rect);
+        const project_opts = ui.FormField.ViewOptions{};
+        self.project_field.view(&project_area, project_opts);
+        const project_input_rect = self.project_field.contentRect(&project_area, project_opts);
         if (self.project) |*project| {
-            project.view(sfc, .{
-                .col = project_rect.col,
-                .row = project_rect.row,
-                .width = project_rect.width,
+            var project_input_area = project_area.child(project_input_rect);
+            project.view(&project_input_area, .{
                 .show_cursor = self.selected == .project,
             });
         }

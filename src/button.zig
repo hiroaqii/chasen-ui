@@ -30,12 +30,6 @@ pub const Button = struct {
 
     /// Rendering options for `Button.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the button should be drawn.
-        col: u16 = 0,
-        /// Surface row where the button should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line button region.
-        width: ?u16 = null,
         /// Style used for the button border markers.
         style: chasen.TextStyle = .{},
         /// Style used for the label.
@@ -67,39 +61,26 @@ pub const Button = struct {
         };
     }
 
-    /// Draw the button into a one-line region.
+    /// Draw the button into the provided one-line surface region.
     pub fn view(self: *const Button, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
-
-        _ = child.textAt(0, 0, "[", opts.style);
+        _ = surface.textAt(0, 0, "[", opts.style);
         if (width > 1) {
             const label_style = if (opts.focused) opts.focused_label_style else opts.label_style;
-            _ = child.textAt(1, 0, self.label, label_style);
+            _ = surface.textAt(1, 0, self.label, label_style);
         }
         if (width > 2) {
             const close_col = @min(width - 1, @as(u16, 1) + chasen.text.displayWidth(self.label));
-            _ = child.textAt(close_col, 0, "]", opts.style);
+            _ = surface.textAt(close_col, 0, "]", opts.style);
         }
 
         if (opts.show_cursor) {
-            child.showCursor(@min(@as(u16, 1), width - 1), 0);
+            surface.showCursor(@min(@as(u16, 1), width - 1), 0);
         }
     }
 };
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
 
 test "Button initializes from options" {
     const button = Button.init(.{ .label = "Save" });

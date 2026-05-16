@@ -40,10 +40,8 @@ const App = struct {
             // Only the selected checkbox shows the terminal cursor. This keeps
             // focus behavior explicit in the app until a shared focus model
             // exists.
-            checkbox.view(sfc, .{
-                .col = 0,
-                .row = @intCast(3 + i),
-                .width = 40,
+            var checkbox_area = sfc.child(.{ .col = 0, .row = @intCast(3 + i), .width = 40, .height = 1 });
+            checkbox.view(&checkbox_area, .{
                 .show_cursor = self.focus.isFocused(i),
             });
         }

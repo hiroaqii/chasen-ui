@@ -56,12 +56,6 @@ pub const TextInput = struct {
 
     /// Rendering options for `TextInput.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the input should be drawn.
-        col: u16 = 0,
-        /// Surface row where the input should be drawn.
-        row: u16 = 0,
-        /// Width of the clipped one-line input region.
-        width: u16,
         /// Style used for the current value.
         style: chasen.TextStyle = .{},
         /// Style used when drawing the placeholder.
@@ -136,29 +130,24 @@ pub const TextInput = struct {
         };
     }
 
-    /// Draw the input into a one-line clipped child surface.
+    /// Draw the input into the provided one-line surface region.
     ///
     /// `view` does not mutate component state. When the input is empty, it draws
     /// the placeholder if one was provided. The visible text is clipped so the
-    /// cursor remains inside `opts.width`.
+    /// cursor remains inside the surface width.
     pub fn view(self: *const TextInput, surface: *chasen.Surface, opts: ViewOptions) void {
-        if (opts.width == 0) return;
+        const width = surface.size().width;
+        if (width == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = opts.width,
-            .height = 1,
-        });
-        const visible = self.visibleText(opts.width);
+        const visible = self.visibleText(width);
         if (visible.len == 0 and self.value.items.len == 0 and self.placeholder.len > 0) {
-            _ = child.textAt(0, 0, self.placeholder, opts.placeholder_style);
+            _ = surface.textAt(0, 0, self.placeholder, opts.placeholder_style);
         } else {
-            _ = child.textAt(0, 0, visible, opts.style);
+            _ = surface.textAt(0, 0, visible, opts.style);
         }
 
         if (opts.show_cursor) {
-            child.showCursor(self.visibleCursorCol(opts.width), 0);
+            surface.showCursor(self.visibleCursorCol(width), 0);
         }
     }
 

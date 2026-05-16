@@ -68,11 +68,8 @@ const App = struct {
         if (self.input) |*input| {
             // view only draws. Input handling and mutation happen in
             // handleEvent/update above.
-            input.view(sfc, .{
-                .col = 0,
-                .row = 3,
-                .width = 40,
-            });
+            var input_area = sfc.child(.{ .col = 0, .row = 3, .width = 40, .height = 1 });
+            input.view(&input_area, .{});
 
             _ = sfc.textAt(0, 5, "Value:", .{ .fg = .gray });
             _ = sfc.textAt(7, 5, input.text(), .{});

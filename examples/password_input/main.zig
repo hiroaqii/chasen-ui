@@ -65,11 +65,8 @@ const App = struct {
         if (self.password) |*password| {
             // PasswordInput handles editing like TextInput, but view draws mask
             // glyphs so the app never needs to render the secret itself.
-            password.view(sfc, .{
-                .col = 0,
-                .row = 3,
-                .width = 32,
-            });
+            var password_area = sfc.child(.{ .col = 0, .row = 3, .width = 32, .height = 1 });
+            password.view(&password_area, .{});
         }
 
         if (self.status) |status| {

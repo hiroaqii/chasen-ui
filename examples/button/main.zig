@@ -44,17 +44,13 @@ const App = struct {
         // The focused button gets both focused styling and the terminal cursor
         // in this example. The two options are separate so apps can split them
         // later if their focus and cursor policies differ.
-        self.save_button.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 8,
+        var save_area = sfc.child(.{ .col = 0, .row = 3, .width = 8, .height = 1 });
+        self.save_button.view(&save_area, .{
             .focused = self.focus.isFocused(0),
             .show_cursor = self.focus.isFocused(0),
         });
-        self.cancel_button.view(sfc, .{
-            .col = 10,
-            .row = 3,
-            .width = 10,
+        var cancel_area = sfc.child(.{ .col = 10, .row = 3, .width = 10, .height = 1 });
+        self.cancel_button.view(&cancel_area, .{
             .focused = self.focus.isFocused(1),
             .show_cursor = self.focus.isFocused(1),
         });

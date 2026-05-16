@@ -47,10 +47,8 @@ const App = struct {
         _ = sfc.textAt(0, 1, "Up/Down: move  Space/Enter: select  Esc: quit", .{ .fg = .gray });
 
         for (&self.radios, 0..) |*radio, i| {
-            radio.view(sfc, .{
-                .col = 0,
-                .row = @intCast(3 + i),
-                .width = 40,
+            var radio_area = sfc.child(.{ .col = 0, .row = @intCast(3 + i), .width = 40, .height = 1 });
+            radio.view(&radio_area, .{
                 .show_cursor = self.focus.isFocused(i),
             });
         }

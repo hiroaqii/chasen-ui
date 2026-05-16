@@ -6,7 +6,7 @@ const chasen = @import("chasen");
 /// `FormField` draws a label, optional required marker, and one help/error
 /// message row around an app-owned content rectangle. It does not own input
 /// state, validation, focus routing, or submission policy; applications render
-/// the actual input component inside `contentRect`.
+/// the actual input component inside the rectangle returned by `contentRect`.
 pub const FormField = struct {
     /// Initial values used when constructing a `FormField`.
     pub const Options = struct {
@@ -18,16 +18,6 @@ pub const FormField = struct {
 
     /// Rendering options for `FormField.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the field should start.
-        col: u16 = 0,
-        /// Surface row where the field should start.
-        row: u16 = 0,
-        /// Optional field width.
-        ///
-        /// When omitted, the field uses the remaining surface width.
-        width: ?u16 = null,
-        /// Field height including label, content, and optional message rows.
-        height: u16 = 3,
         /// Whether to draw `required_marker` after the label.
         required: bool = false,
         /// Marker drawn after required labels.
@@ -59,14 +49,12 @@ pub const FormField = struct {
         };
     }
 
-    /// Return the app-owned content rectangle inside the field.
+    /// Return the app-owned content rectangle inside the provided field surface.
+    ///
+    /// The returned rectangle is relative to the field surface. Pass it to
+    /// `surface.child(rect)` before drawing the input component.
     pub fn contentRect(self: *const FormField, surface: *chasen.Surface, opts: ViewOptions) chasen.Rect {
-        return self.contentRectFor(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = opts.width orelse availableWidth(surface, opts.col),
-            .height = opts.height,
-        }, opts);
+        return self.contentRectFor(.{ .col = 0, .row = 0, .width = surface.size().width, .height = surface.size().height }, opts);
     }
 
     /// Return the app-owned content rectangle for an already resolved field.
@@ -85,27 +73,22 @@ pub const FormField = struct {
 
     /// Draw label and help/error chrome. The app draws the input content.
     pub fn view(self: *const FormField, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        if (width == 0 or opts.height == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = opts.height,
-        });
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
+        if (width == 0 or height == 0) return;
 
         var label_cursor: u16 = 0;
-        drawText(&child, &label_cursor, 0, self.label, opts.label_style, width);
+        drawText(surface, &label_cursor, 0, self.label, opts.label_style, width);
         if (opts.required) {
-            drawText(&child, &label_cursor, 0, " ", opts.label_style, width);
-            drawText(&child, &label_cursor, 0, opts.required_marker, opts.required_style, width);
+            drawText(surface, &label_cursor, 0, " ", opts.label_style, width);
+            drawText(surface, &label_cursor, 0, opts.required_marker, opts.required_style, width);
         }
 
         const message_row = self.message(opts);
-        if (message_row.text.len > 0 and opts.height >= 3) {
+        if (message_row.text.len > 0 and height >= 3) {
             var message_cursor: u16 = 0;
-            drawText(&child, &message_cursor, opts.height - 1, message_row.text, message_row.style, width);
+            drawText(surface, &message_cursor, height - 1, message_row.text, message_row.style, width);
         }
     }
 
@@ -125,12 +108,6 @@ fn drawText(surface: *chasen.Surface, cursor: *u16, row: u16, text: []const u8, 
     if (text.len == 0 or cursor.* >= width) return;
     _ = surface.textAt(cursor.*, row, text, style);
     cursor.* +|= chasen.text.displayWidth(text);
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "FormField initializes from options" {
@@ -199,7 +176,7 @@ test "FormField contentRectFor uses resolved height for message row" {
         .row = 0,
         .width = 20,
         .height = 4,
-    }, .{ .height = 2 });
+    }, .{});
 
     try std.testing.expectEqual(@as(u16, 1), tall_rect.row);
     try std.testing.expectEqual(@as(u16, 2), tall_rect.height);

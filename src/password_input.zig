@@ -24,12 +24,6 @@ pub const PasswordInput = struct {
 
     /// Rendering options for `PasswordInput.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the input should be drawn.
-        col: u16 = 0,
-        /// Surface row where the input should be drawn.
-        row: u16 = 0,
-        /// Width of the clipped one-line input region.
-        width: u16,
         /// Mask glyph drawn once per visible scalar.
         mask: []const u8 = "*",
         /// Style used for mask glyphs.
@@ -75,30 +69,24 @@ pub const PasswordInput = struct {
         return self.input.handleEvent(event);
     }
 
-    /// Draw the password input into a one-line clipped child surface.
+    /// Draw the password input into the provided one-line surface region.
     ///
     /// The real value is never drawn. When the input is empty, the placeholder
     /// is shown with `placeholder_style`.
     pub fn view(self: *const PasswordInput, surface: *chasen.Surface, opts: ViewOptions) void {
-        if (opts.width == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = opts.width,
-            .height = 1,
-        });
+        const width = surface.size().width;
+        if (width == 0) return;
 
         if (self.input.value.items.len == 0) {
             if (self.input.placeholder.len > 0) {
-                _ = child.textAt(0, 0, self.input.placeholder, opts.placeholder_style);
+                _ = surface.textAt(0, 0, self.input.placeholder, opts.placeholder_style);
             }
         } else {
-            drawMask(&child, visibleSecretCount(self.input.value.items, self.input.cursor, opts.width), opts.mask, opts.style, opts.width);
+            drawMask(surface, visibleSecretCount(self.input.value.items, self.input.cursor, width), opts.mask, opts.style, width);
         }
 
         if (opts.show_cursor) {
-            child.showCursor(visibleCursorCol(self.input.value.items, self.input.cursor, opts.width, opts.mask), 0);
+            surface.showCursor(visibleCursorCol(self.input.value.items, self.input.cursor, width, opts.mask), 0);
         }
     }
 };

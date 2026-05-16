@@ -35,12 +35,6 @@ pub const Checkbox = struct {
 
     /// Rendering options for `Checkbox.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the checkbox should be drawn.
-        col: u16 = 0,
-        /// Surface row where the checkbox should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line checkbox region.
-        width: ?u16 = null,
         /// Style used for the checkbox marker.
         style: chasen.TextStyle = .{},
         /// Style used for the checked marker.
@@ -89,27 +83,20 @@ pub const Checkbox = struct {
         };
     }
 
-    /// Draw the checkbox into a one-line region.
+    /// Draw the checkbox into the provided one-line surface region.
     pub fn view(self: *const Checkbox, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
 
         const marker = if (self.checked_value) "[x]" else "[ ]";
         const marker_style = if (self.checked_value) opts.checked_style else opts.style;
-        _ = child.textAt(0, 0, marker, marker_style);
+        _ = surface.textAt(0, 0, marker, marker_style);
         if (self.label.len > 0) {
-            _ = child.textAt(4, 0, self.label, opts.label_style);
+            _ = surface.textAt(4, 0, self.label, opts.label_style);
         }
 
         if (opts.show_cursor) {
-            child.showCursor(@min(@as(u16, 1), width - 1), 0);
+            surface.showCursor(@min(@as(u16, 1), width - 1), 0);
         }
     }
 };
@@ -117,12 +104,6 @@ pub const Checkbox = struct {
 fn keyToMsg(key: chasen.Key) ?Checkbox.Msg {
     if (selectable.isActivationKey(key)) return .toggle;
     return null;
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "Checkbox initializes from options" {

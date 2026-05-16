@@ -54,14 +54,6 @@ pub const TextArea = struct {
 
     /// Rendering options for `TextArea.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the text area should be drawn.
-        col: u16 = 0,
-        /// Surface row where the text area should be drawn.
-        row: u16 = 0,
-        /// Width of the clipped text area region.
-        width: u16,
-        /// Height of the clipped text area region.
-        height: u16,
         /// First explicit line index to draw.
         scroll_line: usize = 0,
         /// Style used for the current value.
@@ -164,30 +156,26 @@ pub const TextArea = struct {
     /// Draw explicit lines into a clipped rectangular region.
     ///
     /// `TextArea` does not soft-wrap or own scroll state. It draws explicit
-    /// lines from `opts.scroll_line`, clips to the provided rectangle, and only
-    /// shows the cursor when the cursor position is inside that rectangle.
+    /// lines from `opts.scroll_line`, clips to the provided surface, and only
+    /// shows the cursor when the cursor position is inside that surface.
     pub fn view(self: *const TextArea, surface: *chasen.Surface, opts: ViewOptions) void {
-        if (opts.width == 0 or opts.height == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = opts.width,
-            .height = opts.height,
-        });
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
+        if (width == 0 or height == 0) return;
 
         if (self.value.items.len == 0 and self.placeholder.len > 0) {
-            _ = child.textAt(0, 0, self.placeholder, opts.placeholder_style);
+            _ = surface.textAt(0, 0, self.placeholder, opts.placeholder_style);
         } else {
-            drawLines(&child, self.value.items, opts.scroll_line, opts.height, opts.style);
+            drawLines(surface, self.value.items, opts.scroll_line, height, opts.style);
         }
 
         if (opts.show_cursor) {
             const cursor = cursorPoint(self.value.items, self.cursor);
             if (cursor.row >= opts.scroll_line) {
                 const visible_row = cursor.row - opts.scroll_line;
-                if (visible_row < opts.height and cursor.col < opts.width) {
-                    child.showCursor(cursor.col, @intCast(visible_row));
+                if (visible_row < height and cursor.col < width) {
+                    surface.showCursor(cursor.col, @intCast(visible_row));
                 }
             }
         }

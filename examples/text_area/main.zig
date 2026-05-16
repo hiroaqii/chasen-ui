@@ -80,11 +80,8 @@ const App = struct {
             // offset from the cursor so repeated Enter presses keep the cursor
             // visible without giving TextArea internal scroll state.
             const scroll_line = scrollLineForCursor(area.cursorLine(), height);
-            area.view(sfc, .{
-                .col = 0,
-                .row = 3,
-                .width = width,
-                .height = height,
+            var text_area = sfc.child(.{ .col = 0, .row = 3, .width = width, .height = height });
+            area.view(&text_area, .{
                 .scroll_line = scroll_line,
             });
 

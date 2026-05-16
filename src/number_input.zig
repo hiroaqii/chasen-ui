@@ -91,7 +91,7 @@ pub const NumberInput = struct {
         return self.input.handleEvent(event);
     }
 
-    /// Draw the input into a one-line clipped child surface.
+    /// Draw the input into the provided one-line surface region.
     pub fn view(self: *const NumberInput, surface: *chasen.Surface, opts: ViewOptions) void {
         self.input.view(surface, opts);
     }

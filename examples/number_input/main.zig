@@ -69,11 +69,8 @@ const App = struct {
         if (self.quantity) |*quantity| {
             // NumberInput filters inserted characters. The app still decides
             // whether an empty value is valid and how to use the parsed number.
-            quantity.view(sfc, .{
-                .col = 0,
-                .row = 3,
-                .width = 16,
-            });
+            var quantity_area = sfc.child(.{ .col = 0, .row = 3, .width = 16, .height = 1 });
+            quantity.view(&quantity_area, .{});
         }
 
         if (self.status) |status| {
