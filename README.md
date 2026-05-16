@@ -64,119 +64,32 @@ outlive the component.
 
 ## Examples
 
-Component-specific usage lives in examples:
+Component-specific usage lives under `examples/<name>/main.zig`.
 
-- `examples/text_input/main.zig`
-- `examples/password_input/main.zig`
-- `examples/number_input/main.zig`
-- `examples/select/main.zig`
-- `examples/checkbox/main.zig`
-- `examples/radio/main.zig`
-- `examples/button/main.zig`
-- `examples/list/main.zig`
-- `examples/selectable_list/main.zig`
-- `examples/multi_select_list/main.zig`
-- `examples/menu/main.zig`
-- `examples/tabs/main.zig`
-- `examples/breadcrumbs/main.zig`
-- `examples/box/main.zig`
-- `examples/panel/main.zig`
-- `examples/modal/main.zig`
-- `examples/table/main.zig`
-- `examples/tree/main.zig`
-- `examples/spinner/main.zig`
-- `examples/progress_bar/main.zig`
-- `examples/animated_feedback/main.zig`
-- `examples/rating/main.zig`
-- `examples/badge/main.zig`
-- `examples/alert/main.zig`
-- `examples/divider/main.zig`
-- `examples/label/main.zig`
-- `examples/paragraph/main.zig`
-- `examples/status_line/main.zig`
-- `examples/help/main.zig`
-- `examples/settings/main.zig`
-
-Run examples from this repository:
+Run an example from this package:
 
 ```sh
 zig build run-text_input
-zig build run-password_input
-zig build run-number_input
-zig build run-select
-zig build run-checkbox
-zig build run-radio
-zig build run-button
-zig build run-list
-zig build run-selectable_list
-zig build run-multi_select_list
-zig build run-menu
-zig build run-tabs
-zig build run-breadcrumbs
-zig build run-box
-zig build run-panel
-zig build run-modal
-zig build run-table
-zig build run-tree
-zig build run-spinner
-zig build run-progress_bar
-zig build run-animated_feedback
-zig build run-rating
-zig build run-badge
-zig build run-alert
-zig build run-divider
-zig build run-label
-zig build run-paragraph
-zig build run-status_line
-zig build run-help
-zig build run-settings
 ```
 
-Build all examples:
+Use the example directory name after `run-`, for example
+`zig build run-table`, `zig build run-tree`, or `zig build run-settings`.
+
+Build all examples, or list all available build steps:
 
 ```sh
 zig build check-examples
+zig build --help
 ```
 
 ## Development
 
-Run tests:
+Run tests and build one example:
 
 ```sh
 zig build test
-```
-
-Build individual examples:
-
-```sh
 zig build check-text_input
-zig build check-password_input
-zig build check-number_input
-zig build check-select
-zig build check-checkbox
-zig build check-radio
-zig build check-button
-zig build check-list
-zig build check-selectable_list
-zig build check-multi_select_list
-zig build check-menu
-zig build check-tabs
-zig build check-breadcrumbs
-zig build check-box
-zig build check-panel
-zig build check-modal
-zig build check-table
-zig build check-tree
-zig build check-spinner
-zig build check-progress_bar
-zig build check-animated_feedback
-zig build check-rating
-zig build check-badge
-zig build check-alert
-zig build check-divider
-zig build check-label
-zig build check-paragraph
-zig build check-status_line
-zig build check-help
-zig build check-settings
 ```
+
+Individual example build steps use the same name as run steps with
+`check-<name>`.
