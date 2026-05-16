@@ -37,10 +37,8 @@ const App = struct {
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         // Top status line: editor mode, current file, and dirty state.
-        self.title.view(sfc, .{
-            .col = 0,
-            .row = 0,
-            .width = 60,
+        var title_area = sfc.child(.{ .col = 0, .row = 0, .width = 60, .height = 1 });
+        self.title.view(&title_area, .{
             .style = .{ .bold = true },
             .fill_style = .{ .bg = .{ .index = 8 } },
         });
@@ -53,19 +51,15 @@ const App = struct {
         }
 
         // A narrow status line can summarize a small panel.
-        self.sidebar.view(sfc, .{
-            .col = 0,
-            .row = 10,
-            .width = 24,
+        var sidebar_area = sfc.child(.{ .col = 0, .row = 10, .width = 24, .height = 1 });
+        self.sidebar.view(&sidebar_area, .{
             .style = .{ .dim = true },
             .fill_style = .{ .bg = .{ .index = 0 } },
         });
 
         // Footer status line: command hints and cursor location.
-        self.footer.view(sfc, .{
-            .col = 0,
-            .row = 14,
-            .width = 60,
+        var footer_area = sfc.child(.{ .col = 0, .row = 14, .width = 60, .height = 1 });
+        self.footer.view(&footer_area, .{
             .style = .{ .fg = .{ .index = 15 } },
             .fill_style = .{ .bg = .{ .index = 4 } },
         });

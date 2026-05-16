@@ -13,12 +13,6 @@ pub const Gauge = struct {
 
     /// Rendering options for `Gauge.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the gauge should be drawn.
-        col: u16 = 0,
-        /// Surface row where the gauge should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line gauge region.
-        width: ?u16 = null,
         /// Label drawn before the bar.
         label: []const u8 = "",
         /// Normalized progress. Non-NaN values are clamped into `0.0...1.0`.
@@ -87,42 +81,35 @@ pub const Gauge = struct {
         return @min(filled, width);
     }
 
-    /// Draw the gauge into a one-line region.
+    /// Draw the gauge into the provided one-line surface region.
     pub fn view(self: *const Gauge, surface: *chasen.Surface, opts: ViewOptions) void {
         _ = self;
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
 
         const label_width = reservedTextWidth(opts.label, opts.label_width);
         const value_width = reservedTextWidth(opts.value_text, opts.value_width);
         const bar_width = barWidth(width, opts);
 
         var cursor: u16 = 0;
-        drawText(&child, &cursor, opts.label, opts.label_style, width);
-        padTo(&child, &cursor, label_width, width);
-        drawSpaces(&child, &cursor, opts.gap, width);
-        drawText(&child, &cursor, opts.left_delimiter, opts.delimiter_style, width);
+        drawText(surface, &cursor, opts.label, opts.label_style, width);
+        padTo(surface, &cursor, label_width, width);
+        drawSpaces(surface, &cursor, opts.gap, width);
+        drawText(surface, &cursor, opts.left_delimiter, opts.delimiter_style, width);
 
         const filled_count = filledCount(opts.progress, bar_width);
         var index: u16 = 0;
         while (index < bar_width and cursor < width) : (index += 1) {
             if (index < filled_count) {
-                drawText(&child, &cursor, opts.filled, opts.filled_style, width);
+                drawText(surface, &cursor, opts.filled, opts.filled_style, width);
             } else {
-                drawText(&child, &cursor, opts.empty, opts.empty_style, width);
+                drawText(surface, &cursor, opts.empty, opts.empty_style, width);
             }
         }
 
-        drawText(&child, &cursor, opts.right_delimiter, opts.delimiter_style, width);
-        drawSpaces(&child, &cursor, opts.gap, width);
-        drawText(&child, &cursor, opts.value_text, opts.value_style, @min(width, cursor +| value_width));
+        drawText(surface, &cursor, opts.right_delimiter, opts.delimiter_style, width);
+        drawSpaces(surface, &cursor, opts.gap, width);
+        drawText(surface, &cursor, opts.value_text, opts.value_style, @min(width, cursor +| value_width));
     }
 };
 
@@ -155,12 +142,6 @@ fn clamp01(value: f32) f32 {
     if (value <= 0.0) return 0.0;
     if (value >= 1.0) return 1.0;
     return value;
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "Gauge initializes from options" {

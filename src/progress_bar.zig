@@ -13,12 +13,6 @@ pub const ProgressBar = struct {
 
     /// Rendering options for `ProgressBar.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the progress bar should be drawn.
-        col: u16 = 0,
-        /// Surface row where the progress bar should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line progress bar region.
-        width: ?u16 = null,
         /// Normalized progress. Non-NaN values are clamped into `0.0...1.0`.
         progress: f32 = 0.0,
         /// Glyph used for filled cells.
@@ -59,26 +53,19 @@ pub const ProgressBar = struct {
         return @min(filled, width);
     }
 
-    /// Draw the progress bar into a one-line region.
+    /// Draw the progress bar into the provided one-line surface region.
     pub fn view(self: *const ProgressBar, surface: *chasen.Surface, opts: ViewOptions) void {
         _ = self;
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
 
         const filled_count = filledCount(opts.progress, width);
         var col: u16 = 0;
         while (col < width) : (col += 1) {
             if (col < filled_count) {
-                _ = child.textAt(col, 0, opts.filled, opts.filled_style);
+                _ = surface.textAt(col, 0, opts.filled, opts.filled_style);
             } else {
-                _ = child.textAt(col, 0, opts.empty, opts.empty_style);
+                _ = surface.textAt(col, 0, opts.empty, opts.empty_style);
             }
         }
     }
@@ -88,12 +75,6 @@ fn clamp01(value: f32) f32 {
     if (value <= 0.0) return 0.0;
     if (value >= 1.0) return 1.0;
     return value;
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "ProgressBar initializes from options" {

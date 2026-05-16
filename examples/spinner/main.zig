@@ -58,10 +58,8 @@ const App = struct {
         // The app passes the current frame index into Spinner.view. Replacing
         // this with a value from chasen-anim.loopIndex later would not require
         // Spinner to own animation state.
-        self.spinner.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 24,
+        var spinner_area = sfc.child(.{ .col = 0, .row = 3, .width = 24, .height = 1 });
+        self.spinner.view(&spinner_area, .{
             .frame_index = self.frame_index,
         });
 

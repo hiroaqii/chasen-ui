@@ -13,14 +13,6 @@ pub const Toast = struct {
 
     /// Rendering options for `Toast.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the toast should start.
-        col: u16 = 0,
-        /// Surface row where the toast should start.
-        row: u16 = 0,
-        /// Optional width of the clipped toast region.
-        width: ?u16 = null,
-        /// Optional height of the clipped toast region.
-        height: ?u16 = null,
         /// Optional leading marker, such as a severity glyph.
         marker: []const u8 = "",
         /// Toast title shown on the header row.
@@ -95,20 +87,15 @@ pub const Toast = struct {
         return @min(filled, width);
     }
 
-    /// Draw the toast into a clipped region.
+    /// Draw the toast into the provided clipped surface region.
     pub fn view(self: *const Toast, surface: *chasen.Surface, opts: ViewOptions) void {
         _ = self;
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse @max(contentHeight(opts), 1);
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
         if (width == 0 or height == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
-        fillRegion(&child, width, height, opts.fill_style);
+        fillRegion(surface, width, height, opts.fill_style);
 
         var row: u16 = 0;
         const content_col = @min(opts.padding, width);
@@ -116,23 +103,23 @@ pub const Toast = struct {
 
         if (hasHeader(opts) and row < height) {
             var cursor = content_col;
-            drawText(&child, &cursor, row, opts.marker, opts.marker_style, width);
+            drawText(surface, &cursor, row, opts.marker, opts.marker_style, width);
             if (opts.marker.len > 0 and opts.title.len > 0) {
-                drawSpaces(&child, &cursor, row, opts.gap, opts.title_style, width);
+                drawSpaces(surface, &cursor, row, opts.gap, opts.title_style, width);
             }
-            drawText(&child, &cursor, row, opts.title, opts.title_style, width);
+            drawText(surface, &cursor, row, opts.title, opts.title_style, width);
             row +|= 1;
         }
 
         if (opts.body.len > 0 and row < height) {
             var cursor = content_col;
-            drawText(&child, &cursor, row, opts.body, opts.body_style, width);
+            drawText(surface, &cursor, row, opts.body, opts.body_style, width);
             row +|= 1;
         }
 
         if (opts.progress) |progress| {
             if (row < height and content_width > 0) {
-                drawProgress(&child, content_col, row, content_width, progress, opts);
+                drawProgress(surface, content_col, row, content_width, progress, opts);
             }
         }
     }
@@ -183,12 +170,6 @@ fn clamp01(value: f32) f32 {
     if (value <= 0.0) return 0.0;
     if (value >= 1.0) return 1.0;
     return value;
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "Toast initializes from options" {

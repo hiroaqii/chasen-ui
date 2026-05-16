@@ -19,12 +19,6 @@ pub const Label = struct {
 
     /// Rendering options for `Label.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the label should be drawn.
-        col: u16 = 0,
-        /// Surface row where the label should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line label region.
-        width: ?u16 = null,
         /// Style used for the label text.
         style: chasen.TextStyle = .{},
     };
@@ -34,26 +28,12 @@ pub const Label = struct {
         return .{ .text = opts.text };
     }
 
-    /// Draw the label into a one-line region.
+    /// Draw the label into the provided one-line surface region.
     pub fn view(self: *const Label, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        if (width == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
-        _ = child.textAt(0, 0, self.text, opts.style);
+        if (surface.size().width == 0) return;
+        _ = surface.textAt(0, 0, self.text, opts.style);
     }
 };
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
 
 test "Label initializes from options" {
     const label = Label.init(.{ .text = "Username" });

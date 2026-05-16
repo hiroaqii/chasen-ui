@@ -12,12 +12,6 @@ pub const Badge = struct {
 
     /// Rendering options for `Badge.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the badge should be drawn.
-        col: u16 = 0,
-        /// Surface row where the badge should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line badge region.
-        width: ?u16 = null,
         /// Optional leading marker, such as a status glyph.
         marker: []const u8 = "",
         /// Badge text. The application decides its meaning.
@@ -53,27 +47,20 @@ pub const Badge = struct {
         return width;
     }
 
-    /// Draw the badge into a one-line region.
+    /// Draw the badge into the provided one-line surface region.
     pub fn view(self: *const Badge, surface: *chasen.Surface, opts: ViewOptions) void {
         _ = self;
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
-
         var cursor: u16 = 0;
-        drawSpaces(&child, &cursor, opts.padding_left, opts.padding_style, width);
-        drawText(&child, &cursor, opts.marker, opts.marker_style, width);
+        drawSpaces(surface, &cursor, opts.padding_left, opts.padding_style, width);
+        drawText(surface, &cursor, opts.marker, opts.marker_style, width);
         if (opts.marker.len > 0 and opts.text.len > 0) {
-            drawSpaces(&child, &cursor, opts.gap, opts.padding_style, width);
+            drawSpaces(surface, &cursor, opts.gap, opts.padding_style, width);
         }
-        drawText(&child, &cursor, opts.text, opts.text_style, width);
-        drawSpaces(&child, &cursor, opts.padding_right, opts.padding_style, width);
+        drawText(surface, &cursor, opts.text, opts.text_style, width);
+        drawSpaces(surface, &cursor, opts.padding_right, opts.padding_style, width);
     }
 };
 
@@ -89,12 +76,6 @@ fn drawSpaces(surface: *chasen.Surface, cursor: *u16, count: u16, style: chasen.
         _ = surface.textAt(cursor.*, 0, " ", style);
         cursor.* +|= 1;
     }
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "Badge initializes from options" {

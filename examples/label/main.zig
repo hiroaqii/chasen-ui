@@ -24,49 +24,37 @@ const App = struct {
         _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
         // The same Label component can be styled as a section heading.
-        self.title.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 30,
+        var title_area = sfc.child(.{ .col = 0, .row = 3, .width = 30, .height = 1 });
+        self.title.view(&title_area, .{
             .style = .{ .bold = true },
         });
 
         // Field labels are ordinary labels. The app decides column placement
         // and draws the value or input next to them.
-        self.username.view(sfc, .{
-            .col = 0,
-            .row = 5,
-            .width = 12,
+        var username_area = sfc.child(.{ .col = 0, .row = 5, .width = 12, .height = 1 });
+        self.username.view(&username_area, .{
             .style = .{ .bold = true },
         });
         _ = sfc.textAt(14, 5, "hiro", .{});
-        self.username_hint.view(sfc, .{
-            .col = 14,
-            .row = 6,
-            .width = 40,
+        var username_hint_area = sfc.child(.{ .col = 14, .row = 6, .width = 40, .height = 1 });
+        self.username_hint.view(&username_hint_area, .{
             .style = .{ .dim = true },
         });
 
-        self.email.view(sfc, .{
-            .col = 0,
-            .row = 8,
-            .width = 12,
+        var email_area = sfc.child(.{ .col = 0, .row = 8, .width = 12, .height = 1 });
+        self.email.view(&email_area, .{
             .style = .{ .bold = true },
         });
         _ = sfc.textAt(14, 8, "hiro@example.com", .{});
-        self.email_hint.view(sfc, .{
-            .col = 14,
-            .row = 9,
-            .width = 40,
+        var email_hint_area = sfc.child(.{ .col = 14, .row = 9, .width = 40, .height = 1 });
+        self.email_hint.view(&email_hint_area, .{
             .style = .{ .dim = true },
         });
 
         // Status text is also app policy. Label only draws the provided text
         // into the requested one-line region.
-        self.status.view(sfc, .{
-            .col = 0,
-            .row = 12,
-            .width = 30,
+        var status_area = sfc.child(.{ .col = 0, .row = 12, .width = 30, .height = 1 });
+        self.status.view(&status_area, .{
             .style = .{ .italic = true },
         });
     }

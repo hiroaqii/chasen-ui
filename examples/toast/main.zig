@@ -68,11 +68,8 @@ const App = struct {
 
         if (self.visible) {
             const rect = toastRect(sfc, 36, 3);
-            self.toast.view(sfc, .{
-                .col = rect.col,
-                .row = rect.row,
-                .width = rect.width,
-                .height = rect.height,
+            var toast_area = sfc.child(rect);
+            self.toast.view(&toast_area, .{
                 .marker = "!",
                 .title = "Settings saved",
                 .body = "Preferences were written",

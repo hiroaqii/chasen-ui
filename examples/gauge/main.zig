@@ -64,10 +64,8 @@ const App = struct {
         // whether this is percent, bytes, latency, health, or another metric.
         _ = try sfc.printAt(0, 3, .{ .fg = .gray }, "Upload progress: {d}%", .{percent});
 
-        self.gauge.view(sfc, .{
-            .col = 0,
-            .row = 5,
-            .width = 48,
+        var upload_area = sfc.child(.{ .col = 0, .row = 5, .width = 48, .height = 1 });
+        self.gauge.view(&upload_area, .{
             .label = "Upload",
             .progress = p,
             .value_text = if (self.running) "syncing" else "done",
@@ -78,10 +76,8 @@ const App = struct {
             .value_style = if (self.running) .{ .fg = .{ .index = 14 } } else .{ .fg = .{ .index = 2 } },
         });
 
-        self.gauge.view(sfc, .{
-            .col = 0,
-            .row = 7,
-            .width = 48,
+        var memory_area = sfc.child(.{ .col = 0, .row = 7, .width = 48, .height = 1 });
+        self.gauge.view(&memory_area, .{
             .label = "Memory",
             .progress = 0.68,
             .value_text = "68%",
@@ -94,10 +90,8 @@ const App = struct {
             .value_style = .{ .fg = .{ .index = 11 } },
         });
 
-        self.gauge.view(sfc, .{
-            .col = 0,
-            .row = 9,
-            .width = 48,
+        var queue_area = sfc.child(.{ .col = 0, .row = 9, .width = 48, .height = 1 });
+        self.gauge.view(&queue_area, .{
             .label = "Queue",
             .progress = 0.25,
             .value_text = "3 open",

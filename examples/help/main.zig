@@ -30,18 +30,13 @@ const App = struct {
 
         // The app chooses the shortcuts and action wording. Help only draws a
         // compact one-line summary of the borrowed item list.
-        self.main_help.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 56,
-        });
+        var main_help_area = sfc.child(.{ .col = 0, .row = 3, .width = 56, .height = 1 });
+        self.main_help.view(&main_help_area, .{});
 
         // Separators, gaps, and styles are view concerns. They do not change
         // the meaning of the shortcuts or how input is routed.
-        self.compact_help.view(sfc, .{
-            .col = 0,
-            .row = 5,
-            .width = 56,
+        var compact_help_area = sfc.child(.{ .col = 0, .row = 5, .width = 56, .height = 1 });
+        self.compact_help.view(&compact_help_area, .{
             .separator = " ",
             .item_gap = 4,
             .key_style = .{ .bold = true, .fg = .{ .index = 14 } },

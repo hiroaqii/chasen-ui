@@ -26,12 +26,6 @@ pub const StatusLine = struct {
 
     /// Rendering options for `StatusLine.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the status line should start.
-        col: u16 = 0,
-        /// Surface row where the status line should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line status region.
-        width: ?u16 = null,
         /// Style used for status text.
         style: chasen.TextStyle = .{ .dim = true },
         /// Whether to paint the full status region with spaces before text.
@@ -63,28 +57,21 @@ pub const StatusLine = struct {
         return (width - text_width) / 2;
     }
 
-    /// Draw the status line into a one-line region.
+    /// Draw the status line into the provided one-line surface region.
     pub fn view(self: *const StatusLine, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
-
         if (opts.fill) {
-            fillLine(&child, width, opts.fill_style);
+            fillLine(surface, width, opts.fill_style);
         }
 
         // Draw left, center, then right. When a narrow width causes overlap,
         // later slots overwrite earlier slots. This keeps the right hint or
         // summary visible, which is usually the most compact status item.
-        _ = child.textAt(0, 0, self.left, opts.style);
-        _ = child.textAt(centerCol(self.center, width), 0, self.center, opts.style);
-        _ = child.textAt(rightCol(self.right, width), 0, self.right, opts.style);
+        _ = surface.textAt(0, 0, self.left, opts.style);
+        _ = surface.textAt(centerCol(self.center, width), 0, self.center, opts.style);
+        _ = surface.textAt(rightCol(self.right, width), 0, self.right, opts.style);
     }
 };
 
@@ -93,12 +80,6 @@ fn fillLine(surface: *chasen.Surface, width: u16, style: chasen.TextStyle) void 
     while (col < width) : (col += 1) {
         _ = surface.textAt(col, 0, " ", style);
     }
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "StatusLine initializes from options" {

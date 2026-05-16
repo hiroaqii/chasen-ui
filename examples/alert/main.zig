@@ -39,11 +39,8 @@ const App = struct {
         // chasen-graphics provides severity-like glyphs as plain data. Alert
         // receives a marker and text only; it does not know what "warning"
         // means or when this message should disappear.
-        self.alert.view(sfc, .{
-            .col = alert_rows[0].col,
-            .row = alert_rows[0].row,
-            .width = alert_rows[0].width,
-            .height = alert_rows[0].height,
+        var warning_area = sfc.child(alert_rows[0]);
+        self.alert.view(&warning_area, .{
             .marker = graphics.glyph.status.warn,
             .title = "Configuration warning",
             .body = "Theme file is missing; using defaults.",
@@ -54,11 +51,8 @@ const App = struct {
 
         // Success and failure are app concepts. The component only draws the
         // marker/title/body selected by the app for this view.
-        self.alert.view(sfc, .{
-            .col = alert_rows[1].col,
-            .row = alert_rows[1].row,
-            .width = alert_rows[1].width,
-            .height = alert_rows[1].height,
+        var saved_area = sfc.child(alert_rows[1]);
+        self.alert.view(&saved_area, .{
             .marker = graphics.glyph.status.ok,
             .title = "Saved",
             .body = "Profile changes were written.",
@@ -69,22 +63,16 @@ const App = struct {
 
         // Body-only alerts are useful when the surrounding UI already supplies
         // the heading or severity. In that case the body starts at column zero.
-        self.alert.view(sfc, .{
-            .col = alert_rows[2].col,
-            .row = alert_rows[2].row,
-            .width = alert_rows[2].width,
-            .height = alert_rows[2].height,
+        var body_area = sfc.child(alert_rows[2]);
+        self.alert.view(&body_area, .{
             .body = "Press Esc after reviewing these messages.",
             .body_style = .{ .dim = true },
         });
 
         // ASCII fallback glyphs use the same API. The app chooses the glyph
         // set that fits the terminal or style it is targeting.
-        self.alert.view(sfc, .{
-            .col = alert_rows[3].col,
-            .row = alert_rows[3].row,
-            .width = alert_rows[3].width,
-            .height = alert_rows[3].height,
+        var error_area = sfc.child(alert_rows[3]);
+        self.alert.view(&error_area, .{
             .marker = graphics.glyph.status.err_ascii,
             .title = "Connection failed",
             .body = "Retry is managed by app state, not Alert.",

@@ -25,12 +25,6 @@ pub const Spinner = struct {
 
     /// Rendering options for `Spinner.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the spinner should be drawn.
-        col: u16 = 0,
-        /// Surface row where the spinner should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line spinner region.
-        width: ?u16 = null,
         /// Current frame index. Values wrap across `frames`.
         frame_index: u64 = 0,
         /// Gap between the frame and label.
@@ -63,33 +57,20 @@ pub const Spinner = struct {
         return self.frames[index];
     }
 
-    /// Draw the spinner into a one-line region.
+    /// Draw the spinner into the provided one-line surface region.
     pub fn view(self: *const Spinner, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
 
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
-
         const frame = self.frameAt(opts.frame_index);
-        _ = child.textAt(0, 0, frame, opts.frame_style);
+        _ = surface.textAt(0, 0, frame, opts.frame_style);
 
         const label_col = @as(usize, chasen.text.displayWidth(frame)) + @as(usize, opts.gap);
         if (self.label.len > 0 and label_col < width) {
-            _ = child.textAt(@intCast(label_col), 0, self.label, opts.label_style);
+            _ = surface.textAt(@intCast(label_col), 0, self.label, opts.label_style);
         }
     }
 };
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
 
 test "Spinner initializes with default frames" {
     const spinner = Spinner.init(.{ .label = "Loading" });

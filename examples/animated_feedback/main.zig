@@ -76,19 +76,15 @@ const App = struct {
         // index that wraps across the graphics preset's frame list. Spinner
         // still receives only a frame_index and draws the selected label.
         const spinner_frame = anim.loopIndex(self.frame_counter.frame, self.spinner.frames.len);
-        self.spinner.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            .width = 32,
+        var spinner_area = sfc.child(.{ .col = 0, .row = 3, .width = 32, .height = 1 });
+        self.spinner.view(&spinner_area, .{
             .frame_index = spinner_frame,
             .frame_style = .{ .bold = true, .fg = .{ .index = 14 } },
         });
 
         const p = self.progress();
-        self.bar.view(sfc, .{
-            .col = 0,
-            .row = 5,
-            .width = 40,
+        var bar_area = sfc.child(.{ .col = 0, .row = 5, .width = 40, .height = 1 });
+        self.bar.view(&bar_area, .{
             .progress = p,
             // The filled cell comes from chasen-graphics. The empty preset is
             // a space, so this demo uses the visible ASCII fallback to show

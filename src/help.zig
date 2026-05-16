@@ -23,12 +23,6 @@ pub const Help = struct {
 
     /// Rendering options for `Help.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the help row should start.
-        col: u16 = 0,
-        /// Surface row where the help row should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line help region.
-        width: ?u16 = null,
         /// Text between each key and action.
         separator: []const u8 = ": ",
         /// Spaces between help items.
@@ -67,24 +61,17 @@ pub const Help = struct {
         return width;
     }
 
-    /// Draw the help hints into a clipped one-line region.
+    /// Draw the help hints into the provided clipped one-line surface region.
     pub fn view(self: *const Help, surface: *chasen.Surface, opts: ViewOptions) void {
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
 
         var cursor: u16 = 0;
         for (self.items, 0..) |item, i| {
-            if (i > 0) drawSpaces(&child, &cursor, opts.item_gap, .{}, width);
-            drawText(&child, &cursor, item.key, opts.key_style, width);
-            drawText(&child, &cursor, opts.separator, opts.separator_style, width);
-            drawText(&child, &cursor, item.action, opts.action_style, width);
+            if (i > 0) drawSpaces(surface, &cursor, opts.item_gap, .{}, width);
+            drawText(surface, &cursor, item.key, opts.key_style, width);
+            drawText(surface, &cursor, opts.separator, opts.separator_style, width);
+            drawText(surface, &cursor, item.action, opts.action_style, width);
         }
     }
 };
@@ -101,12 +88,6 @@ fn drawSpaces(surface: *chasen.Surface, cursor: *u16, count: u16, style: chasen.
         _ = surface.textAt(cursor.*, 0, " ", style);
         cursor.* +|= 1;
     }
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
 }
 
 test "Help initializes from options" {

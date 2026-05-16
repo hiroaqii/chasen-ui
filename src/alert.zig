@@ -12,14 +12,6 @@ pub const Alert = struct {
 
     /// Rendering options for `Alert.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the alert should be drawn.
-        col: u16 = 0,
-        /// Surface row where the alert should start.
-        row: u16 = 0,
-        /// Optional width of the clipped alert region.
-        width: ?u16 = null,
-        /// Optional height of the clipped alert region.
-        height: ?u16 = null,
         /// Optional leading marker, such as a severity glyph.
         marker: []const u8 = "",
         /// Alert title shown on the header row.
@@ -78,34 +70,28 @@ pub const Alert = struct {
         return 0;
     }
 
-    /// Draw the alert into a clipped region.
+    /// Draw the alert into the provided clipped surface region.
     pub fn view(self: *const Alert, surface: *chasen.Surface, opts: ViewOptions) void {
         _ = self;
-        const width = opts.width orelse availableWidth(surface, opts.col);
-        const height = opts.height orelse availableHeight(surface, opts.row);
+        const size = surface.size();
+        const width = size.width;
+        const height = size.height;
         if (width == 0 or height == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = height,
-        });
 
         var row: u16 = 0;
         if (hasHeader(opts)) {
             var cursor: u16 = 0;
-            drawText(&child, &cursor, 0, opts.marker, opts.marker_style, width);
+            drawText(surface, &cursor, 0, opts.marker, opts.marker_style, width);
             if (opts.marker.len > 0 and opts.title.len > 0) {
-                drawSpaces(&child, &cursor, 0, opts.gap, opts.title_style, width);
+                drawSpaces(surface, &cursor, 0, opts.gap, opts.title_style, width);
             }
-            drawText(&child, &cursor, 0, opts.title, opts.title_style, width);
+            drawText(surface, &cursor, 0, opts.title, opts.title_style, width);
             row += 1;
         }
 
         if (opts.body.len > 0 and row < height) {
             var cursor = @min(defaultBodyCol(opts), width);
-            drawText(&child, &cursor, row, opts.body, opts.body_style, width);
+            drawText(surface, &cursor, row, opts.body, opts.body_style, width);
         }
     }
 };
@@ -126,18 +112,6 @@ fn drawSpaces(surface: *chasen.Surface, cursor: *u16, row: u16, count: u16, styl
         _ = surface.textAt(cursor.*, row, " ", style);
         cursor.* +|= 1;
     }
-}
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
-
-fn availableHeight(surface: *chasen.Surface, row: u16) u16 {
-    const size = surface.size();
-    if (row >= size.height) return 0;
-    return size.height - row;
 }
 
 test "Alert initializes from options" {

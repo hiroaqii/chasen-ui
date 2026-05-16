@@ -73,12 +73,10 @@ const App = struct {
         _ = sfc.textAt(0, 1, "r: reset  Esc: quit", .{ .fg = .gray });
 
         const p = self.progress();
-        self.bar.view(sfc, .{
-            .col = 0,
-            .row = 3,
-            // Wider bars have smaller visible steps. With width 40, each cell
-            // represents 2.5% progress.
-            .width = 40,
+        // The child surface controls the visible bar width. With width 40,
+        // each cell represents 2.5% progress.
+        var bar_area = sfc.child(.{ .col = 0, .row = 3, .width = 40, .height = 1 });
+        self.bar.view(&bar_area, .{
             .progress = p,
         });
 

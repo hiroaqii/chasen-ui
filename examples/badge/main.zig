@@ -23,9 +23,8 @@ const App = struct {
         _ = sfc.textAt(0, 3, "Task", .{ .bold = true });
         // chasen-graphics provides the status glyph as data. Badge receives a
         // marker and text only; it does not know what "ready" means.
-        self.badge.view(sfc, .{
-            .col = 14,
-            .row = 3,
+        var ready_area = sfc.child(.{ .col = 14, .row = 3, .width = 16, .height = 1 });
+        self.badge.view(&ready_area, .{
             .marker = graphics.glyph.status.ok,
             .text = "READY",
             .marker_style = .{ .bold = true, .fg = .{ .index = 10 }, .bg = .{ .index = 22 } },
@@ -37,9 +36,8 @@ const App = struct {
         // Count formatting is app policy. The component gets the resulting
         // borrowed text and draws it the same way as any other badge label.
         const count_text = try std.fmt.allocPrint(sfc.frameAllocator(), "{d} open", .{self.open_count});
-        self.badge.view(sfc, .{
-            .col = 14,
-            .row = 5,
+        var queue_area = sfc.child(.{ .col = 14, .row = 5, .width = 16, .height = 1 });
+        self.badge.view(&queue_area, .{
             .text = count_text,
             .text_style = .{ .bold = true, .fg = .{ .index = 14 }, .bg = .{ .index = 24 } },
             .padding_style = .{ .bg = .{ .index = 24 } },
@@ -48,9 +46,8 @@ const App = struct {
         _ = sfc.textAt(0, 7, "Mode", .{ .bold = true });
         // A badge can also be just a compact mode label. There is no marker
         // requirement and no status model hidden inside the component.
-        self.badge.view(sfc, .{
-            .col = 14,
-            .row = 7,
+        var mode_area = sfc.child(.{ .col = 14, .row = 7, .width = 16, .height = 1 });
+        self.badge.view(&mode_area, .{
             .text = "NORMAL",
             .text_style = .{ .bold = true, .fg = .{ .index = 15 }, .bg = .{ .index = 8 } },
             .padding_style = .{ .bg = .{ .index = 8 } },
@@ -59,9 +56,8 @@ const App = struct {
         _ = sfc.textAt(0, 9, "Fallback", .{ .bold = true });
         // ASCII status fallbacks use the same Badge API. The app decides which
         // glyph set fits the terminal or style it is targeting.
-        self.badge.view(sfc, .{
-            .col = 14,
-            .row = 9,
+        var fallback_area = sfc.child(.{ .col = 14, .row = 9, .width = 16, .height = 1 });
+        self.badge.view(&fallback_area, .{
             .marker = graphics.glyph.status.err_ascii,
             .text = "FAILED",
             .marker_style = .{ .bold = true, .fg = .{ .index = 9 } },

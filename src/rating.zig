@@ -12,12 +12,6 @@ pub const Rating = struct {
 
     /// Rendering options for `Rating.view`.
     pub const ViewOptions = struct {
-        /// Surface column where the rating should be drawn.
-        col: u16 = 0,
-        /// Surface row where the rating should be drawn.
-        row: u16 = 0,
-        /// Optional width of the clipped one-line rating region.
-        width: ?u16 = null,
         /// Number of filled rating items to draw.
         ///
         /// Values greater than `total_count` are clamped while rendering.
@@ -51,28 +45,21 @@ pub const Rating = struct {
         return @min(filled_count, total_count);
     }
 
-    /// Draw the rating into a one-line region.
+    /// Draw the rating into the provided one-line surface region.
     pub fn view(self: *const Rating, surface: *chasen.Surface, opts: ViewOptions) void {
         _ = self;
-        const width = opts.width orelse availableWidth(surface, opts.col);
+        const width = surface.size().width;
         if (width == 0) return;
-
-        var child = surface.child(.{
-            .col = opts.col,
-            .row = opts.row,
-            .width = width,
-            .height = 1,
-        });
 
         const filled_count = clampedFilledCount(opts.filled_count, opts.total_count);
         var index: u16 = 0;
         var item_col: u16 = 0;
         while (index < opts.total_count and item_col < width) : (index += 1) {
             if (index < filled_count) {
-                _ = child.textAt(item_col, 0, opts.filled_glyph, opts.filled_style);
+                _ = surface.textAt(item_col, 0, opts.filled_glyph, opts.filled_style);
                 item_col +|= chasen.text.displayWidth(opts.filled_glyph);
             } else {
-                _ = child.textAt(item_col, 0, opts.empty_glyph, opts.empty_style);
+                _ = surface.textAt(item_col, 0, opts.empty_glyph, opts.empty_style);
                 item_col +|= chasen.text.displayWidth(opts.empty_glyph);
             }
 
@@ -82,12 +69,6 @@ pub const Rating = struct {
         }
     }
 };
-
-fn availableWidth(surface: *chasen.Surface, col: u16) u16 {
-    const size = surface.size();
-    if (col >= size.width) return 0;
-    return size.width - col;
-}
 
 test "Rating initializes from options" {
     const rating = Rating.init(.{});

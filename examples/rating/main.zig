@@ -23,9 +23,8 @@ const App = struct {
         // The app decides this is a 4-out-of-5 score. chasen-graphics only
         // provides glyph presets; Rating receives them as plain borrowed
         // labels and does not depend on the graphics package itself.
-        self.rating.view(sfc, .{
-            .col = 14,
-            .row = 3,
+        var movie_area = sfc.child(.{ .col = 14, .row = 3, .width = 14, .height = 1 });
+        self.rating.view(&movie_area, .{
             .filled_count = 4,
             .total_count = 5,
             .filled_glyph = graphics.glyph.rating.filled,
@@ -37,9 +36,8 @@ const App = struct {
         _ = sfc.textAt(0, 5, "Service", .{ .bold = true });
         // The scale is not fixed to five items. Passing counts keeps validation
         // and domain meaning in the app instead of inside the component.
-        self.rating.view(sfc, .{
-            .col = 14,
-            .row = 5,
+        var service_area = sfc.child(.{ .col = 14, .row = 5, .width = 14, .height = 1 });
+        self.rating.view(&service_area, .{
             .filled_count = 2,
             .total_count = 3,
             .filled_glyph = graphics.glyph.rating.filled,
@@ -52,9 +50,8 @@ const App = struct {
         _ = sfc.textAt(0, 7, "Fallback", .{ .bold = true });
         // ASCII fallback glyphs are useful for terminals or fonts where star
         // glyphs are not desirable. The component API is the same either way.
-        self.rating.view(sfc, .{
-            .col = 14,
-            .row = 7,
+        var fallback_area = sfc.child(.{ .col = 14, .row = 7, .width = 14, .height = 1 });
+        self.rating.view(&fallback_area, .{
             .filled_count = 3,
             .total_count = 5,
             .filled_glyph = graphics.glyph.rating.filled_ascii,

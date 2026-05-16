@@ -70,10 +70,13 @@ const App = struct {
         }
 
         if (content.height > 0) {
-            self.help.view(sfc, .{
+            var help_area = sfc.child(.{
                 .col = content.col,
                 .row = content.row + content.height - 1,
                 .width = content.width,
+                .height = 1,
+            });
+            self.help.view(&help_area, .{
                 .key_style = .{ .bold = true, .fg = .{ .index = 6 } },
                 .action_style = .{ .dim = true },
             });

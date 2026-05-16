@@ -66,10 +66,13 @@ const App = struct {
         }
 
         if (content.height > 0) {
-            self.status.view(sfc, .{
+            var status_area = sfc.child(.{
                 .col = content.col,
                 .row = content.row + content.height - 1,
                 .width = content.width,
+                .height = 1,
+            });
+            self.status.view(&status_area, .{
                 .style = .{ .dim = true },
                 .fill_style = .{ .dim = true },
             });

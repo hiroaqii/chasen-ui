@@ -21,11 +21,8 @@ const App = struct {
         _ = sfc.textAt(0, 3, "Account", .{ .bold = true });
         // A horizontal divider draws one glyph per cell on a single row. The
         // default glyph is "-", but callers can replace it with glyph option.
-        self.divider.view(sfc, .{
-            .col = 0,
-            .row = 4,
-            .length = 40,
-        });
+        var account_divider = sfc.child(.{ .col = 0, .row = 4, .width = 40, .height = 1 });
+        self.divider.view(&account_divider, .{});
         _ = sfc.textAt(0, 5, "Username", .{});
         _ = sfc.textAt(14, 5, "hiro", .{ .dim = true });
         _ = sfc.textAt(0, 6, "Notifications", .{});
@@ -36,20 +33,16 @@ const App = struct {
         _ = sfc.textAt(22, 11, "Right side", .{});
         // A vertical divider uses the same component with direction changed.
         // The default vertical glyph is "|".
-        self.divider.view(sfc, .{
-            .col = 18,
-            .row = 10,
+        var column_divider = sfc.child(.{ .col = 18, .row = 10, .width = 1, .height = 4 });
+        self.divider.view(&column_divider, .{
             .direction = .vertical,
-            .length = 4,
         });
 
         _ = sfc.textAt(0, 16, "Custom glyph", .{ .bold = true });
         // The glyph is not fixed. Use a one-display-cell string when changing
         // it so each cell still lines up with the next one.
-        self.divider.view(sfc, .{
-            .col = 0,
-            .row = 17,
-            .length = 40,
+        var custom_divider = sfc.child(.{ .col = 0, .row = 17, .width = 40, .height = 1 });
+        self.divider.view(&custom_divider, .{
             .glyph = "=",
             .style = .{ .bold = true },
         });
