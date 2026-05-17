@@ -14,6 +14,11 @@ pub const TextArea = struct {
     /// Current UTF-8 text buffer.
     value: std.ArrayList(u8) = .empty,
     /// Cursor byte offset into `value`.
+    ///
+    /// Editing keeps this offset on a grapheme boundary. Terminal cursor
+    /// columns are derived from display width instead of byte count. If caller
+    /// code sets this public field inside a grapheme cluster, movement and
+    /// deletion repair the position to a surrounding grapheme boundary.
     cursor: usize = 0,
     /// Text shown when the area is empty. Borrowed; must outlive the component.
     placeholder: []const u8 = "",
@@ -32,13 +37,13 @@ pub const TextArea = struct {
         insert: u21,
         /// Insert an explicit line break at the current cursor position.
         insert_newline,
-        /// Remove the scalar before the cursor.
+        /// Remove the grapheme cluster before the cursor.
         backspace,
-        /// Remove the scalar at the cursor.
+        /// Remove the grapheme cluster at the cursor.
         delete,
-        /// Move the cursor one scalar to the left.
+        /// Move the cursor one grapheme cluster to the left.
         move_left,
-        /// Move the cursor one scalar to the right.
+        /// Move the cursor one grapheme cluster to the right.
         move_right,
         /// Move the cursor to the nearest column on the previous explicit line.
         move_up,
@@ -126,8 +131,8 @@ pub const TextArea = struct {
             .insert_newline => try self.insertBytes("\n"),
             .backspace => self.backspace(),
             .delete => self.delete(),
-            .move_left => self.cursor = previousScalarStart(self.value.items, self.cursor),
-            .move_right => self.cursor = nextScalarEnd(self.value.items, self.cursor),
+            .move_left => self.cursor = previousGraphemeStart(self.value.items, self.cursor),
+            .move_right => self.cursor = nextGraphemeEnd(self.value.items, self.cursor),
             .move_up => self.moveVertical(.up),
             .move_down => self.moveVertical(.down),
             .home => self.cursor = lineStart(self.value.items, self.cursor),
@@ -188,21 +193,23 @@ pub const TextArea = struct {
     }
 
     fn insertBytes(self: *TextArea, bytes: []const u8) !void {
+        self.cursor = insertionBoundary(self.value.items, self.cursor);
         try self.value.insertSlice(self.allocator, self.cursor, bytes);
         self.cursor += bytes.len;
     }
 
     fn backspace(self: *TextArea) void {
         if (self.cursor == 0) return;
-        const start = previousScalarStart(self.value.items, self.cursor);
-        self.value.replaceRangeAssumeCapacity(start, self.cursor - start, "");
-        self.cursor = start;
+        const range = graphemeBeforeOrContaining(self.value.items, self.cursor);
+        self.value.replaceRangeAssumeCapacity(range.start, range.end - range.start, "");
+        self.cursor = range.start;
     }
 
     fn delete(self: *TextArea) void {
         if (self.cursor >= self.value.items.len) return;
-        const end = nextScalarEnd(self.value.items, self.cursor);
-        self.value.replaceRangeAssumeCapacity(self.cursor, end - self.cursor, "");
+        const range = graphemeAtOrContaining(self.value.items, self.cursor);
+        self.value.replaceRangeAssumeCapacity(range.start, range.end - range.start, "");
+        self.cursor = range.start;
     }
 
     fn moveVertical(self: *TextArea, direction: enum { up, down }) void {
@@ -266,17 +273,79 @@ fn isPrintable(codepoint: u21) bool {
     return codepoint >= 0x20 and codepoint != 0x7f and !(codepoint >= 0x80 and codepoint <= 0x9f);
 }
 
-fn previousScalarStart(bytes: []const u8, index: usize) usize {
-    if (index == 0) return 0;
-    var i = index - 1;
-    while (i > 0 and (bytes[i] & 0b1100_0000) == 0b1000_0000) : (i -= 1) {}
-    return i;
+fn previousGraphemeStart(bytes: []const u8, index: usize) usize {
+    const target = @min(index, bytes.len);
+    if (target == 0) return 0;
+
+    var previous: usize = 0;
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        if (grapheme.start >= target) break;
+        const end = grapheme.start + grapheme.len;
+        if (end >= target) return grapheme.start;
+        previous = grapheme.start;
+    }
+    return previous;
 }
 
-fn nextScalarEnd(bytes: []const u8, index: usize) usize {
-    if (index >= bytes.len) return bytes.len;
-    const len = std.unicode.utf8ByteSequenceLength(bytes[index]) catch 1;
-    return @min(bytes.len, index + len);
+fn nextGraphemeEnd(bytes: []const u8, index: usize) usize {
+    const target = @min(index, bytes.len);
+    if (target >= bytes.len) return bytes.len;
+
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        const end = grapheme.start + grapheme.len;
+        if (grapheme.start <= target and target < end) return end;
+        if (grapheme.start > target) return end;
+    }
+    return bytes.len;
+}
+
+const GraphemeRange = struct {
+    start: usize,
+    end: usize,
+};
+
+fn graphemeBeforeOrContaining(bytes: []const u8, index: usize) GraphemeRange {
+    const target = @min(index, bytes.len);
+    var previous: GraphemeRange = .{ .start = 0, .end = 0 };
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        const range: GraphemeRange = .{
+            .start = grapheme.start,
+            .end = grapheme.start + grapheme.len,
+        };
+        if (range.start < target and target <= range.end) return range;
+        if (range.end >= target) return previous;
+        previous = range;
+    }
+    return previous;
+}
+
+fn graphemeAtOrContaining(bytes: []const u8, index: usize) GraphemeRange {
+    const target = @min(index, bytes.len);
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        const range: GraphemeRange = .{
+            .start = grapheme.start,
+            .end = grapheme.start + grapheme.len,
+        };
+        if (range.start <= target and target < range.end) return range;
+        if (range.start > target) return range;
+    }
+    return .{ .start = bytes.len, .end = bytes.len };
+}
+
+fn insertionBoundary(bytes: []const u8, index: usize) usize {
+    const target = @min(index, bytes.len);
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        const end = grapheme.start + grapheme.len;
+        if (target == grapheme.start or target == end) return target;
+        if (grapheme.start < target and target < end) return grapheme.start;
+        if (grapheme.start > target) return grapheme.start;
+    }
+    return bytes.len;
 }
 
 fn lineStart(bytes: []const u8, index: usize) usize {
@@ -367,7 +436,7 @@ test "TextArea inserts text and explicit newlines" {
     try std.testing.expectEqual(@as(usize, "a\nb".len), area.cursor);
 }
 
-test "TextArea backspace and delete remove utf8 scalars and newlines" {
+test "TextArea backspace and delete remove grapheme clusters and newlines" {
     var area = try TextArea.init(std.testing.allocator, .{ .value = "a\nあb" });
     defer area.deinit();
 
@@ -379,6 +448,49 @@ test "TextArea backspace and delete remove utf8 scalars and newlines" {
     area.cursor = 1;
     try area.update(.delete);
     try std.testing.expectEqualStrings("ab", area.text());
+}
+
+test "TextArea does not split combining or emoji grapheme clusters" {
+    var area = try TextArea.init(std.testing.allocator, .{ .value = "ae\u{301}\n👩‍🚀b" });
+    defer area.deinit();
+
+    area.cursor = "ae\u{301}".len;
+    try area.update(.backspace);
+    try std.testing.expectEqualStrings("a\n👩‍🚀b", area.text());
+    try std.testing.expectEqual(@as(usize, "a".len), area.cursor);
+
+    area.cursor = "a\n".len;
+    try area.update(.delete);
+    try std.testing.expectEqualStrings("a\nb", area.text());
+    try std.testing.expectEqual(@as(usize, "a\n".len), area.cursor);
+}
+
+test "TextArea deletion repairs cursor placed inside grapheme cluster" {
+    var area = try TextArea.init(std.testing.allocator, .{ .value = "ae\u{301}\nb" });
+    defer area.deinit();
+
+    area.cursor = "ae".len;
+    try area.update(.backspace);
+    try std.testing.expectEqualStrings("a\nb", area.text());
+    try std.testing.expectEqual(@as(usize, "a".len), area.cursor);
+
+    var delete_area = try TextArea.init(std.testing.allocator, .{ .value = "ae\u{301}\nb" });
+    defer delete_area.deinit();
+
+    delete_area.cursor = "ae".len;
+    try delete_area.update(.delete);
+    try std.testing.expectEqualStrings("a\nb", delete_area.text());
+    try std.testing.expectEqual(@as(usize, "a".len), delete_area.cursor);
+}
+
+test "TextArea insertion repairs cursor placed inside grapheme cluster" {
+    var area = try TextArea.init(std.testing.allocator, .{ .value = "ae\u{301}\nb" });
+    defer area.deinit();
+
+    area.cursor = "ae".len;
+    try area.update(.{ .insert = 'X' });
+    try std.testing.expectEqualStrings("aXe\u{301}\nb", area.text());
+    try std.testing.expectEqual(@as(usize, "aX".len), area.cursor);
 }
 
 test "TextArea home end and cursor position use explicit lines" {

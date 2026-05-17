@@ -17,6 +17,11 @@ pub const TextInput = struct {
     /// Current UTF-8 text buffer.
     value: std.ArrayList(u8) = .empty,
     /// Cursor byte offset into `value`.
+    ///
+    /// Editing keeps this offset on a grapheme boundary. Terminal cursor
+    /// columns are derived from display width instead of byte count. If caller
+    /// code sets this public field inside a grapheme cluster, movement and
+    /// deletion repair the position to a surrounding grapheme boundary.
     cursor: usize = 0,
     /// Text shown when the input is empty. Borrowed; must outlive the component.
     placeholder: []const u8 = "",
@@ -36,13 +41,13 @@ pub const TextInput = struct {
     pub const Msg = union(enum) {
         /// Insert one Unicode scalar at the current cursor position.
         insert: u21,
-        /// Remove the scalar before the cursor.
+        /// Remove the grapheme cluster before the cursor.
         backspace,
-        /// Remove the scalar at the cursor.
+        /// Remove the grapheme cluster at the cursor.
         delete,
-        /// Move the cursor one scalar to the left.
+        /// Move the cursor one grapheme cluster to the left.
         move_left,
-        /// Move the cursor one scalar to the right.
+        /// Move the cursor one grapheme cluster to the right.
         move_right,
         /// Move the cursor to the start of the buffer.
         home,
@@ -154,29 +159,31 @@ pub const TextInput = struct {
     fn insertCodepoint(self: *TextInput, codepoint: u21) !void {
         var buf: [4]u8 = undefined;
         const len = try std.unicode.utf8Encode(codepoint, &buf);
+        self.cursor = insertionBoundary(self.value.items, self.cursor);
         try self.value.insertSlice(self.allocator, self.cursor, buf[0..len]);
         self.cursor += len;
     }
 
     fn backspace(self: *TextInput) void {
         if (self.cursor == 0) return;
-        const start = previousScalarStart(self.value.items, self.cursor);
-        self.value.replaceRangeAssumeCapacity(start, self.cursor - start, "");
-        self.cursor = start;
+        const range = graphemeBeforeOrContaining(self.value.items, self.cursor);
+        self.value.replaceRangeAssumeCapacity(range.start, range.end - range.start, "");
+        self.cursor = range.start;
     }
 
     fn delete(self: *TextInput) void {
         if (self.cursor >= self.value.items.len) return;
-        const end = nextScalarEnd(self.value.items, self.cursor);
-        self.value.replaceRangeAssumeCapacity(self.cursor, end - self.cursor, "");
+        const range = graphemeAtOrContaining(self.value.items, self.cursor);
+        self.value.replaceRangeAssumeCapacity(range.start, range.end - range.start, "");
+        self.cursor = range.start;
     }
 
     fn moveLeft(self: *TextInput) void {
-        self.cursor = previousScalarStart(self.value.items, self.cursor);
+        self.cursor = previousGraphemeStart(self.value.items, self.cursor);
     }
 
     fn moveRight(self: *TextInput) void {
-        self.cursor = nextScalarEnd(self.value.items, self.cursor);
+        self.cursor = nextGraphemeEnd(self.value.items, self.cursor);
     }
 
     fn visibleText(self: *const TextInput, width: u16) []const u8 {
@@ -229,17 +236,79 @@ fn isPrintable(codepoint: u21) bool {
     return codepoint >= 0x20 and codepoint != 0x7f and !(codepoint >= 0x80 and codepoint <= 0x9f);
 }
 
-fn previousScalarStart(bytes: []const u8, index: usize) usize {
-    if (index == 0) return 0;
-    var i = index - 1;
-    while (i > 0 and (bytes[i] & 0b1100_0000) == 0b1000_0000) : (i -= 1) {}
-    return i;
+fn previousGraphemeStart(bytes: []const u8, index: usize) usize {
+    const target = @min(index, bytes.len);
+    if (target == 0) return 0;
+
+    var previous: usize = 0;
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        if (grapheme.start >= target) break;
+        const end = grapheme.start + grapheme.len;
+        if (end >= target) return grapheme.start;
+        previous = grapheme.start;
+    }
+    return previous;
 }
 
-fn nextScalarEnd(bytes: []const u8, index: usize) usize {
-    if (index >= bytes.len) return bytes.len;
-    const len = std.unicode.utf8ByteSequenceLength(bytes[index]) catch 1;
-    return @min(bytes.len, index + len);
+fn nextGraphemeEnd(bytes: []const u8, index: usize) usize {
+    const target = @min(index, bytes.len);
+    if (target >= bytes.len) return bytes.len;
+
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        const end = grapheme.start + grapheme.len;
+        if (grapheme.start <= target and target < end) return end;
+        if (grapheme.start > target) return end;
+    }
+    return bytes.len;
+}
+
+const GraphemeRange = struct {
+    start: usize,
+    end: usize,
+};
+
+fn graphemeBeforeOrContaining(bytes: []const u8, index: usize) GraphemeRange {
+    const target = @min(index, bytes.len);
+    var previous: GraphemeRange = .{ .start = 0, .end = 0 };
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        const range: GraphemeRange = .{
+            .start = grapheme.start,
+            .end = grapheme.start + grapheme.len,
+        };
+        if (range.start < target and target <= range.end) return range;
+        if (range.end >= target) return previous;
+        previous = range;
+    }
+    return previous;
+}
+
+fn graphemeAtOrContaining(bytes: []const u8, index: usize) GraphemeRange {
+    const target = @min(index, bytes.len);
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        const range: GraphemeRange = .{
+            .start = grapheme.start,
+            .end = grapheme.start + grapheme.len,
+        };
+        if (range.start <= target and target < range.end) return range;
+        if (range.start > target) return range;
+    }
+    return .{ .start = bytes.len, .end = bytes.len };
+}
+
+fn insertionBoundary(bytes: []const u8, index: usize) usize {
+    const target = @min(index, bytes.len);
+    var iter = chasen.text.graphemeIterator(bytes);
+    while (iter.next()) |grapheme| {
+        const end = grapheme.start + grapheme.len;
+        if (target == grapheme.start or target == end) return target;
+        if (grapheme.start < target and target < end) return grapheme.start;
+        if (grapheme.start > target) return grapheme.start;
+    }
+    return bytes.len;
 }
 
 fn visibleStart(bytes: []const u8, cursor: usize, width: u16) usize {
@@ -273,7 +342,7 @@ test "TextInput inserts codepoints at the cursor" {
     try std.testing.expectEqual(@as(usize, 2), input.cursor);
 }
 
-test "TextInput backspace and delete remove full utf8 scalars" {
+test "TextInput backspace and delete remove full grapheme clusters" {
     var input = try TextInput.init(std.testing.allocator, .{ .value = "aあb" });
     defer input.deinit();
 
@@ -287,7 +356,7 @@ test "TextInput backspace and delete remove full utf8 scalars" {
     try std.testing.expectEqual(@as(usize, 1), input.cursor);
 }
 
-test "TextInput moves cursor by utf8 scalar" {
+test "TextInput moves cursor by grapheme cluster" {
     var input = try TextInput.init(std.testing.allocator, .{ .value = "aあb" });
     defer input.deinit();
 
@@ -299,6 +368,62 @@ test "TextInput moves cursor by utf8 scalar" {
 
     try input.update(.move_right);
     try std.testing.expectEqual(@as(usize, "aあ".len), input.cursor);
+}
+
+test "TextInput does not split combining grapheme clusters" {
+    var input = try TextInput.init(std.testing.allocator, .{ .value = "ae\u{301}b" });
+    defer input.deinit();
+
+    try input.update(.move_left);
+    try std.testing.expectEqual(@as(usize, "ae\u{301}".len), input.cursor);
+
+    try input.update(.move_left);
+    try std.testing.expectEqual(@as(usize, "a".len), input.cursor);
+
+    try input.update(.move_right);
+    try std.testing.expectEqual(@as(usize, "ae\u{301}".len), input.cursor);
+
+    try input.update(.backspace);
+    try std.testing.expectEqualStrings("ab", input.text());
+    try std.testing.expectEqual(@as(usize, "a".len), input.cursor);
+}
+
+test "TextInput delete removes emoji grapheme clusters" {
+    var input = try TextInput.init(std.testing.allocator, .{ .value = "a👩‍🚀b" });
+    defer input.deinit();
+
+    input.cursor = "a".len;
+    try input.update(.delete);
+    try std.testing.expectEqualStrings("ab", input.text());
+    try std.testing.expectEqual(@as(usize, "a".len), input.cursor);
+}
+
+test "TextInput deletion repairs cursor placed inside grapheme cluster" {
+    var input = try TextInput.init(std.testing.allocator, .{ .value = "ae\u{301}b" });
+    defer input.deinit();
+
+    input.cursor = "ae".len;
+    try input.update(.backspace);
+    try std.testing.expectEqualStrings("ab", input.text());
+    try std.testing.expectEqual(@as(usize, "a".len), input.cursor);
+
+    var delete_input = try TextInput.init(std.testing.allocator, .{ .value = "ae\u{301}b" });
+    defer delete_input.deinit();
+
+    delete_input.cursor = "ae".len;
+    try delete_input.update(.delete);
+    try std.testing.expectEqualStrings("ab", delete_input.text());
+    try std.testing.expectEqual(@as(usize, "a".len), delete_input.cursor);
+}
+
+test "TextInput insertion repairs cursor placed inside grapheme cluster" {
+    var input = try TextInput.init(std.testing.allocator, .{ .value = "ae\u{301}b" });
+    defer input.deinit();
+
+    input.cursor = "ae".len;
+    try input.update(.{ .insert = 'X' });
+    try std.testing.expectEqualStrings("aXe\u{301}b", input.text());
+    try std.testing.expectEqual(@as(usize, "aX".len), input.cursor);
 }
 
 test "TextInput maps printable key events to messages" {
