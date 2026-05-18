@@ -137,10 +137,15 @@ const App = struct {
         if (content.width == 0 or content.height == 0) return;
         var body = sfc.child(content);
 
-        const card_rect = ui.layout.center(surfaceRect(&body), .{
-            .width = @min(body.size().width, 18),
-            .height = @min(body.size().height, 5),
-        });
+        const body_rect = surfaceRect(&body);
+        const top = ui.layout.takeTop(body_rect, 1);
+        const strip_rect = ui.layout.constrain(top.taken, .{ .width = 18, .height = 1 });
+        var strip = body.child(strip_rect);
+        _ = strip.textAt(0, 0, "constrain()", .{ .fg = .gray });
+
+        // center already clamps the requested size to the parent rect. Passing
+        // the desired maximum size is enough for a max-size centered area.
+        const card_rect = ui.layout.center(top.rest, .{ .width = 18, .height = 5 });
         var card = body.child(card_rect);
         _ = card.textAt(0, 0, "center()", .{ .bold = true, .fg = .{ .index = 5 } });
         _ = card.textAt(0, 2, "clamps size", .{});

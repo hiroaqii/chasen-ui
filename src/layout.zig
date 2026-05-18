@@ -244,6 +244,28 @@ pub fn center(rect: chasen.Rect, size: chasen.Size) chasen.Rect {
     return alignRect(rect, size, .middle_center);
 }
 
+/// Return `size` clamped to `max`.
+pub fn maxSize(size: chasen.Size, max: chasen.Size) chasen.Size {
+    return .{
+        .width = @min(size.width, max.width),
+        .height = @min(size.height, max.height),
+    };
+}
+
+/// Return `rect` with its size clamped to `max`.
+///
+/// Position is preserved. Use `center(rect, max_size)` when the constrained
+/// child rectangle should be centered inside the parent instead.
+pub fn constrain(rect: chasen.Rect, max: chasen.Size) chasen.Rect {
+    const size = maxSize(.{ .width = rect.width, .height = rect.height }, max);
+    return .{
+        .col = rect.col,
+        .row = rect.row,
+        .width = size.width,
+        .height = size.height,
+    };
+}
+
 /// Stack fixed-size child rectangles from top to bottom within `rect`.
 ///
 /// Each requested size is clamped to the remaining parent height and parent
@@ -710,6 +732,35 @@ test "center clamps child size to parent size" {
         .width = 4,
         .height = 2,
     }, center(rect, .{ .width = 10, .height = 8 }));
+}
+
+test "maxSize clamps width and height independently" {
+    try std.testing.expectEqual(chasen.Size{
+        .width = 8,
+        .height = 4,
+    }, maxSize(.{ .width = 12, .height = 4 }, .{ .width = 8, .height = 6 }));
+}
+
+test "constrain preserves position and clamps size" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 6 };
+
+    try std.testing.expectEqual(chasen.Rect{
+        .col = 2,
+        .row = 3,
+        .width = 7,
+        .height = 4,
+    }, constrain(rect, .{ .width = 7, .height = 4 }));
+}
+
+test "center can be used for max-size centered rectangles" {
+    const rect: chasen.Rect = .{ .col = 2, .row = 3, .width = 10, .height = 6 };
+
+    try std.testing.expectEqual(chasen.Rect{
+        .col = 4,
+        .row = 4,
+        .width = 6,
+        .height = 4,
+    }, center(rect, .{ .width = 6, .height = 4 }));
 }
 
 test "stack positions fixed-size rectangles with gaps" {
