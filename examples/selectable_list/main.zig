@@ -29,8 +29,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "SelectableList Example - component-owned selection", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Up/Down: move  Enter/Space: select  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "SelectableList Example - component-owned selection", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Up/Down: move  Enter/Space: select  Esc: quit", .{ .fg = .gray });
 
         // Selection storage is local to SelectableList. Meaning stays in the
         // app, which decides how to use the selected label below.
@@ -41,16 +41,16 @@ const App = struct {
             .focused_selected_style = .{ .bold = true, .fg = .{ .index = 14 } },
         });
 
-        _ = sfc.textAt(30, 3, "Component state", .{ .bold = true, .fg = .{ .index = 14 } });
-        _ = sfc.textAt(30, 4, "selected_index", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(30, 3, "Component state", .{ .bold = true, .fg = .{ .index = 14 } });
+        _ = sfc.borrowTextAt(30, 4, "selected_index", .{ .fg = .gray });
         if (self.list.selectedLabel()) |label| {
-            _ = sfc.textAt(45, 4, label, .{ .fg = .{ .index = 14 } });
+            _ = sfc.borrowTextAt(45, 4, label, .{ .fg = .{ .index = 14 } });
         } else {
-            _ = sfc.textAt(45, 4, "None", .{ .dim = true });
+            _ = sfc.borrowTextAt(45, 4, "None", .{ .dim = true });
         }
 
-        _ = sfc.textAt(30, 6, "SelectableList owns focus", .{ .dim = true });
-        _ = sfc.textAt(30, 7, "and selected index", .{ .dim = true });
+        _ = sfc.borrowTextAt(30, 6, "SelectableList owns focus", .{ .dim = true });
+        _ = sfc.borrowTextAt(30, 7, "and selected index", .{ .dim = true });
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

@@ -66,14 +66,14 @@ pub const Button = struct {
         const width = surface.size().width;
         if (width == 0) return;
 
-        _ = surface.textAt(0, 0, "[", opts.style);
+        _ = surface.borrowTextAt(0, 0, "[", opts.style);
         if (width > 1) {
             const label_style = if (opts.focused) opts.focused_label_style else opts.label_style;
-            _ = surface.textAt(1, 0, self.label, label_style);
+            _ = surface.borrowTextAt(1, 0, self.label, label_style);
         }
         if (width > 2) {
             const close_col = @min(width - 1, @as(u16, 1) + chasen.text.displayWidth(self.label));
-            _ = surface.textAt(close_col, 0, "]", opts.style);
+            _ = surface.borrowTextAt(close_col, 0, "]", opts.style);
         }
 
         if (opts.show_cursor) {

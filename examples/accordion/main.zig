@@ -35,8 +35,8 @@ const App = struct {
             .collapsed_title_style = .{ .fg = .gray },
         };
 
-        _ = sfc.textAt(0, 0, "Accordion Example - app-owned sections", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Accordion Example - app-owned sections", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
         var accordion_area = sfc.child(.{ .col = 0, .row = 3, .width = width, .height = height });
         self.accordion.view(&accordion_area, opts);
@@ -65,17 +65,17 @@ const App = struct {
                 .width = activity_body.width -| 2,
                 .height = activity_body.height,
             });
-            _ = activity_body_area.textAt(0, 0, "09:41  Added Accordion component", .{});
+            _ = activity_body_area.borrowTextAt(0, 0, "09:41  Added Accordion component", .{});
             if (activity_body.height > 1) {
-                _ = activity_body_area.textAt(0, 1, "09:43  Wrote app-composed example", .{ .fg = .gray });
+                _ = activity_body_area.borrowTextAt(0, 1, "09:43  Wrote app-composed example", .{ .fg = .gray });
             }
             if (activity_body.height > 2) {
-                _ = activity_body_area.textAt(0, 2, "09:45  Kept expansion state outside UI", .{ .fg = .gray });
+                _ = activity_body_area.borrowTextAt(0, 2, "09:45  Kept expansion state outside UI", .{ .fg = .gray });
             }
         }
 
         const footer_row = size.height -| 1;
-        _ = sfc.textAt(0, footer_row, "Collapsed sections still reserve no body rows; the app decides when that changes.", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, footer_row, "Collapsed sections still reserve no body rows; the app decides when that changes.", .{ .dim = true });
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

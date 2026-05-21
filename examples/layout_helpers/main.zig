@@ -21,9 +21,9 @@ const App = struct {
         const footer = ui.layout.takeBottom(help.rest, 1);
         const page = ui.layout.inset(footer.rest, .{ .top = 1, .right = 0, .bottom = 1, .left = 0 });
 
-        _ = sfc.textAt(title.taken.col, title.taken.row, "Layout Helpers Example", .{ .bold = true });
-        _ = sfc.textAt(help.taken.col, help.taken.row, "Esc: quit  helpers return Rect values; Surface.child(Rect) scopes rendering", .{ .fg = .gray });
-        _ = sfc.textAt(footer.taken.col, footer.taken.row, "takeTop/takeBottom reserve page chrome; inset adds breathing room.", .{ .dim = true });
+        _ = sfc.borrowTextAt(title.taken.col, title.taken.row, "Layout Helpers Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(help.taken.col, help.taken.row, "Esc: quit  helpers return Rect values; Surface.child(Rect) scopes rendering", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(footer.taken.col, footer.taken.row, "takeTop/takeBottom reserve page chrome; inset adds breathing room.", .{ .dim = true });
 
         const left = ui.layout.takeLeft(page, @min(page.width, 24));
         const right = ui.layout.takeRight(left.rest, @min(left.rest.width, 28));
@@ -49,11 +49,11 @@ const App = struct {
         const content = ui.Panel.contentRect(sfc, opts);
         if (content.width == 0 or content.height == 0) return;
         var body = sfc.child(content);
-        _ = body.textAt(0, 0, "Page bands:", .{ .bold = true });
-        _ = body.textAt(0, 2, "takeTop: title/help", .{});
-        _ = body.textAt(0, 3, "takeBottom: footer", .{});
-        _ = body.textAt(0, 4, "takeLeft: sidebar", .{});
-        _ = body.textAt(0, 5, "takeRight: inspector", .{});
+        _ = body.borrowTextAt(0, 0, "Page bands:", .{ .bold = true });
+        _ = body.borrowTextAt(0, 2, "takeTop: title/help", .{});
+        _ = body.borrowTextAt(0, 3, "takeBottom: footer", .{});
+        _ = body.borrowTextAt(0, 4, "takeLeft: sidebar", .{});
+        _ = body.borrowTextAt(0, 5, "takeRight: inspector", .{});
         _ = try body.printAt(0, 7, .{ .fg = .gray }, "area {d}x{d}", .{ sfc.size().width, sfc.size().height });
     }
 
@@ -91,7 +91,7 @@ const App = struct {
 
         for (cols, labels) |col, label| {
             var col_surface = body.child(col);
-            _ = col_surface.textAt(0, 0, label, .{ .bold = true, .fg = .{ .index = 6 } });
+            _ = col_surface.borrowTextAt(0, 0, label, .{ .bold = true, .fg = .{ .index = 6 } });
             _ = try col_surface.printAt(0, 1, .{ .fg = .gray }, "{d}x{d}", .{ col.width, col.height });
         }
     }
@@ -141,15 +141,15 @@ const App = struct {
         const top = ui.layout.takeTop(body_rect, 1);
         const strip_rect = ui.layout.constrain(top.taken, .{ .width = 18, .height = 1 });
         var strip = body.child(strip_rect);
-        _ = strip.textAt(0, 0, "constrain()", .{ .fg = .gray });
+        _ = strip.borrowTextAt(0, 0, "constrain()", .{ .fg = .gray });
 
         // center already clamps the requested size to the parent rect. Passing
         // the desired maximum size is enough for a max-size centered area.
         const card_rect = ui.layout.center(top.rest, .{ .width = 18, .height = 5 });
         var card = body.child(card_rect);
-        _ = card.textAt(0, 0, "center()", .{ .bold = true, .fg = .{ .index = 5 } });
-        _ = card.textAt(0, 2, "clamps size", .{});
-        _ = card.textAt(0, 3, "to parent", .{});
+        _ = card.borrowTextAt(0, 0, "center()", .{ .bold = true, .fg = .{ .index = 5 } });
+        _ = card.borrowTextAt(0, 2, "clamps size", .{});
+        _ = card.borrowTextAt(0, 3, "to parent", .{});
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

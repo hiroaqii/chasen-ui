@@ -89,9 +89,9 @@ pub const Radio = struct {
 
         const marker = if (self.selected_value) "(o)" else "( )";
         const marker_style = if (self.selected_value) opts.selected_style else opts.style;
-        _ = surface.textAt(0, 0, marker, marker_style);
+        _ = surface.borrowTextAt(0, 0, marker, marker_style);
         if (self.label.len > 0) {
-            _ = surface.textAt(4, 0, self.label, opts.label_style);
+            _ = surface.borrowTextAt(4, 0, self.label, opts.label_style);
         }
 
         if (opts.show_cursor) {

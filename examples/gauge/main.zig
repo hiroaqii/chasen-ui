@@ -54,8 +54,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Gauge Example - app-owned metrics", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "r: reset  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Gauge Example - app-owned metrics", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "r: reset  Esc: quit", .{ .fg = .gray });
 
         const p = self.progress();
         const percent: u8 = @intFromFloat(@round(p * 100.0));
@@ -105,7 +105,7 @@ const App = struct {
             .value_style = .{ .fg = .{ .index = 6 } },
         });
 
-        _ = sfc.textAt(0, 12, "Gauge owns presentation only; thresholds and labels stay in app.", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, 12, "Gauge owns presentation only; thresholds and labels stay in app.", .{ .dim = true });
     }
 
     fn progress(self: *const App) f32 {

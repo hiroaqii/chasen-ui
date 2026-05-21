@@ -152,11 +152,11 @@ fn drawHeader(surface: *chasen.Surface, row: u16, width: u16, section: Accordion
     const title_style = if (section.expanded) opts.expanded_title_style else opts.collapsed_title_style;
 
     var col: u16 = 0;
-    _ = surface.textAt(col, row, marker, marker_style);
+    _ = surface.borrowTextAt(col, row, marker, marker_style);
     col +|= chasen.text.displayWidth(marker);
 
     if (col < width and opts.marker_gap.len > 0) {
-        _ = surface.textAt(col, row, opts.marker_gap, title_style);
+        _ = surface.borrowTextAt(col, row, opts.marker_gap, title_style);
         col +|= chasen.text.displayWidth(opts.marker_gap);
     }
 
@@ -167,7 +167,7 @@ fn drawHeader(surface: *chasen.Surface, row: u16, width: u16, section: Accordion
         .width = width - col,
         .height = 1,
     });
-    _ = title_surface.textAt(0, 0, section.title, title_style);
+    _ = title_surface.borrowTextAt(0, 0, section.title, title_style);
 }
 
 fn headerRowFor(sections: []const Accordion.Section, index: usize) ?u16 {

@@ -34,12 +34,12 @@ const App = struct {
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         const size = sfc.size();
 
-        _ = sfc.textAt(0, 0, "Table Example - display modes", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Table Example - display modes", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
         // Minimal is the default and preserves the original sample shape:
         // columns and a header separator, without spreadsheet-style borders.
-        _ = sfc.textAt(0, 3, "minimal grid", .{ .bold = true, .fg = .{ .index = 6 } });
+        _ = sfc.borrowTextAt(0, 3, "minimal grid", .{ .bold = true, .fg = .{ .index = 6 } });
         var minimal_area = sfc.child(.{ .col = 0, .row = 4, .width = @min(size.width, self.table.naturalWidthFor(2, .minimal)), .height = 5 });
         self.table.view(&minimal_area, .{
             .column_gap = 2,
@@ -50,7 +50,7 @@ const App = struct {
         });
 
         // None is useful when surrounding layout already supplies grouping.
-        _ = sfc.textAt(0, 10, "no grid", .{ .bold = true, .fg = .{ .index = 6 } });
+        _ = sfc.borrowTextAt(0, 10, "no grid", .{ .bold = true, .fg = .{ .index = 6 } });
         var no_grid_area = sfc.child(.{ .col = 0, .row = 11, .width = @min(size.width, self.table.naturalWidthFor(2, .none)), .height = 3 });
         self.table.view(&no_grid_area, .{
             .column_gap = 2,
@@ -61,7 +61,7 @@ const App = struct {
 
         // Full draws spreadsheet-like borders and row/column separators. The
         // app still owns sorting, pagination, scrolling, and activation.
-        _ = sfc.textAt(0, 15, "full grid", .{ .bold = true, .fg = .{ .index = 6 } });
+        _ = sfc.borrowTextAt(0, 15, "full grid", .{ .bold = true, .fg = .{ .index = 6 } });
         var full_area = sfc.child(.{ .col = 0, .row = 16, .width = @min(size.width, self.table.naturalWidthFor(0, .full)), .height = size.height -| @min(size.height, 16) });
         self.table.view(&full_area, .{
             .grid = .full,
@@ -71,7 +71,7 @@ const App = struct {
         });
 
         const footer_row = @min(size.height -| 1, 27);
-        _ = sfc.textAt(0, footer_row, "Rows are borrowed; table owns no scroll or selection state.", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, footer_row, "Rows are borrowed; table owns no scroll or selection state.", .{ .dim = true });
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

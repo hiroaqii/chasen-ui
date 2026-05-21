@@ -118,17 +118,17 @@ pub const Select = struct {
         const width = surface.size().width;
         if (width == 0) return;
 
-        _ = surface.textAt(0, 0, opts.prev_marker, opts.marker_style);
+        _ = surface.borrowTextAt(0, 0, opts.prev_marker, opts.marker_style);
         if (width > 1) {
-            _ = surface.textAt(width - 1, 0, opts.next_marker, opts.marker_style);
+            _ = surface.borrowTextAt(width - 1, 0, opts.next_marker, opts.marker_style);
         }
 
         const label = self.selectedLabel() orelse opts.empty_label;
         const label_style = if (self.empty()) opts.empty_style else opts.item_style;
         if (width > 4) {
-            _ = surface.textAt(2, 0, label, label_style);
+            _ = surface.borrowTextAt(2, 0, label, label_style);
         } else if (width > 2) {
-            _ = surface.textAt(1, 0, label, label_style);
+            _ = surface.borrowTextAt(1, 0, label, label_style);
         }
 
         if (opts.show_cursor) {

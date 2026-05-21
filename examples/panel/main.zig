@@ -35,8 +35,8 @@ const App = struct {
             .title_style = .{ .bold = true, .fg = .{ .index = 6 } },
         };
 
-        _ = sfc.textAt(0, 0, "Panel Example - app-composed content", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Panel Example - app-composed content", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
         var panel_area = sfc.child(.{ .col = 0, .row = 3, .width = panel_width, .height = panel_height });
         self.panel.view(&panel_area, panel_opts);
@@ -48,10 +48,10 @@ const App = struct {
         // The content rectangle is normal app-owned space. Panel does not draw
         // these labels, the paragraph, or the status line; it only gives the app
         // a predictable inner area after border and padding are removed.
-        _ = content_area.textAt(0, 0, "Name", .{ .fg = .gray });
-        _ = content_area.textAt(12, 0, "chasen-ui", .{});
-        _ = content_area.textAt(0, 1, "Scope", .{ .fg = .gray });
-        _ = content_area.textAt(12, 1, "structure component", .{});
+        _ = content_area.borrowTextAt(0, 0, "Name", .{ .fg = .gray });
+        _ = content_area.borrowTextAt(12, 0, "chasen-ui", .{});
+        _ = content_area.borrowTextAt(0, 1, "Scope", .{ .fg = .gray });
+        _ = content_area.borrowTextAt(12, 1, "structure component", .{});
 
         if (content.height > 4) {
             var paragraph_area = content_area.child(.{

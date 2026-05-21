@@ -79,7 +79,7 @@ pub const PasswordInput = struct {
 
         if (self.input.value.items.len == 0) {
             if (self.input.placeholder.len > 0) {
-                _ = surface.textAt(0, 0, self.input.placeholder, opts.placeholder_style);
+                _ = surface.borrowTextAt(0, 0, self.input.placeholder, opts.placeholder_style);
             }
         } else {
             drawMask(surface, visibleSecretCount(self.input.value.items, self.input.cursor, width), opts.mask, opts.style, width);
@@ -98,7 +98,7 @@ fn drawMask(surface: *chasen.Surface, count: u16, mask: []const u8, style: chase
     var col: u16 = 0;
     var index: u16 = 0;
     while (index < count and col < width) : (index += 1) {
-        _ = surface.textAt(col, 0, mask, style);
+        _ = surface.borrowTextAt(col, 0, mask, style);
         col +|= mask_width;
     }
 }

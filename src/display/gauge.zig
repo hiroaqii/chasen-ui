@@ -119,21 +119,21 @@ fn reservedTextWidth(text: []const u8, minimum_width: u16) u16 {
 
 fn drawText(surface: *chasen.Surface, cursor: *u16, text: []const u8, style: chasen.TextStyle, width: u16) void {
     if (text.len == 0 or cursor.* >= width) return;
-    _ = surface.textAt(cursor.*, 0, text, style);
+    _ = surface.borrowTextAt(cursor.*, 0, text, style);
     cursor.* +|= chasen.text.displayWidth(text);
 }
 
 fn drawSpaces(surface: *chasen.Surface, cursor: *u16, count: u16, width: u16) void {
     var index: u16 = 0;
     while (index < count and cursor.* < width) : (index += 1) {
-        _ = surface.textAt(cursor.*, 0, " ", .{});
+        _ = surface.borrowTextAt(cursor.*, 0, " ", .{});
         cursor.* +|= 1;
     }
 }
 
 fn padTo(surface: *chasen.Surface, cursor: *u16, target: u16, width: u16) void {
     while (cursor.* < target and cursor.* < width) {
-        _ = surface.textAt(cursor.*, 0, " ", .{});
+        _ = surface.borrowTextAt(cursor.*, 0, " ", .{});
         cursor.* +|= 1;
     }
 }

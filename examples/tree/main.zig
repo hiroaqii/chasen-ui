@@ -30,8 +30,8 @@ const App = struct {
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         const size = sfc.size();
 
-        _ = sfc.textAt(0, 0, "Tree Example - app-owned visibility", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Tree Example - app-owned visibility", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
         // The component draws depth guides, markers, and labels only. The app
         // decides which nodes are visible and what expand/collapse means.
@@ -45,7 +45,7 @@ const App = struct {
         });
 
         const footer_row = size.height -| 1;
-        _ = sfc.textAt(0, footer_row, "Nodes are borrowed; tree owns no expansion or focus state.", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, footer_row, "Nodes are borrowed; tree owns no expansion or focus state.", .{ .dim = true });
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

@@ -28,8 +28,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Tabs Example - component-owned active tab", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Left/Right: focus tab  Enter/Space: activate  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Tabs Example - component-owned active tab", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Left/Right: focus tab  Enter/Space: activate  Esc: quit", .{ .fg = .gray });
 
         // Tabs stores focus and active index locally. The app reads activeIndex
         // and decides which panel content belongs below the tab strip.
@@ -40,25 +40,25 @@ const App = struct {
             .focused_active_style = .{ .bold = true, .fg = .{ .index = 2 } },
         });
 
-        _ = sfc.textAt(0, 5, "Panel", .{ .bold = true, .fg = .{ .index = 2 } });
+        _ = sfc.borrowTextAt(0, 5, "Panel", .{ .bold = true, .fg = .{ .index = 2 } });
         switch (self.tabs.activeIndex()) {
             0 => {
-                _ = sfc.textAt(0, 6, "System health: nominal", .{});
-                _ = sfc.textAt(0, 7, "Open work items: 4", .{});
+                _ = sfc.borrowTextAt(0, 6, "System health: nominal", .{});
+                _ = sfc.borrowTextAt(0, 7, "Open work items: 4", .{});
             },
             1 => {
-                _ = sfc.textAt(0, 6, "Owner: Platform", .{});
-                _ = sfc.textAt(0, 7, "Updated: today", .{});
+                _ = sfc.borrowTextAt(0, 6, "Owner: Platform", .{});
+                _ = sfc.borrowTextAt(0, 7, "Updated: today", .{});
             },
             2 => {
-                _ = sfc.textAt(0, 6, "09:30 build passed", .{});
-                _ = sfc.textAt(0, 7, "10:15 review requested", .{});
+                _ = sfc.borrowTextAt(0, 6, "09:30 build passed", .{});
+                _ = sfc.borrowTextAt(0, 7, "10:15 review requested", .{});
             },
             else => {},
         }
 
-        _ = sfc.textAt(0, 10, "Tabs owns focus and active index", .{ .dim = true });
-        _ = sfc.textAt(0, 11, "Panel meaning stays in app", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, 10, "Tabs owns focus and active index", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, 11, "Panel meaning stays in app", .{ .dim = true });
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

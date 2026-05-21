@@ -102,14 +102,14 @@ fn hasHeader(opts: Alert.ViewOptions) bool {
 
 fn drawText(surface: *chasen.Surface, cursor: *u16, row: u16, text: []const u8, style: chasen.TextStyle, width: u16) void {
     if (text.len == 0 or cursor.* >= width) return;
-    _ = surface.textAt(cursor.*, row, text, style);
+    _ = surface.borrowTextAt(cursor.*, row, text, style);
     cursor.* +|= chasen.text.displayWidth(text);
 }
 
 fn drawSpaces(surface: *chasen.Surface, cursor: *u16, row: u16, count: u16, style: chasen.TextStyle, width: u16) void {
     var index: u16 = 0;
     while (index < count and cursor.* < width) : (index += 1) {
-        _ = surface.textAt(cursor.*, row, " ", style);
+        _ = surface.borrowTextAt(cursor.*, row, " ", style);
         cursor.* +|= 1;
     }
 }

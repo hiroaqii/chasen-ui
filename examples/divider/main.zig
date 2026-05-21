@@ -15,22 +15,22 @@ const App = struct {
     };
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Divider Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Divider Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
-        _ = sfc.textAt(0, 3, "Account", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 3, "Account", .{ .bold = true });
         // A horizontal divider draws one glyph per cell on a single row. The
         // default glyph is "-", but callers can replace it with glyph option.
         var account_divider = sfc.child(.{ .col = 0, .row = 4, .width = 40, .height = 1 });
         self.divider.view(&account_divider, .{});
-        _ = sfc.textAt(0, 5, "Username", .{});
-        _ = sfc.textAt(14, 5, "hiro", .{ .dim = true });
-        _ = sfc.textAt(0, 6, "Notifications", .{});
-        _ = sfc.textAt(14, 6, "enabled", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, 5, "Username", .{});
+        _ = sfc.borrowTextAt(14, 5, "hiro", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, 6, "Notifications", .{});
+        _ = sfc.borrowTextAt(14, 6, "enabled", .{ .dim = true });
 
-        _ = sfc.textAt(0, 9, "Two columns", .{ .bold = true });
-        _ = sfc.textAt(0, 11, "Left side", .{});
-        _ = sfc.textAt(22, 11, "Right side", .{});
+        _ = sfc.borrowTextAt(0, 9, "Two columns", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 11, "Left side", .{});
+        _ = sfc.borrowTextAt(22, 11, "Right side", .{});
         // A vertical divider uses the same component with direction changed.
         // The default vertical glyph is "|".
         var column_divider = sfc.child(.{ .col = 18, .row = 10, .width = 1, .height = 4 });
@@ -38,7 +38,7 @@ const App = struct {
             .direction = .vertical,
         });
 
-        _ = sfc.textAt(0, 16, "Custom glyph", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 16, "Custom glyph", .{ .bold = true });
         // The glyph is not fixed. Use a one-display-cell string when changing
         // it so each cell still lines up with the next one.
         var custom_divider = sfc.child(.{ .col = 0, .row = 17, .width = 40, .height = 1 });

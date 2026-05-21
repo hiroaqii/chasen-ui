@@ -43,8 +43,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Radio Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Up/Down: move  Space/Enter: select  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Radio Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Up/Down: move  Space/Enter: select  Esc: quit", .{ .fg = .gray });
 
         for (&self.radios, 0..) |*radio, i| {
             var radio_area = sfc.child(.{ .col = 0, .row = @intCast(3 + i), .width = 40, .height = 1 });
@@ -53,10 +53,10 @@ const App = struct {
             });
         }
 
-        _ = sfc.textAt(0, 7, "Selected:", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 7, "Selected:", .{ .fg = .gray });
         for (self.radios) |radio| {
             if (radio.selected()) {
-                _ = sfc.textAt(10, 7, radio.label, .{});
+                _ = sfc.borrowTextAt(10, 7, radio.label, .{});
                 break;
             }
         }

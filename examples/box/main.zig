@@ -32,8 +32,8 @@ const App = struct {
             .fill_style = .{ .bg = .{ .index = 236 } },
         };
 
-        _ = sfc.textAt(0, 0, "Box Example - borderless composition", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Box Example - borderless composition", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
         var box_area = sfc.child(.{
             .col = 0,
@@ -49,11 +49,11 @@ const App = struct {
 
         // The content is still normal app-owned drawing. Box does not know
         // that this area is a summary card, a form section, or a detail pane.
-        _ = content_area.textAt(0, 0, "Summary", .{ .bold = true, .fg = .{ .index = 6 } });
-        _ = content_area.textAt(0, 1, "Container", .{ .fg = .gray });
-        _ = content_area.textAt(12, 1, "Box", .{});
-        _ = content_area.textAt(0, 2, "Chrome", .{ .fg = .gray });
-        _ = content_area.textAt(12, 2, "none", .{});
+        _ = content_area.borrowTextAt(0, 0, "Summary", .{ .bold = true, .fg = .{ .index = 6 } });
+        _ = content_area.borrowTextAt(0, 1, "Container", .{ .fg = .gray });
+        _ = content_area.borrowTextAt(12, 1, "Box", .{});
+        _ = content_area.borrowTextAt(0, 2, "Chrome", .{ .fg = .gray });
+        _ = content_area.borrowTextAt(12, 2, "none", .{});
 
         if (content.height > 5) {
             var paragraph_area = content_area.child(.{

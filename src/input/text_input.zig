@@ -146,9 +146,9 @@ pub const TextInput = struct {
 
         const visible = self.visibleText(width);
         if (visible.len == 0 and self.value.items.len == 0 and self.placeholder.len > 0) {
-            _ = surface.textAt(0, 0, self.placeholder, opts.placeholder_style);
+            _ = surface.borrowTextAt(0, 0, self.placeholder, opts.placeholder_style);
         } else {
-            _ = surface.textAt(0, 0, visible, opts.style);
+            _ = surface.borrowTextAt(0, 0, visible, opts.style);
         }
 
         if (opts.show_cursor) {

@@ -130,7 +130,7 @@ pub const Tabs = struct {
         if (width == 0) return;
 
         if (self.empty()) {
-            _ = surface.textAt(0, 0, opts.empty_label, opts.empty_style);
+            _ = surface.borrowTextAt(0, 0, opts.empty_label, opts.empty_style);
             if (opts.show_cursor) surface.showCursor(0, 0);
             return;
         }
@@ -145,12 +145,12 @@ pub const Tabs = struct {
             const active = self.activeIndex() == i;
             if (focused) focused_col = @min(col + 1, width - 1);
 
-            _ = surface.textAt(col, 0, opts.left_marker, opts.marker_style);
+            _ = surface.borrowTextAt(col, 0, opts.left_marker, opts.marker_style);
             if (tab_width > 1) {
-                _ = surface.textAt(col + 1, 0, item, itemStyle(opts, focused, active));
+                _ = surface.borrowTextAt(col + 1, 0, item, itemStyle(opts, focused, active));
             }
             if (tab_width > 2) {
-                _ = surface.textAt(col + tab_width - 1, 0, opts.right_marker, opts.marker_style);
+                _ = surface.borrowTextAt(col + tab_width - 1, 0, opts.right_marker, opts.marker_style);
             }
 
             col += tab_width;

@@ -43,11 +43,11 @@ const App = struct {
             .fill_style = .{ .bg = .{ .index = 8 } },
         });
 
-        _ = sfc.textAt(0, 2, " 1  const std = @import(\"std\");", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 2, " 1  const std = @import(\"std\");", .{ .fg = .gray });
         for (buffer_lines, 0..) |line, index| {
             const row: u16 = @intCast(index + 3);
-            _ = sfc.textAt(0, row, "    ", .{ .fg = .gray });
-            _ = sfc.textAt(4, row, line, .{});
+            _ = sfc.borrowTextAt(0, row, "    ", .{ .fg = .gray });
+            _ = sfc.borrowTextAt(4, row, line, .{});
         }
 
         // A narrow status line can summarize a small panel.

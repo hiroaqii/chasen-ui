@@ -69,16 +69,16 @@ pub const StatusLine = struct {
         // Draw left, center, then right. When a narrow width causes overlap,
         // later slots overwrite earlier slots. This keeps the right hint or
         // summary visible, which is usually the most compact status item.
-        _ = surface.textAt(0, 0, self.left, opts.style);
-        _ = surface.textAt(centerCol(self.center, width), 0, self.center, opts.style);
-        _ = surface.textAt(rightCol(self.right, width), 0, self.right, opts.style);
+        _ = surface.borrowTextAt(0, 0, self.left, opts.style);
+        _ = surface.borrowTextAt(centerCol(self.center, width), 0, self.center, opts.style);
+        _ = surface.borrowTextAt(rightCol(self.right, width), 0, self.right, opts.style);
     }
 };
 
 fn fillLine(surface: *chasen.Surface, width: u16, style: chasen.TextStyle) void {
     var col: u16 = 0;
     while (col < width) : (col += 1) {
-        _ = surface.textAt(col, 0, " ", style);
+        _ = surface.borrowTextAt(col, 0, " ", style);
     }
 }
 

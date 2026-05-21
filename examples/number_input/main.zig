@@ -63,8 +63,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "NumberInput Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Digits only  Enter: submit  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "NumberInput Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Digits only  Enter: submit  Esc: quit", .{ .fg = .gray });
 
         if (self.quantity) |*quantity| {
             // NumberInput filters inserted characters. The app still decides
@@ -74,7 +74,7 @@ const App = struct {
         }
 
         if (self.status) |status| {
-            _ = sfc.textAt(0, 5, status, .{ .fg = .{ .index = 2 } });
+            _ = sfc.borrowTextAt(0, 5, status, .{ .fg = .{ .index = 2 } });
         }
     }
 

@@ -136,7 +136,7 @@ fn countWrappedLines(text: []const u8, width: u16) usize {
 }
 
 fn drawLine(surface: *chasen.Surface, row: u16, line: []const u8, style: chasen.TextStyle) void {
-    _ = surface.textAt(0, row, line, style);
+    _ = surface.borrowTextAt(0, row, line, style);
 }
 
 fn isLineBreak(bytes: []const u8) bool {

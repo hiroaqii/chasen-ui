@@ -59,12 +59,12 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Toast Example - app-owned lifetime", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "n: notify  d: dismiss  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Toast Example - app-owned lifetime", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "n: notify  d: dismiss  Esc: quit", .{ .fg = .gray });
 
-        _ = sfc.textAt(0, 3, "Main screen keeps rendering while the toast is visible.", .{});
-        _ = sfc.textAt(0, 5, "Toast owns only the small notification chrome.", .{ .dim = true });
-        _ = sfc.textAt(0, 6, "Visibility, queue, placement, and timer policy stay in app.", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, 3, "Main screen keeps rendering while the toast is visible.", .{});
+        _ = sfc.borrowTextAt(0, 5, "Toast owns only the small notification chrome.", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, 6, "Visibility, queue, placement, and timer policy stay in app.", .{ .dim = true });
 
         if (self.visible) {
             const rect = toastRect(sfc, 36, 3);

@@ -122,9 +122,9 @@ pub const List = struct {
             const item_style = itemStyle(opts, focused, selected);
             const marker = if (focused) opts.focused_marker else opts.marker;
 
-            _ = surface.textAt(0, row, marker, opts.marker_style);
+            _ = surface.borrowTextAt(0, row, marker, opts.marker_style);
             if (width > 2) {
-                _ = surface.textAt(2, row, item, item_style);
+                _ = surface.borrowTextAt(2, row, item, item_style);
             }
         }
 

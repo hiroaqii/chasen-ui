@@ -71,8 +71,8 @@ const App = struct {
         const width = @min(size.width, 64);
         const height = @min(size.height -| @min(size.height, 8), 8);
 
-        _ = sfc.textAt(0, 0, "TextArea Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Enter: newline  Ctrl+S: save  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "TextArea Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Enter: newline  Ctrl+S: save  Esc: quit", .{ .fg = .gray });
 
         if (self.area) |*area| {
             // TextArea draws explicit lines inside the app-provided rectangle
@@ -86,7 +86,7 @@ const App = struct {
             });
 
             const meta_row = 4 + height;
-            _ = sfc.textAt(0, meta_row, "Cursor:", .{ .fg = .gray });
+            _ = sfc.borrowTextAt(0, meta_row, "Cursor:", .{ .fg = .gray });
             _ = try sfc.printAt(8, meta_row, .{}, "line {d}, chars {d}, cells {d}  visible {d}-{d}", .{
                 area.cursorLine() + 1,
                 area.cursorGraphemeColumn(),
@@ -98,8 +98,8 @@ const App = struct {
 
         if (self.last_saved) |saved| {
             const saved_row = 6 + height;
-            _ = sfc.textAt(0, saved_row, "Saved snapshot:", .{ .fg = .{ .index = 2 } });
-            _ = sfc.textAt(16, saved_row, saved, .{ .fg = .{ .index = 2 } });
+            _ = sfc.borrowTextAt(0, saved_row, "Saved snapshot:", .{ .fg = .{ .index = 2 } });
+            _ = sfc.borrowTextAt(16, saved_row, saved, .{ .fg = .{ .index = 2 } });
         }
     }
 

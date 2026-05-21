@@ -74,7 +74,7 @@ pub const Breadcrumbs = struct {
         if (width == 0) return;
 
         if (self.empty()) {
-            _ = surface.textAt(0, 0, opts.empty_label, opts.empty_style);
+            _ = surface.borrowTextAt(0, 0, opts.empty_label, opts.empty_style);
             return;
         }
 
@@ -96,7 +96,7 @@ fn drawText(surface: *chasen.Surface, col: *u16, width: u16, text: []const u8, s
     const text_width = chasen.text.displayWidth(text);
     if (text_width > width - col.*) return false;
 
-    _ = surface.textAt(col.*, 0, text, style);
+    _ = surface.borrowTextAt(col.*, 0, text, style);
     col.* += text_width;
     return true;
 }

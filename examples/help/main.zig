@@ -26,7 +26,7 @@ const App = struct {
     };
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Help Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 0, "Help Example", .{ .bold = true });
 
         // The app chooses the shortcuts and action wording. Help only draws a
         // compact one-line summary of the borrowed item list.

@@ -91,8 +91,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "FormField Example - app-owned validation", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Up/Down: fields  Enter: next  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "FormField Example - app-owned validation", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Up/Down: fields  Enter: next  Esc: quit", .{ .fg = .gray });
 
         const username_error: ?[]const u8 = if (self.username) |*username|
             if (username.text().len == 0) "Username is required" else null
@@ -126,7 +126,7 @@ const App = struct {
             });
         }
 
-        _ = sfc.textAt(0, 12, "FormField owns chrome only; submit/save policy stays in app.", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, 12, "FormField owns chrome only; submit/save policy stays in app.", .{ .dim = true });
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

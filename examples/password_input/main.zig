@@ -59,8 +59,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "PasswordInput Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Enter: submit  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "PasswordInput Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Enter: submit  Esc: quit", .{ .fg = .gray });
 
         if (self.password) |*password| {
             // PasswordInput handles editing like TextInput, but view draws mask
@@ -70,7 +70,7 @@ const App = struct {
         }
 
         if (self.status) |status| {
-            _ = sfc.textAt(0, 5, status, .{ .fg = .{ .index = 2 } });
+            _ = sfc.borrowTextAt(0, 5, status, .{ .fg = .{ .index = 2 } });
         }
     }
 

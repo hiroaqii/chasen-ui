@@ -17,10 +17,10 @@ const App = struct {
     };
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Badge Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Badge Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
-        _ = sfc.textAt(0, 3, "Task", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 3, "Task", .{ .bold = true });
         // chasen-graphics provides the status glyph as data. Badge receives a
         // marker and text only; it does not know what "ready" means.
         var ready_area = sfc.child(.{ .col = 14, .row = 3, .width = 16, .height = 1 });
@@ -32,7 +32,7 @@ const App = struct {
             .padding_style = .{ .bg = .{ .index = 22 } },
         });
 
-        _ = sfc.textAt(0, 5, "Queue", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 5, "Queue", .{ .bold = true });
         // Count formatting is app policy. Because Badge needs the formatted
         // value as a borrowed label, the app stores it in the frame arena
         // before passing it to the component. Direct formatted drawing should
@@ -45,7 +45,7 @@ const App = struct {
             .padding_style = .{ .bg = .{ .index = 24 } },
         });
 
-        _ = sfc.textAt(0, 7, "Mode", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 7, "Mode", .{ .bold = true });
         // A badge can also be just a compact mode label. There is no marker
         // requirement and no status model hidden inside the component.
         var mode_area = sfc.child(.{ .col = 14, .row = 7, .width = 16, .height = 1 });
@@ -55,7 +55,7 @@ const App = struct {
             .padding_style = .{ .bg = .{ .index = 8 } },
         });
 
-        _ = sfc.textAt(0, 9, "Fallback", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 9, "Fallback", .{ .bold = true });
         // ASCII status fallbacks use the same Badge API. The app decides which
         // glyph set fits the terminal or style it is targeting.
         var fallback_area = sfc.child(.{ .col = 14, .row = 9, .width = 16, .height = 1 });

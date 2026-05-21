@@ -147,7 +147,7 @@ fn drawTitle(surface: *chasen.Surface, width: u16, opts: Panel.ViewOptions) void
         .width = max_width,
         .height = 1,
     });
-    _ = title_surface.textAt(0, 0, opts.title, opts.title_style);
+    _ = title_surface.borrowTextAt(0, 0, opts.title, opts.title_style);
 
     const title_width = @min(chasen.text.displayWidth(opts.title), max_width);
     const after_title = start + title_width;
@@ -157,7 +157,7 @@ fn drawTitle(surface: *chasen.Surface, width: u16, opts: Panel.ViewOptions) void
 }
 
 fn drawText(surface: *chasen.Surface, col: u16, row: u16, text: []const u8, style: chasen.TextStyle) void {
-    _ = surface.textAt(col, row, text, style);
+    _ = surface.borrowTextAt(col, row, text, style);
 }
 
 test "Panel initializes from options" {

@@ -38,8 +38,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Button Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Arrows: move  Enter/Space: press  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Button Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Arrows: move  Enter/Space: press  Esc: quit", .{ .fg = .gray });
 
         // The focused button gets both focused styling and the terminal cursor
         // in this example. The two options are separate so apps can split them
@@ -60,7 +60,7 @@ const App = struct {
                 .save => "Pressed: Save",
                 .cancel => "Pressed: Cancel",
             };
-            _ = sfc.textAt(0, 5, label, .{ .fg = .{ .index = 2 } });
+            _ = sfc.borrowTextAt(0, 5, label, .{ .fg = .{ .index = 2 } });
         }
     }
 

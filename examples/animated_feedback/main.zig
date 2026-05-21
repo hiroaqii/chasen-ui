@@ -69,8 +69,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Animated Feedback Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Space: pause/resume  r: reset  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Animated Feedback Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Space: pause/resume  r: reset  Esc: quit", .{ .fg = .gray });
 
         // chasen-anim turns the app's monotonically increasing frame into an
         // index that wraps across the graphics preset's frame list. Spinner
@@ -98,7 +98,7 @@ const App = struct {
         const percent: u8 = @intFromFloat(@round(p * 100.0));
         const status = if (self.running) "running" else "paused";
         // printAt formats into the frame arena before drawing, so this avoids
-        // the short-lived buffer lifetime issue of allocPrint(...) + textAt(...).
+        // the short-lived buffer lifetime issue of allocPrint(...) + borrowTextAt(...).
         _ = try sfc.printAt(
             0,
             7,

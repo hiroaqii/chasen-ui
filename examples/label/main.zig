@@ -20,8 +20,8 @@ const App = struct {
     };
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Label Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Label Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
         // The same Label component can be styled as a section heading.
         var title_area = sfc.child(.{ .col = 0, .row = 3, .width = 30, .height = 1 });
@@ -35,7 +35,7 @@ const App = struct {
         self.username.view(&username_area, .{
             .style = .{ .bold = true },
         });
-        _ = sfc.textAt(14, 5, "hiro", .{});
+        _ = sfc.borrowTextAt(14, 5, "hiro", .{});
         var username_hint_area = sfc.child(.{ .col = 14, .row = 6, .width = 40, .height = 1 });
         self.username_hint.view(&username_hint_area, .{
             .style = .{ .dim = true },
@@ -45,7 +45,7 @@ const App = struct {
         self.email.view(&email_area, .{
             .style = .{ .bold = true },
         });
-        _ = sfc.textAt(14, 8, "hiro@example.com", .{});
+        _ = sfc.borrowTextAt(14, 8, "hiro@example.com", .{});
         var email_hint_area = sfc.child(.{ .col = 14, .row = 9, .width = 40, .height = 1 });
         self.email_hint.view(&email_hint_area, .{
             .style = .{ .dim = true },

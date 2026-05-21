@@ -170,7 +170,7 @@ pub const TextArea = struct {
         if (width == 0 or height == 0) return;
 
         if (self.value.items.len == 0 and self.placeholder.len > 0) {
-            _ = surface.textAt(0, 0, self.placeholder, opts.placeholder_style);
+            _ = surface.borrowTextAt(0, 0, self.placeholder, opts.placeholder_style);
         } else {
             drawLines(surface, self.value.items, opts.scroll_line, height, opts.style);
         }
@@ -414,7 +414,7 @@ fn drawLines(surface: *chasen.Surface, text: []const u8, scroll_line: usize, hei
     while (i <= text.len) : (i += 1) {
         if (i == text.len or text[i] == '\n') {
             if (source_line >= scroll_line) {
-                _ = surface.textAt(0, row, text[line_start..i], style);
+                _ = surface.borrowTextAt(0, row, text[line_start..i], style);
                 row += 1;
                 if (row >= height) return;
             }

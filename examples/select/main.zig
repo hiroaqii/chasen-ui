@@ -56,28 +56,28 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Select Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Tab: focus  Left/Right/Up/Down: change  Enter/Space: save  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Select Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Tab: focus  Left/Right/Up/Down: change  Enter/Space: save  Esc: quit", .{ .fg = .gray });
 
-        _ = sfc.textAt(0, 3, "Theme", labelStyle(self.focus.isFocused(0)));
+        _ = sfc.borrowTextAt(0, 3, "Theme", labelStyle(self.focus.isFocused(0)));
         var theme_area = sfc.child(.{ .col = 14, .row = 3, .width = 20, .height = 1 });
         self.theme.view(&theme_area, .{
             .item_style = itemStyle(self.focus.isFocused(0)),
             .show_cursor = self.focus.isFocused(0),
         });
 
-        _ = sfc.textAt(0, 5, "Density", labelStyle(self.focus.isFocused(1)));
+        _ = sfc.borrowTextAt(0, 5, "Density", labelStyle(self.focus.isFocused(1)));
         var density_area = sfc.child(.{ .col = 14, .row = 5, .width = 20, .height = 1 });
         self.density.view(&density_area, .{
             .item_style = itemStyle(self.focus.isFocused(1)),
             .show_cursor = self.focus.isFocused(1),
         });
 
-        _ = sfc.textAt(0, 8, "Saved values", .{ .bold = true });
-        _ = sfc.textAt(0, 9, "Theme:", .{ .fg = .gray });
-        _ = sfc.textAt(10, 9, theme_items[self.saved_theme], .{});
-        _ = sfc.textAt(0, 10, "Density:", .{ .fg = .gray });
-        _ = sfc.textAt(10, 10, density_items[self.saved_density], .{});
+        _ = sfc.borrowTextAt(0, 8, "Saved values", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 9, "Theme:", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(10, 9, theme_items[self.saved_theme], .{});
+        _ = sfc.borrowTextAt(0, 10, "Density:", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(10, 10, density_items[self.saved_density], .{});
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

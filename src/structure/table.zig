@@ -326,14 +326,14 @@ fn gridRightGlyph(style: Table.GridStyle, kind: GridLineKind) []const u8 {
 
 fn drawGridGlyph(surface: *chasen.Surface, cursor: *u16, row: u16, glyph: []const u8, style: chasen.TextStyle, max_width: u16) void {
     if (cursor.* >= max_width) return;
-    _ = surface.textAt(cursor.*, row, glyph, style);
+    _ = surface.borrowTextAt(cursor.*, row, glyph, style);
     cursor.* +|= 1;
 }
 
 fn drawRepeatedGlyph(surface: *chasen.Surface, cursor: *u16, row: u16, glyph: []const u8, count: u16, style: chasen.TextStyle, max_width: u16) void {
     var index: u16 = 0;
     while (index < count and cursor.* < max_width) : (index += 1) {
-        _ = surface.textAt(cursor.*, row, glyph, style);
+        _ = surface.borrowTextAt(cursor.*, row, glyph, style);
         cursor.* +|= 1;
     }
 }
@@ -400,7 +400,7 @@ fn drawSeparator(
         const width = @min(column.width, remaining);
         var col: u16 = 0;
         while (col < width) : (col += 1) {
-            _ = surface.textAt(cursor + col, row, "-", style);
+            _ = surface.borrowTextAt(cursor + col, row, "-", style);
         }
         cursor +|= column.width;
     }
@@ -421,7 +421,7 @@ fn drawCell(
         .width = width,
         .height = 1,
     });
-    _ = child.textAt(alignedCol(text, width, alignment), 0, text, style);
+    _ = child.borrowTextAt(alignedCol(text, width, alignment), 0, text, style);
 }
 
 fn cellText(cells: Table.Row, index: usize) []const u8 {

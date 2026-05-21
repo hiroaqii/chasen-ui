@@ -29,24 +29,24 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "MultiSelectList Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Up/Down: move  Enter/Space: toggle  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "MultiSelectList Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Up/Down: move  Enter/Space: toggle  Esc: quit", .{ .fg = .gray });
 
         // The component stores checked items locally. The app reads the count
         // and can decide what selected accessories mean.
         var list_area = sfc.child(.{ .col = 0, .row = 3, .width = 28, .height = 6 });
         self.list.view(&list_area, .{});
 
-        _ = sfc.textAt(34, 3, "Selected accessories", .{ .bold = true, .fg = .{ .index = 2 } });
-        _ = sfc.textAt(34, 4, "count", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(34, 3, "Selected accessories", .{ .bold = true, .fg = .{ .index = 2 } });
+        _ = sfc.borrowTextAt(34, 4, "count", .{ .fg = .gray });
         // printAt formats into the frame arena before drawing, so this avoids
-        // the short-lived buffer lifetime issue of allocPrint(...) + textAt(...).
+        // the short-lived buffer lifetime issue of allocPrint(...) + borrowTextAt(...).
         _ = try sfc.printAt(42, 4, .{ .fg = .{ .index = 2 } }, "{d}", .{self.list.selectedCount()});
 
         var row: u16 = 6;
         for (items, 0..) |item, index| {
             if (!self.list.isSelected(index)) continue;
-            _ = sfc.textAt(34, row, item, .{});
+            _ = sfc.borrowTextAt(34, row, item, .{});
             row += 1;
         }
     }

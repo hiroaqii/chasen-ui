@@ -127,9 +127,9 @@ pub const MultiSelectList = struct {
             const selected = self.isSelected(i);
             const marker = if (selected) opts.selected_marker else opts.marker;
 
-            _ = surface.textAt(0, row, marker, opts.marker_style);
+            _ = surface.borrowTextAt(0, row, marker, opts.marker_style);
             if (width > 4) {
-                _ = surface.textAt(4, row, item, itemStyle(opts, focused, selected));
+                _ = surface.borrowTextAt(4, row, item, itemStyle(opts, focused, selected));
             }
         }
 

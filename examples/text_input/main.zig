@@ -62,8 +62,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "TextInput Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Enter: submit  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "TextInput Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Enter: submit  Esc: quit", .{ .fg = .gray });
 
         if (self.input) |*input| {
             // view only draws. Input handling and mutation happen in
@@ -71,13 +71,13 @@ const App = struct {
             var input_area = sfc.child(.{ .col = 0, .row = 3, .width = 40, .height = 1 });
             input.view(&input_area, .{});
 
-            _ = sfc.textAt(0, 5, "Value:", .{ .fg = .gray });
-            _ = sfc.textAt(7, 5, input.text(), .{});
+            _ = sfc.borrowTextAt(0, 5, "Value:", .{ .fg = .gray });
+            _ = sfc.borrowTextAt(7, 5, input.text(), .{});
         }
 
         if (self.last_submitted) |submitted| {
-            _ = sfc.textAt(0, 7, "Submitted:", .{ .fg = .{ .index = 2 } });
-            _ = sfc.textAt(11, 7, submitted, .{ .fg = .{ .index = 2 } });
+            _ = sfc.borrowTextAt(0, 7, "Submitted:", .{ .fg = .{ .index = 2 } });
+            _ = sfc.borrowTextAt(11, 7, submitted, .{ .fg = .{ .index = 2 } });
         }
     }
 

@@ -16,10 +16,10 @@ const App = struct {
     };
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Rating Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Rating Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
-        _ = sfc.textAt(0, 3, "Movie", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 3, "Movie", .{ .bold = true });
         // The app decides this is a 4-out-of-5 score. chasen-graphics only
         // provides glyph presets; Rating receives them as plain borrowed
         // labels and does not depend on the graphics package itself.
@@ -33,7 +33,7 @@ const App = struct {
             .empty_style = .{ .dim = true, .fg = .gray },
         });
 
-        _ = sfc.textAt(0, 5, "Service", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 5, "Service", .{ .bold = true });
         // The scale is not fixed to five items. Passing counts keeps validation
         // and domain meaning in the app instead of inside the component.
         var service_area = sfc.child(.{ .col = 14, .row = 5, .width = 14, .height = 1 });
@@ -47,7 +47,7 @@ const App = struct {
             .empty_style = .{ .dim = true, .fg = .gray },
         });
 
-        _ = sfc.textAt(0, 7, "Fallback", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 7, "Fallback", .{ .bold = true });
         // ASCII fallback glyphs are useful for terminals or fonts where star
         // glyphs are not desirable. The component API is the same either way.
         var fallback_area = sfc.child(.{ .col = 14, .row = 7, .width = 14, .height = 1 });

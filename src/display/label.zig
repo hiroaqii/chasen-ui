@@ -31,7 +31,7 @@ pub const Label = struct {
     /// Draw the label into the provided one-line surface region.
     pub fn view(self: *const Label, surface: *chasen.Surface, opts: ViewOptions) void {
         if (surface.size().width == 0) return;
-        _ = surface.textAt(0, 0, self.text, opts.style);
+        _ = surface.borrowTextAt(0, 0, self.text, opts.style);
     }
 };
 

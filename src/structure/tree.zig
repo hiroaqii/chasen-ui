@@ -107,13 +107,13 @@ fn drawNode(surface: *chasen.Surface, row: u16, node: Tree.Node, opts: Tree.View
         while (depth < node.depth) : (depth += 1) {
             const col = depth *| opts.indent_width;
             if (col >= width) return;
-            _ = surface.textAt(col, row, opts.glyphs.guide, opts.guide_style);
+            _ = surface.borrowTextAt(col, row, opts.glyphs.guide, opts.guide_style);
         }
     }
 
     if (opts.show_markers) {
         if (indent >= width) return;
-        _ = surface.textAt(indent, row, markerFor(node, opts.glyphs), opts.marker_style);
+        _ = surface.borrowTextAt(indent, row, markerFor(node, opts.glyphs), opts.marker_style);
     }
 
     const label_col = Tree.labelCol(node.depth, opts.indent_width, opts.show_markers);
@@ -125,7 +125,7 @@ fn drawNode(surface: *chasen.Surface, row: u16, node: Tree.Node, opts: Tree.View
         .width = width - label_col,
         .height = 1,
     });
-    _ = label_surface.textAt(0, 0, node.label, opts.label_style);
+    _ = label_surface.borrowTextAt(0, 0, node.label, opts.label_style);
 }
 
 fn markerFor(node: Tree.Node, glyphs: Tree.Glyphs) []const u8 {

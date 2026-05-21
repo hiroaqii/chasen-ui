@@ -52,8 +52,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Spinner Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Space: pause/resume  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Spinner Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Space: pause/resume  Esc: quit", .{ .fg = .gray });
 
         // The app passes the current frame index into Spinner.view. Replacing
         // this with a value from chasen-anim.loopIndex later would not require
@@ -68,7 +68,7 @@ const App = struct {
         // is not mistaken for a timestamp.
         const elapsed_seconds = @as(f64, @floatFromInt(self.elapsed_ns)) / @as(f64, @floatFromInt(std.time.ns_per_s));
         // printAt formats into the frame arena before drawing, so this avoids
-        // the short-lived buffer lifetime issue of allocPrint(...) + textAt(...).
+        // the short-lived buffer lifetime issue of allocPrint(...) + borrowTextAt(...).
         _ = try sfc.printAt(
             0,
             5,

@@ -63,11 +63,11 @@ pub const Spinner = struct {
         if (width == 0) return;
 
         const frame = self.frameAt(opts.frame_index);
-        _ = surface.textAt(0, 0, frame, opts.frame_style);
+        _ = surface.borrowTextAt(0, 0, frame, opts.frame_style);
 
         const label_col = @as(usize, chasen.text.displayWidth(frame)) + @as(usize, opts.gap);
         if (self.label.len > 0 and label_col < width) {
-            _ = surface.textAt(@intCast(label_col), 0, self.label, opts.label_style);
+            _ = surface.borrowTextAt(@intCast(label_col), 0, self.label, opts.label_style);
         }
     }
 };

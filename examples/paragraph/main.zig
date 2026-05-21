@@ -32,20 +32,20 @@ const App = struct {
     };
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Paragraph Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Paragraph Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
-        _ = sfc.textAt(0, 3, "Basic wrapped text", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 3, "Basic wrapped text", .{ .bold = true });
         var intro_area = sfc.child(.{ .col = 0, .row = 4, .width = 44, .height = 4 });
         self.intro.view(&intro_area, .{});
 
-        _ = sfc.textAt(0, 9, "Line breaks and wide characters", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 9, "Line breaks and wide characters", .{ .bold = true });
         var note_area = sfc.child(.{ .col = 0, .row = 10, .width = 48, .height = 5 });
         self.note.view(&note_area, .{
             .style = .{ .dim = true },
         });
 
-        _ = sfc.textAt(0, 16, "Clipped region", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 16, "Clipped region", .{ .bold = true });
         var clipped_area = sfc.child(.{ .col = 0, .row = 17, .width = 42, .height = 3 });
         self.clipped.view(&clipped_area, .{
             .style = .{ .italic = true },

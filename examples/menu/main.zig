@@ -37,11 +37,11 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Menu Example - app-owned command policy", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Up/Down: move  Enter/Space: activate  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Menu Example - app-owned command policy", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Up/Down: move  Enter/Space: activate  Esc: quit", .{ .fg = .gray });
 
-        _ = sfc.textAt(2, 3, "Command", .{ .fg = .gray });
-        _ = sfc.textAt(20, 3, "Hint", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(2, 3, "Command", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(20, 3, "Hint", .{ .fg = .gray });
 
         var menu_area = sfc.child(.{ .col = 0, .row = 4, .width = 34, .height = 6 });
         self.menu.view(&menu_area, .{
@@ -49,16 +49,16 @@ const App = struct {
             .focused_style = .{ .bold = true, .fg = .{ .index = 14 } },
         });
 
-        _ = sfc.textAt(40, 4, "App screen", .{ .bold = true, .fg = .{ .index = 14 } });
-        _ = sfc.textAt(40, 5, "active", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(40, 4, "App screen", .{ .bold = true, .fg = .{ .index = 14 } });
+        _ = sfc.borrowTextAt(40, 5, "active", .{ .fg = .gray });
         if (self.active_index) |index| {
-            _ = sfc.textAt(50, 5, menu_items[index].label, .{ .fg = .{ .index = 14 } });
+            _ = sfc.borrowTextAt(50, 5, menu_items[index].label, .{ .fg = .{ .index = 14 } });
         } else {
-            _ = sfc.textAt(50, 5, "None", .{ .dim = true });
+            _ = sfc.borrowTextAt(50, 5, "None", .{ .dim = true });
         }
 
-        _ = sfc.textAt(40, 7, "Menu owns focus only", .{ .dim = true });
-        _ = sfc.textAt(40, 8, "Activation stays in app", .{ .dim = true });
+        _ = sfc.borrowTextAt(40, 7, "Menu owns focus only", .{ .dim = true });
+        _ = sfc.borrowTextAt(40, 8, "Activation stays in app", .{ .dim = true });
     }
 
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {

@@ -56,10 +56,10 @@ pub const Rating = struct {
         var item_col: u16 = 0;
         while (index < opts.total_count and item_col < width) : (index += 1) {
             if (index < filled_count) {
-                _ = surface.textAt(item_col, 0, opts.filled_glyph, opts.filled_style);
+                _ = surface.borrowTextAt(item_col, 0, opts.filled_glyph, opts.filled_style);
                 item_col +|= chasen.text.displayWidth(opts.filled_glyph);
             } else {
-                _ = surface.textAt(item_col, 0, opts.empty_glyph, opts.empty_style);
+                _ = surface.borrowTextAt(item_col, 0, opts.empty_glyph, opts.empty_style);
                 item_col +|= chasen.text.displayWidth(opts.empty_glyph);
             }
 

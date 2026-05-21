@@ -63,9 +63,9 @@ pub const ProgressBar = struct {
         var col: u16 = 0;
         while (col < width) : (col += 1) {
             if (col < filled_count) {
-                _ = surface.textAt(col, 0, opts.filled, opts.filled_style);
+                _ = surface.borrowTextAt(col, 0, opts.filled, opts.filled_style);
             } else {
-                _ = surface.textAt(col, 0, opts.empty, opts.empty_style);
+                _ = surface.borrowTextAt(col, 0, opts.empty, opts.empty_style);
             }
         }
     }

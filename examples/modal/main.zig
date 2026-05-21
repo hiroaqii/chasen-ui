@@ -27,12 +27,12 @@ const App = struct {
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         const size = sfc.size();
-        _ = sfc.textAt(0, 0, "Modal Example - app-owned visibility", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "m: toggle modal  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Modal Example - app-owned visibility", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "m: toggle modal  Esc: quit", .{ .fg = .gray });
 
-        _ = sfc.textAt(0, 3, "Underlying screen", .{ .bold = true, .fg = .{ .index = 6 } });
-        _ = sfc.textAt(0, 4, "The app keeps rendering normally behind the modal.", .{ .fg = .gray });
-        _ = sfc.textAt(0, 6, if (self.show_modal) "Modal visible" else "Modal hidden", .{ .dim = true });
+        _ = sfc.borrowTextAt(0, 3, "Underlying screen", .{ .bold = true, .fg = .{ .index = 6 } });
+        _ = sfc.borrowTextAt(0, 4, "The app keeps rendering normally behind the modal.", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 6, if (self.show_modal) "Modal visible" else "Modal hidden", .{ .dim = true });
 
         if (!self.show_modal) return;
 
@@ -58,7 +58,7 @@ const App = struct {
         // The dialog content is regular app-owned drawing. Modal gives the app
         // a centered, padded rectangle but does not own the buttons, focus, or
         // the meaning of confirmation.
-        _ = content_area.textAt(0, 0, "Delete saved filter?", .{ .bold = true });
+        _ = content_area.borrowTextAt(0, 0, "Delete saved filter?", .{ .bold = true });
         if (content.height > 3) {
             var paragraph_area = content_area.child(.{
                 .col = 0,

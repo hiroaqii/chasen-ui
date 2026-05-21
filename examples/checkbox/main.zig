@@ -33,8 +33,8 @@ const App = struct {
     }
 
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
-        _ = sfc.textAt(0, 0, "Checkbox Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Up/Down: move  Space/Enter: toggle  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Checkbox Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Up/Down: move  Space/Enter: toggle  Esc: quit", .{ .fg = .gray });
 
         for (&self.checkboxes, 0..) |*checkbox, i| {
             // Only the selected checkbox shows the terminal cursor. This keeps
@@ -46,9 +46,9 @@ const App = struct {
             });
         }
 
-        _ = sfc.textAt(0, 7, "Checked:", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 7, "Checked:", .{ .fg = .gray });
         for (self.checkboxes, 0..) |checkbox, i| {
-            _ = sfc.textAt(@intCast(9 + i * 5), 7, if (checkbox.checked()) "yes" else "no", .{});
+            _ = sfc.borrowTextAt(@intCast(9 + i * 5), 7, if (checkbox.checked()) "yes" else "no", .{});
         }
     }
 

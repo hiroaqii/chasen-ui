@@ -194,8 +194,8 @@ const App = struct {
         const buttons_row = form_rows[5];
         const status_row = form_rows[7];
 
-        _ = sfc.textAt(title_row.col, title_row.row, "Settings Example", .{ .bold = true });
-        _ = sfc.textAt(help_row.col, help_row.row, "Up/Down: fields  Left/Right: buttons  Enter/Space: action  Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(title_row.col, title_row.row, "Settings Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(help_row.col, help_row.row, "Up/Down: fields  Left/Right: buttons  Enter/Space: action  Esc: quit", .{ .fg = .gray });
 
         // Labels are drawn by the app. The TextInput only draws the editable
         // one-line input area at the region we assign to it. The row helper
@@ -208,7 +208,7 @@ const App = struct {
         const username_label = username_cols[0];
         const username_input = username_cols[1];
 
-        _ = sfc.textAt(username_label.col, username_label.row, "Username", .{});
+        _ = sfc.borrowTextAt(username_label.col, username_label.row, "Username", .{});
         if (self.username) |*username| {
             var username_area = sfc.child(username_input);
             username.view(&username_area, .{
@@ -256,7 +256,7 @@ const App = struct {
         });
 
         if (self.saved) |saved| {
-            _ = sfc.textAt(status_row.col, status_row.row, saved, .{ .fg = .{ .index = 2 } });
+            _ = sfc.borrowTextAt(status_row.col, status_row.row, saved, .{ .fg = .{ .index = 2 } });
         }
     }
 

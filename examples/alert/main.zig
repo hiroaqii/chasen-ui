@@ -31,8 +31,8 @@ const App = struct {
             .{ .width = 54, .height = 2 },
         }, .{ .gap = 2 });
 
-        _ = sfc.textAt(0, 0, "Alert Example", .{ .bold = true });
-        _ = sfc.textAt(0, 1, "Esc: quit", .{ .fg = .gray });
+        _ = sfc.borrowTextAt(0, 0, "Alert Example", .{ .bold = true });
+        _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
         // The stack helper keeps repeated alert row math out of the example
         // while the app still chooses each alert's meaning, marker, and text.

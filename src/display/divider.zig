@@ -55,13 +55,13 @@ pub const Divider = struct {
             .horizontal => {
                 var col: u16 = 0;
                 while (col < size.width) : (col += 1) {
-                    _ = surface.textAt(col, 0, glyph, opts.style);
+                    _ = surface.borrowTextAt(col, 0, glyph, opts.style);
                 }
             },
             .vertical => {
                 var row: u16 = 0;
                 while (row < size.height) : (row += 1) {
-                    _ = surface.textAt(0, row, glyph, opts.style);
+                    _ = surface.borrowTextAt(0, row, glyph, opts.style);
                 }
             },
         }

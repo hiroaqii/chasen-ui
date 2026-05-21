@@ -90,9 +90,9 @@ pub const Checkbox = struct {
 
         const marker = if (self.checked_value) "[x]" else "[ ]";
         const marker_style = if (self.checked_value) opts.checked_style else opts.style;
-        _ = surface.textAt(0, 0, marker, marker_style);
+        _ = surface.borrowTextAt(0, 0, marker, marker_style);
         if (self.label.len > 0) {
-            _ = surface.textAt(4, 0, self.label, opts.label_style);
+            _ = surface.borrowTextAt(4, 0, self.label, opts.label_style);
         }
 
         if (opts.show_cursor) {

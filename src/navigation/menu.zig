@@ -123,13 +123,13 @@ pub const Menu = struct {
             const marker = if (focused) opts.focused_marker else opts.marker;
             const label_style = if (focused) opts.focused_style else opts.item_style;
 
-            _ = surface.textAt(0, row, marker, opts.marker_style);
+            _ = surface.borrowTextAt(0, row, marker, opts.marker_style);
             if (width > 2) {
-                _ = surface.textAt(2, row, item.label, label_style);
+                _ = surface.borrowTextAt(2, row, item.label, label_style);
             }
             if (item.shortcut) |shortcut| {
                 if (opts.shortcut_col < width) {
-                    _ = surface.textAt(opts.shortcut_col, row, shortcut, opts.shortcut_style);
+                    _ = surface.borrowTextAt(opts.shortcut_col, row, shortcut, opts.shortcut_style);
                 }
             }
         }
