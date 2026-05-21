@@ -5,9 +5,9 @@ const layout = @import("../layout.zig");
 /// A small bordered container component.
 ///
 /// `Panel` is display-only and allocation-free. It draws optional title text
-/// and border chrome, then leaves content rendering to the application. Apps
-/// can use `contentRect` to place child components inside the panel without
-/// giving `Panel` ownership of layout or child state.
+/// and border chrome, then leaves content rendering to the application.
+/// `frame` is the preferred app-facing API because it keeps the panel chrome
+/// and content surface calculation in one layout context.
 pub const Panel = struct {
     /// Border glyphs used by `Panel.view`.
     ///
@@ -56,19 +56,60 @@ pub const Panel = struct {
         title_style: chasen.TextStyle = .{ .bold = true },
     };
 
+    /// A resolved panel surface and its rendering options.
+    ///
+    /// `Frame` does not own children, focus, or scrolling. It only keeps the
+    /// outer panel surface and options together so callers can draw the chrome
+    /// and then derive the matching clipped content surface without repeating
+    /// border/padding arithmetic.
+    pub const Frame = struct {
+        surface: *chasen.Surface,
+        opts: ViewOptions,
+
+        /// Draw the panel chrome into the frame surface.
+        pub fn view(self: *const Frame) void {
+            Panel.init(.{}).view(self.surface, self.opts);
+        }
+
+        /// Return the frame-local content rectangle after border and padding.
+        pub fn contentRect(self: *const Frame) chasen.Rect {
+            const size = self.surface.size();
+            return Panel.contentRectFor(.{
+                .col = 0,
+                .row = 0,
+                .width = size.width,
+                .height = size.height,
+            }, self.opts.padding);
+        }
+
+        /// Return a clipped surface for child content inside this panel.
+        ///
+        /// Prefer this over manually combining `Panel.contentRectFor` and
+        /// `Surface.child` in app code. It guarantees the same surface/options
+        /// context is used for the border and the content region.
+        pub fn contentSurface(self: *const Frame) chasen.Surface {
+            return self.surface.child(self.contentRect());
+        }
+
+        /// Return the size of the content surface without constructing it.
+        pub fn contentSize(self: *const Frame) chasen.Size {
+            const rect = self.contentRect();
+            return .{ .width = rect.width, .height = rect.height };
+        }
+    };
+
     /// Create a panel.
     pub fn init(opts: Options) Panel {
         _ = opts;
         return .{};
     }
 
-    /// Return the app-owned content rectangle inside the provided panel surface.
+    /// Resolve a panel frame for the provided surface and options.
     ///
-    /// The returned rectangle is the panel region after one-cell borders and
-    /// `padding` are removed. The returned rectangle is relative to the panel
-    /// surface. Pass it to `surface.child(rect)` before drawing child content.
-    pub fn contentRect(surface: *chasen.Surface, opts: ViewOptions) chasen.Rect {
-        return contentRectFor(.{ .col = 0, .row = 0, .width = surface.size().width, .height = surface.size().height }, opts.padding);
+    /// Use `frame.view()` to draw the border/title and
+    /// `frame.contentSurface()` to draw app-owned child content.
+    pub fn frame(surface: *chasen.Surface, opts: ViewOptions) Frame {
+        return .{ .surface = surface, .opts = opts };
     }
 
     /// Return a content rectangle for an already resolved panel rectangle.
@@ -191,4 +232,26 @@ test "Panel contentRect collapses when panel is too small" {
     try std.testing.expectEqual(@as(u16, 1), rect.row);
     try std.testing.expectEqual(@as(u16, 0), rect.width);
     try std.testing.expectEqual(@as(u16, 0), rect.height);
+}
+
+test "Panel frame content surface matches content rect" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(20, 8);
+    defer ts.deinit();
+
+    var surface = ts.surface;
+    const frame = Panel.frame(&surface, .{
+        .padding = .{ .top = 1, .right = 2, .bottom = 1, .left = 2 },
+    });
+
+    const rect = frame.contentRect();
+    const content = frame.contentSize();
+    var child = frame.contentSurface();
+    const child_size = child.size();
+
+    try std.testing.expectEqual(@as(u16, 3), rect.col);
+    try std.testing.expectEqual(@as(u16, 2), rect.row);
+    try std.testing.expectEqual(@as(u16, 14), rect.width);
+    try std.testing.expectEqual(@as(u16, 4), rect.height);
+    try std.testing.expectEqual(content, child_size);
 }

@@ -6,10 +6,9 @@ const ui = @import("chasen_ui");
 //
 // Panel draws a border and optional title. It does not own child components,
 // focus, scrolling, or the meaning of the content inside the rectangle. The
-// app asks Panel for a content rect, then composes regular drawing and other
-// chasen-ui components inside that area.
+// app asks Panel for a frame, then composes regular drawing and other
+// chasen-ui components inside that frame's content surface.
 const App = struct {
-    panel: ui.Panel = ui.Panel.init(.{}),
     status: ui.StatusLine = ui.StatusLine.init(.{
         .left = "Panel",
         .center = "display-only",
@@ -39,13 +38,14 @@ const App = struct {
         _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
 
         var panel_area = sfc.child(.{ .col = 0, .row = 3, .width = panel_width, .height = panel_height });
-        self.panel.view(&panel_area, panel_opts);
+        const frame = ui.Panel.frame(&panel_area, panel_opts);
+        frame.view();
 
-        const content = ui.Panel.contentRect(&panel_area, panel_opts);
+        const content = frame.contentSize();
         if (content.width == 0 or content.height == 0) return;
-        var content_area = panel_area.child(content);
+        var content_area = frame.contentSurface();
 
-        // The content rectangle is normal app-owned space. Panel does not draw
+        // The content surface is normal app-owned space. Panel does not draw
         // these labels, the paragraph, or the status line; it only gives the app
         // a predictable inner area after border and padding are removed.
         _ = content_area.borrowTextAt(0, 0, "Name", .{ .fg = .gray });

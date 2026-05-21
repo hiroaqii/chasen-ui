@@ -8,8 +8,6 @@ const ui = @import("chasen_ui");
 // The app calculates regions, turns each region into a Surface.child(Rect),
 // then draws text or components inside that clipped child surface.
 const App = struct {
-    panel: ui.Panel = ui.Panel.init(.{}),
-
     pub const Msg = union(enum) {
         quit,
     };
@@ -40,15 +38,17 @@ const App = struct {
     }
 
     fn drawSidebar(self: *const App, sfc: *chasen.Surface) !void {
+        _ = self;
         const opts = ui.Panel.ViewOptions{
             .title = "take*",
             .padding = .{ .top = 1, .right = 1, .bottom = 1, .left = 1 },
         };
-        self.panel.view(sfc, opts);
+        const frame = ui.Panel.frame(sfc, opts);
+        frame.view();
 
-        const content = ui.Panel.contentRect(sfc, opts);
+        const content = frame.contentSize();
         if (content.width == 0 or content.height == 0) return;
-        var body = sfc.child(content);
+        var body = frame.contentSurface();
         _ = body.borrowTextAt(0, 0, "Page bands:", .{ .bold = true });
         _ = body.borrowTextAt(0, 2, "takeTop: title/help", .{});
         _ = body.borrowTextAt(0, 3, "takeBottom: footer", .{});
@@ -73,15 +73,17 @@ const App = struct {
     }
 
     fn drawColumns(self: *const App, sfc: *chasen.Surface) !void {
+        _ = self;
         const opts = ui.Panel.ViewOptions{
             .title = "columns",
             .padding = .{ .top = 1, .right = 1, .bottom = 1, .left = 1 },
         };
-        self.panel.view(sfc, opts);
+        const frame = ui.Panel.frame(sfc, opts);
+        frame.view();
 
-        const content = ui.Panel.contentRect(sfc, opts);
+        const content = frame.contentSize();
         if (content.width == 0 or content.height == 0) return;
-        var body = sfc.child(content);
+        var body = frame.contentSurface();
 
         // columns splits the available body into equal-width child regions.
         // The app still decides what each region means.
@@ -97,15 +99,17 @@ const App = struct {
     }
 
     fn drawGrid(self: *const App, sfc: *chasen.Surface) !void {
+        _ = self;
         const opts = ui.Panel.ViewOptions{
             .title = "fixedGrid",
             .padding = .{ .top = 1, .right = 1, .bottom = 1, .left = 1 },
         };
-        self.panel.view(sfc, opts);
+        const frame = ui.Panel.frame(sfc, opts);
+        frame.view();
 
-        const content = ui.Panel.contentRect(sfc, opts);
+        const content = frame.contentSize();
         if (content.width == 0 or content.height == 0) return;
-        var body = sfc.child(content);
+        var body = frame.contentSurface();
 
         // fixedGrid is useful when the row/column count is part of the design,
         // such as dashboard cards or thumbnail tiles.
@@ -127,15 +131,17 @@ const App = struct {
     }
 
     fn drawInspector(self: *const App, sfc: *chasen.Surface) !void {
+        _ = self;
         const opts = ui.Panel.ViewOptions{
             .title = "inspector",
             .padding = .{ .top = 1, .right = 1, .bottom = 1, .left = 1 },
         };
-        self.panel.view(sfc, opts);
+        const frame = ui.Panel.frame(sfc, opts);
+        frame.view();
 
-        const content = ui.Panel.contentRect(sfc, opts);
+        const content = frame.contentSize();
         if (content.width == 0 or content.height == 0) return;
-        var body = sfc.child(content);
+        var body = frame.contentSurface();
 
         const body_rect = surfaceRect(&body);
         const top = ui.layout.takeTop(body_rect, 1);
