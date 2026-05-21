@@ -108,6 +108,9 @@ pub const Select = select.Select;
 pub const help = @import("display/help.zig");
 pub const Help = help.Help;
 
+pub const message_block = @import("display/message_block.zig");
+pub const MessageBlock = message_block.MessageBlock;
+
 test "chasen-ui imports chasen core" {
     try std.testing.expect(@hasDecl(chasen, "Surface"));
     try std.testing.expect(@hasDecl(chasen, "Ctx"));
