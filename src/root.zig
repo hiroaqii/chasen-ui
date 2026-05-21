@@ -3,6 +3,9 @@ const chasen = @import("chasen");
 
 pub const layout = @import("layout.zig");
 
+pub const viewport = @import("viewport.zig");
+pub const Viewport = viewport.Viewport;
+
 pub const text_input = @import("input/text_input.zig");
 pub const TextInput = text_input.TextInput;
 
