@@ -15,6 +15,16 @@ pub const Panel = struct {
     /// Unicode box-drawing glyphs when the target terminal supports them, or
     /// keep the ASCII defaults for conservative output.
     pub const Border = struct {
+        pub const Preset = enum {
+            none,
+            ascii,
+            rounded,
+            thick,
+            double,
+            block,
+            dots,
+        };
+
         top_left: []const u8 = "+",
         top: []const u8 = "-",
         top_right: []const u8 = "+",
@@ -35,6 +45,63 @@ pub const Panel = struct {
             .bottom_left = "╰",
             .left = "│",
         };
+
+        pub fn preset(value: Preset) Border {
+            return switch (value) {
+                .none => .{
+                    .top_left = " ",
+                    .top = " ",
+                    .top_right = " ",
+                    .right = " ",
+                    .bottom_right = " ",
+                    .bottom = " ",
+                    .bottom_left = " ",
+                    .left = " ",
+                },
+                .ascii => .ascii,
+                .rounded => .rounded,
+                .thick => .{
+                    .top_left = "┏",
+                    .top = "━",
+                    .top_right = "┓",
+                    .right = "┃",
+                    .bottom_right = "┛",
+                    .bottom = "━",
+                    .bottom_left = "┗",
+                    .left = "┃",
+                },
+                .double => .{
+                    .top_left = "╔",
+                    .top = "═",
+                    .top_right = "╗",
+                    .right = "║",
+                    .bottom_right = "╝",
+                    .bottom = "═",
+                    .bottom_left = "╚",
+                    .left = "║",
+                },
+                .block => .{
+                    .top_left = "█",
+                    .top = "▀",
+                    .top_right = "█",
+                    .right = "█",
+                    .bottom_right = "█",
+                    .bottom = "▄",
+                    .bottom_left = "█",
+                    .left = "█",
+                },
+                .dots => .{
+                    .top_left = "·",
+                    .top = "·",
+                    .top_right = "·",
+                    .right = "⋮",
+                    .bottom_right = "·",
+                    .bottom = "·",
+                    .bottom_left = "·",
+                    .left = "⋮",
+                },
+            };
+        }
     };
 
     /// Initial values used when constructing a `Panel`.
@@ -204,6 +271,17 @@ fn drawText(surface: *chasen.Surface, col: u16, row: u16, text: []const u8, styl
 test "Panel initializes from options" {
     const panel = Panel.init(.{});
     _ = panel;
+}
+
+test "Panel border presets map to glyphs" {
+    try std.testing.expectEqualStrings(" ", Panel.Border.preset(.none).top);
+    try std.testing.expectEqualStrings("+", Panel.Border.preset(.ascii).top_left);
+    try std.testing.expectEqualStrings("╭", Panel.Border.preset(.rounded).top_left);
+    try std.testing.expectEqualStrings("━", Panel.Border.preset(.thick).top);
+    try std.testing.expectEqualStrings("═", Panel.Border.preset(.double).top);
+    try std.testing.expectEqualStrings("▀", Panel.Border.preset(.block).top);
+    try std.testing.expectEqualStrings("·", Panel.Border.preset(.dots).top);
+    try std.testing.expectEqualStrings("⋮", Panel.Border.preset(.dots).left);
 }
 
 test "Panel contentRect removes border and padding" {
