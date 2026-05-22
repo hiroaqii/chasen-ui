@@ -32,6 +32,21 @@ pub const MessageBlock = struct {
         hide_cursor: bool = true,
     };
 
+    /// Centered coordinates for each visible line.
+    ///
+    /// Use this when an app wants `MessageBlock` placement but needs to draw one
+    /// line with a custom renderer, such as a loading animation.
+    pub const Layout = struct {
+        title: ?Point = null,
+        message: ?Point = null,
+    };
+
+    /// A terminal cell coordinate inside the message block's surface.
+    pub const Point = struct {
+        col: u16,
+        row: u16,
+    };
+
     /// Create a message block.
     pub fn init(opts: Options) MessageBlock {
         return .{ .title = opts.title, .message = opts.message };
@@ -40,20 +55,9 @@ pub const MessageBlock = struct {
     /// Draw the message block centered within the provided surface.
     pub fn view(self: *const MessageBlock, surface: *chasen.Surface, opts: ViewOptions) void {
         if (opts.hide_cursor) surface.hideCursor();
-        const size = surface.size();
-        if (size.width == 0 or size.height == 0) return;
-
-        const rows = contentHeight(self.*);
-        if (rows == 0) return;
-
-        var row: u16 = if (size.height > rows) (size.height - rows) / 2 else 0;
-        if (self.title.len > 0) {
-            drawCenteredText(surface, row, self.title, opts.title_style);
-            row += 1;
-        }
-        if (self.message.len > 0 and row < size.height) {
-            drawCenteredText(surface, row, self.message, opts.message_style);
-        }
+        const layout_result = self.layout(surface.size());
+        if (layout_result.title) |point| _ = surface.borrowTextAt(point.col, point.row, self.title, opts.title_style);
+        if (layout_result.message) |point| _ = surface.borrowTextAt(point.col, point.row, self.message, opts.message_style);
     }
 
     /// Return how many rows this message occupies before clipping.
@@ -62,15 +66,37 @@ pub const MessageBlock = struct {
         if (self.title.len > 0 or self.message.len > 0) return 1;
         return 0;
     }
+
+    /// Return centered line coordinates for a given available size.
+    pub fn layout(self: MessageBlock, size: chasen.Size) Layout {
+        if (size.width == 0 or size.height == 0) return .{};
+
+        const rows = self.contentHeight();
+        if (rows == 0) return .{};
+
+        var result: Layout = .{};
+        var row: u16 = if (size.height > rows) (size.height - rows) / 2 else 0;
+        if (self.title.len > 0) {
+            result.title = .{ .col = centeredCol(size.width, self.title), .row = row };
+            row += 1;
+        }
+        if (self.message.len > 0 and row < size.height) {
+            result.message = .{ .col = centeredCol(size.width, self.message), .row = row };
+        }
+        return result;
+    }
 };
 
 /// Draw one line horizontally centered within `surface`.
 pub fn drawCenteredText(surface: *chasen.Surface, row: u16, text: []const u8, style: chasen.TextStyle) void {
     if (row >= surface.size().height) return;
-    const width = surface.size().width;
-    const text_width = chasen.text.displayWidth(text);
-    const col: u16 = if (text_width >= width) 0 else @intCast((width - text_width) / 2);
+    const col = centeredCol(surface.size().width, text);
     _ = surface.borrowTextAt(col, row, text, style);
+}
+
+fn centeredCol(width: u16, text: []const u8) u16 {
+    const text_width = chasen.text.displayWidth(text);
+    return if (text_width >= width) 0 else @intCast((width - text_width) / 2);
 }
 
 test "MessageBlock initializes from options" {
@@ -85,6 +111,22 @@ test "MessageBlock content height follows present lines" {
     try std.testing.expectEqual(@as(u16, 1), MessageBlock.init(.{ .title = "Only title" }).contentHeight());
     try std.testing.expectEqual(@as(u16, 1), MessageBlock.init(.{ .message = "Only message" }).contentHeight());
     try std.testing.expectEqual(@as(u16, 2), MessageBlock.init(.{ .title = "Title", .message = "Message" }).contentHeight());
+}
+
+test "MessageBlock layout exposes centered title and message points" {
+    const block = MessageBlock.init(.{ .title = "Title", .message = "Message" });
+    const layout = block.layout(.{ .width = 20, .height = 6 });
+
+    try std.testing.expectEqual(MessageBlock.Point{ .col = 7, .row = 2 }, layout.title.?);
+    try std.testing.expectEqual(MessageBlock.Point{ .col = 6, .row = 3 }, layout.message.?);
+}
+
+test "MessageBlock layout clips message when surface has one row" {
+    const block = MessageBlock.init(.{ .title = "Title", .message = "Message" });
+    const layout = block.layout(.{ .width = 20, .height = 1 });
+
+    try std.testing.expect(layout.title != null);
+    try std.testing.expect(layout.message == null);
 }
 
 test "MessageBlock centers message-only content on its single row" {
