@@ -60,6 +60,9 @@ pub const Panel = panel.Panel;
 pub const modal = @import("structure/modal.zig");
 pub const Modal = modal.Modal;
 
+pub const overlay = @import("structure/overlay.zig");
+pub const Overlay = overlay.Overlay;
+
 pub const table = @import("structure/table.zig");
 pub const Table = table.Table;
 

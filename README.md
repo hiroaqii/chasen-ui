@@ -33,6 +33,7 @@ The Zig module name is `chasen_ui`.
 - `Box`
 - `Panel`
 - `Modal`
+- `Overlay`
 - `Table`
 - `Tree`
 - `Accordion`

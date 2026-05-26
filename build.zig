@@ -44,6 +44,7 @@ pub fn build(b: *std.Build) void {
         "box",
         "panel",
         "modal",
+        "overlay",
         "table",
         "tree",
         "accordion",
