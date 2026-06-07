@@ -24,7 +24,7 @@ const App = struct {
         _ = self;
         // Gauge never asks for frames. This example animates by having the app
         // request frames while its metric is running.
-        ctx.requestFrame();
+        ctx.frame().request();
     }
 
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
@@ -41,13 +41,13 @@ const App = struct {
                     self.running = self.elapsed_ns < duration_ns;
                 }
 
-                if (self.running) ctx.requestFrame();
+                if (self.running) ctx.frame().request();
             },
             .reset => {
                 self.elapsed_ns = 0;
                 self.running = true;
                 self.skip_next_frame_delta = true;
-                ctx.requestFrame();
+                ctx.frame().request();
             },
             .quit => ctx.quit(),
         }

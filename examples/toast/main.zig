@@ -23,7 +23,7 @@ const App = struct {
 
     pub fn init(self: *App, ctx: *chasen.Ctx(Msg)) !void {
         _ = self;
-        ctx.requestFrame();
+        ctx.frame().request();
     }
 
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
@@ -40,7 +40,7 @@ const App = struct {
                     self.visible = self.elapsed_ns < lifetime_ns;
                 }
 
-                if (self.visible) ctx.requestFrame();
+                if (self.visible) ctx.frame().request();
             },
             .notify => {
                 // Restarting a toast is app policy. A real app could enqueue
@@ -48,7 +48,7 @@ const App = struct {
                 self.elapsed_ns = 0;
                 self.visible = true;
                 self.skip_next_frame_delta = true;
-                ctx.requestFrame();
+                ctx.frame().request();
             },
             .dismiss => {
                 // Dismissal policy also stays outside Toast.

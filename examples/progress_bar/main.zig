@@ -33,7 +33,7 @@ const App = struct {
         _ = self;
         // Kick off the first frame. ProgressBar itself never calls
         // requestFrame(); the app owns the animation lifecycle.
-        ctx.requestFrame();
+        ctx.frame().request();
     }
 
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
@@ -52,7 +52,7 @@ const App = struct {
                 }
                 // Keep requesting frames only until the progress reaches 1.0.
                 // Once complete, the runtime can return to event-driven idle.
-                if (self.running) ctx.requestFrame();
+                if (self.running) ctx.frame().request();
             },
             .reset => {
                 // Reset is just app state. Because ProgressBar owns no progress
@@ -62,7 +62,7 @@ const App = struct {
                 self.skip_next_frame_delta = true;
                 // Request a new frame so the run restarts even if it had
                 // already completed and stopped requesting frames.
-                ctx.requestFrame();
+                ctx.frame().request();
             },
             .quit => ctx.quit(),
         }

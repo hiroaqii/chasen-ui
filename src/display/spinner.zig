@@ -7,7 +7,7 @@ const default_frames = [_][]const u8{ "|", "/", "-", "\\" };
 ///
 /// `Spinner` is display-only and allocation-free. It borrows its frame labels
 /// and optional label text. It does not own animation state, schedule frames,
-/// or call `ctx.requestFrame()`. Applications pass the current frame index to
+/// or call `ctx.frame().request()`. Applications pass the current frame index to
 /// `view`, usually from a Chasen frame event or an animation helper.
 pub const Spinner = struct {
     /// Frame labels borrowed by the component.

@@ -36,7 +36,7 @@ const App = struct {
         _ = self;
         // Kick off the first frame. After that, update() decides whether the
         // app should keep animating or return to event-driven idle.
-        ctx.requestFrame();
+        ctx.frame().request();
     }
 
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
@@ -48,21 +48,21 @@ const App = struct {
                     _ = self.frame_counter.step();
                     // Request another frame only while running. When paused,
                     // no frame request is kept alive by Spinner or ProgressBar.
-                    ctx.requestFrame();
+                    ctx.frame().request();
                 }
             },
             .toggle => {
                 self.running = !self.running;
                 // Resuming needs an explicit frame request because pausing
                 // intentionally stopped the app's animation loop.
-                if (self.running) ctx.requestFrame();
+                if (self.running) ctx.frame().request();
             },
             .reset => {
                 // Reset is app policy. There is no component animation state to
                 // synchronize because the display components are stateless.
                 self.frame_counter.reset();
                 self.running = true;
-                ctx.requestFrame();
+                ctx.frame().request();
             },
             .quit => ctx.quit(),
         }

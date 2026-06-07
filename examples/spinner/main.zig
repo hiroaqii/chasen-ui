@@ -27,7 +27,7 @@ const App = struct {
         _ = self;
         // Kick off the first frame. After this, update decides whether another
         // frame should be requested.
-        ctx.requestFrame();
+        ctx.frame().request();
     }
 
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
@@ -39,13 +39,13 @@ const App = struct {
                 self.elapsed_ns += frame.delta_ns;
                 // Request one more frame only while running. Pausing stops the
                 // animation and lets the runtime return to event-driven idle.
-                if (self.running) ctx.requestFrame();
+                if (self.running) ctx.frame().request();
             },
             .toggle => {
                 self.running = !self.running;
                 // Resuming needs a new frame request because the spinner does
                 // not keep a timer or frame future alive by itself.
-                if (self.running) ctx.requestFrame();
+                if (self.running) ctx.frame().request();
             },
             .quit => ctx.quit(),
         }

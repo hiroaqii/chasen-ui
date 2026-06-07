@@ -4,7 +4,7 @@ const chasen = @import("chasen");
 /// A small horizontal progress bar component.
 ///
 /// `ProgressBar` is display-only and allocation-free. It does not own
-/// transition state, schedule frames, or call `ctx.requestFrame()`.
+/// transition state, schedule frames, or call `ctx.frame().request()`.
 /// Applications pass a normalized progress value to `view`, usually from app
 /// state or an animation helper.
 pub const ProgressBar = struct {
