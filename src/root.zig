@@ -36,6 +36,9 @@ pub const FocusList = focus_list.FocusList;
 pub const list = @import("navigation/list.zig");
 pub const List = list.List;
 
+pub const list_view = @import("navigation/list_view.zig");
+pub const ListViewport = list_view.ListViewport;
+
 pub const selectable_list = @import("navigation/selectable_list.zig");
 pub const SelectableList = selectable_list.SelectableList;
 
