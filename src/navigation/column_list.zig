@@ -72,6 +72,20 @@ pub const ColumnList = struct {
 
     /// Rendering options for `ColumnList.view`.
     pub const ViewOptions = struct {
+        /// Optional callback used to draw focused cell text.
+        ///
+        /// This keeps `ColumnList` independent from app-specific animation
+        /// systems while still allowing focused rows to use richer text
+        /// rendering when an app already has it.
+        pub const FocusedTextDrawer = *const fn (
+            surface: *chasen.Surface,
+            col: u16,
+            row: u16,
+            text: []const u8,
+            style: chasen.TextStyle,
+            context: ?*const anyopaque,
+        ) void;
+
         /// Optional app-owned selected index to render differently.
         selected_index: ?usize = null,
         /// Style used for unfocused, unselected row cells.
@@ -98,6 +112,10 @@ pub const ColumnList = struct {
         header_style: chasen.TextStyle = .{ .bold = true },
         /// Marker appended when cell text is clipped.
         truncate_marker: []const u8 = "…",
+        /// Optional focused text drawing hook.
+        focused_text_drawer: ?FocusedTextDrawer = null,
+        /// App-owned context passed through to `focused_text_drawer`.
+        focused_text_drawer_context: ?*const anyopaque = null,
         /// Whether `view` should place the terminal cursor on the focused row.
         show_cursor: bool = true,
     };
@@ -181,7 +199,7 @@ pub const ColumnList = struct {
             _ = surface.borrowTextAt(0, row, marker, opts.marker_style);
 
             const base_style = rowStyle(opts, focused, selected);
-            drawCells(self.columns, row_cells, surface, body_col, row, widths, base_style, opts);
+            drawCells(self.columns, row_cells, surface, body_col, row, widths, base_style, focused, opts);
         }
 
         if (opts.show_cursor and focused_index >= range.start and focused_index < range.end) {
@@ -258,7 +276,7 @@ fn drawHeader(
         const width = widths[index];
         if (width > 0 and column.header != null) {
             const style = column.header_style orelse opts.header_style;
-            drawTextInCell(surface, col, 0, width, column.header.?, column.alignment, style, opts.truncate_marker);
+            drawTextInCell(surface, col, 0, width, column.header.?, column.alignment, style, false, opts);
         }
         col +|= width +| opts.column_gap;
     }
@@ -272,6 +290,7 @@ fn drawCells(
     row: u16,
     widths: [max_columns]u16,
     base_style: chasen.TextStyle,
+    focused: bool,
     opts: ColumnList.ViewOptions,
 ) void {
     var col = start_col;
@@ -281,7 +300,7 @@ fn drawCells(
         const text = if (maybe_cell) |cell| cell.text else "";
         var style = applyPatch(base_style, column.style);
         if (maybe_cell) |cell| style = applyPatch(style, cell.style);
-        if (width > 0) drawTextInCell(surface, col, row, width, text, column.alignment, style, opts.truncate_marker);
+        if (width > 0) drawTextInCell(surface, col, row, width, text, column.alignment, style, focused, opts);
         col +|= width +| opts.column_gap;
     }
 }
@@ -294,25 +313,45 @@ fn drawTextInCell(
     text: []const u8,
     alignment: ColumnList.Align,
     style: chasen.TextStyle,
-    truncate_marker: []const u8,
+    focused: bool,
+    opts: ColumnList.ViewOptions,
 ) void {
     if (width == 0) return;
 
     const text_width = chasen.text.displayWidth(text);
     if (text_width <= width) {
-        _ = surface.borrowTextAt(col + alignedOffset(text_width, width, alignment), row, text, style);
+        drawText(surface, col + alignedOffset(text_width, width, alignment), row, text, style, focused, opts);
         return;
     }
 
+    const truncate_marker = opts.truncate_marker;
     const marker_width = chasen.text.displayWidth(truncate_marker);
     if (marker_width == 0 or marker_width > width) {
-        _ = surface.borrowTextAt(col, row, chasen.text.clipToWidth(text, width), style);
+        drawText(surface, col, row, chasen.text.clipToWidth(text, width), style, focused, opts);
         return;
     }
 
     const clipped = chasen.text.clipToWidth(text, width - marker_width);
-    _ = surface.borrowTextAt(col, row, clipped, style);
+    drawText(surface, col, row, clipped, style, focused, opts);
     _ = surface.borrowTextAt(col + chasen.text.displayWidth(clipped), row, truncate_marker, style);
+}
+
+fn drawText(
+    surface: *chasen.Surface,
+    col: u16,
+    row: u16,
+    text: []const u8,
+    style: chasen.TextStyle,
+    focused: bool,
+    opts: ColumnList.ViewOptions,
+) void {
+    if (focused) {
+        if (opts.focused_text_drawer) |drawer| {
+            drawer(surface, col, row, text, style, opts.focused_text_drawer_context);
+            return;
+        }
+    }
+    _ = surface.borrowTextAt(col, row, text, style);
 }
 
 fn alignedOffset(text_width: u16, width: u16, alignment: ColumnList.Align) u16 {
