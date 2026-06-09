@@ -22,6 +22,7 @@ The Zig module name is `chasen_ui`.
 ### Navigation
 
 - `List`
+- `ColumnList`
 - `SelectableList`
 - `MultiSelectList`
 - `Menu`

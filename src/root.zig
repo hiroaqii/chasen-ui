@@ -42,6 +42,9 @@ pub const ListViewport = list_view.ListViewport;
 pub const list_filter = @import("navigation/list_filter.zig");
 pub const ListFilter = list_filter.ListFilter;
 
+pub const column_list = @import("navigation/column_list.zig");
+pub const ColumnList = column_list.ColumnList;
+
 pub const selectable_list = @import("navigation/selectable_list.zig");
 pub const SelectableList = selectable_list.SelectableList;
 
