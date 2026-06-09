@@ -23,6 +23,45 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        return switch (event) {
+            .key_press => |key| {
+                if (self.picker_open) {
+                    if (key.matches(chasen.Key.escape, .{})) return .cancel_picker;
+                    if (key.matches(chasen.Key.enter, .{})) return .confirm_picker;
+                    if (key.matches(chasen.Key.up, .{}) or key.codepoint == 'k') return .move_prev;
+                    if (key.matches(chasen.Key.down, .{}) or key.codepoint == 'j') return .move_next;
+                    return null;
+                }
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches(chasen.Key.enter, .{})) return .open_picker;
+                return null;
+            },
+            else => null,
+        };
+    }
+
+    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
+        switch (msg) {
+            .open_picker => {
+                self.focused_index = self.selected_index;
+                self.picker_open = true;
+            },
+            .cancel_picker => self.picker_open = false,
+            .confirm_picker => {
+                self.selected_index = self.focused_index;
+                self.picker_open = false;
+            },
+            .move_prev => {
+                if (self.focused_index > 0) self.focused_index -= 1;
+            },
+            .move_next => {
+                if (self.focused_index + 1 < items.len) self.focused_index += 1;
+            },
+            .quit => ctx.quit(),
+        }
+    }
+
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         const size = sfc.size();
         _ = sfc.borrowTextAt(0, 0, "Overlay Example - picker popup", .{ .bold = true });
@@ -60,45 +99,6 @@ const App = struct {
             _ = content.borrowTextAt(0, row, if (focused) "> " else "  ", .{ .bold = focused });
             _ = content.borrowTextAt(2, row, if (selected) "*" else " ", if (selected) .{ .fg = .{ .index = 6 } } else .{ .fg = .gray });
             _ = content.borrowTextAt(4, row, item, if (focused) .{ .fg = .{ .index = 6 }, .bold = true } else .{});
-        }
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        return switch (event) {
-            .key_press => |key| {
-                if (self.picker_open) {
-                    if (key.matches(chasen.Key.escape, .{})) return .cancel_picker;
-                    if (key.matches(chasen.Key.enter, .{})) return .confirm_picker;
-                    if (key.matches(chasen.Key.up, .{}) or key.codepoint == 'k') return .move_prev;
-                    if (key.matches(chasen.Key.down, .{}) or key.codepoint == 'j') return .move_next;
-                    return null;
-                }
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches(chasen.Key.enter, .{})) return .open_picker;
-                return null;
-            },
-            else => null,
-        };
-    }
-
-    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
-        switch (msg) {
-            .open_picker => {
-                self.focused_index = self.selected_index;
-                self.picker_open = true;
-            },
-            .cancel_picker => self.picker_open = false,
-            .confirm_picker => {
-                self.selected_index = self.focused_index;
-                self.picker_open = false;
-            },
-            .move_prev => {
-                if (self.focused_index > 0) self.focused_index -= 1;
-            },
-            .move_next => {
-                if (self.focused_index + 1 < items.len) self.focused_index += 1;
-            },
-            .quit => ctx.quit(),
         }
     }
 };

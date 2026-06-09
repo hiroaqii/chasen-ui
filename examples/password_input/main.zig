@@ -24,6 +24,26 @@ const App = struct {
         });
     }
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        // App-level shortcuts get first chance. Escape quits instead of being
+        // forwarded to the PasswordInput.
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+            },
+            else => {},
+        }
+
+        // Component-level key handling is delegated to PasswordInput, then
+        // wrapped in the app's Msg type.
+        if (self.password) |*password| {
+            if (password.handleEvent(event)) |msg| {
+                return .{ .password = msg };
+            }
+        }
+        return null;
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .password => |password_msg| {
@@ -46,18 +66,6 @@ const App = struct {
         }
     }
 
-    fn setStatus(self: *App, byte_len: usize) !void {
-        self.clearStatus();
-        self.status = try std.fmt.allocPrint(self.allocator.?, "Submitted secret with {d} bytes", .{byte_len});
-    }
-
-    fn clearStatus(self: *App) void {
-        if (self.status) |status| {
-            self.allocator.?.free(status);
-            self.status = null;
-        }
-    }
-
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         _ = sfc.borrowTextAt(0, 0, "PasswordInput Example", .{ .bold = true });
         _ = sfc.borrowTextAt(0, 1, "Enter: submit  Esc: quit", .{ .fg = .gray });
@@ -74,24 +82,16 @@ const App = struct {
         }
     }
 
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        // App-level shortcuts get first chance. Escape quits instead of being
-        // forwarded to the PasswordInput.
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-            },
-            else => {},
-        }
+    fn setStatus(self: *App, byte_len: usize) !void {
+        self.clearStatus();
+        self.status = try std.fmt.allocPrint(self.allocator.?, "Submitted secret with {d} bytes", .{byte_len});
+    }
 
-        // Component-level key handling is delegated to PasswordInput, then
-        // wrapped in the app's Msg type.
-        if (self.password) |*password| {
-            if (password.handleEvent(event)) |msg| {
-                return .{ .password = msg };
-            }
+    fn clearStatus(self: *App) void {
+        if (self.status) |status| {
+            self.allocator.?.free(status);
+            self.status = null;
         }
-        return null;
     }
 };
 

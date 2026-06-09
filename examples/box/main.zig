@@ -24,6 +24,21 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
+            else => null,
+        };
+    }
+
+    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
+        _ = self;
+        switch (msg) {
+            .quit => ctx.quit(),
+        }
+    }
+
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         const size = sfc.size();
         const box_opts = ui.Box.ViewOptions{
@@ -78,21 +93,6 @@ const App = struct {
                 .key_style = .{ .bold = true, .fg = .{ .index = 6 } },
                 .action_style = .{ .dim = true },
             });
-        }
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
-            else => null,
-        };
-    }
-
-    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
-        _ = self;
-        switch (msg) {
-            .quit => ctx.quit(),
         }
     }
 };

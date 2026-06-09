@@ -25,6 +25,26 @@ const App = struct {
         });
     }
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        // App-level shortcuts get first chance. Escape quits instead of being
+        // forwarded to the NumberInput.
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+            },
+            else => {},
+        }
+
+        // Component-level key handling is delegated to NumberInput, then
+        // wrapped in the app's Msg type.
+        if (self.quantity) |*quantity| {
+            if (quantity.handleEvent(event)) |msg| {
+                return .{ .quantity = msg };
+            }
+        }
+        return null;
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .quantity => |quantity_msg| {
@@ -46,22 +66,6 @@ const App = struct {
         }
     }
 
-    fn setStatus(self: *App) !void {
-        self.clearStatus();
-        if (self.quantity.?.intValue()) |value| {
-            self.status = try std.fmt.allocPrint(self.allocator.?, "Submitted quantity: {d}", .{value});
-        } else {
-            self.status = try std.fmt.allocPrint(self.allocator.?, "Enter a quantity before submitting", .{});
-        }
-    }
-
-    fn clearStatus(self: *App) void {
-        if (self.status) |status| {
-            self.allocator.?.free(status);
-            self.status = null;
-        }
-    }
-
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         _ = sfc.borrowTextAt(0, 0, "NumberInput Example", .{ .bold = true });
         _ = sfc.borrowTextAt(0, 1, "Digits only  Enter: submit  Esc: quit", .{ .fg = .gray });
@@ -78,24 +82,20 @@ const App = struct {
         }
     }
 
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        // App-level shortcuts get first chance. Escape quits instead of being
-        // forwarded to the NumberInput.
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-            },
-            else => {},
+    fn setStatus(self: *App) !void {
+        self.clearStatus();
+        if (self.quantity.?.intValue()) |value| {
+            self.status = try std.fmt.allocPrint(self.allocator.?, "Submitted quantity: {d}", .{value});
+        } else {
+            self.status = try std.fmt.allocPrint(self.allocator.?, "Enter a quantity before submitting", .{});
         }
+    }
 
-        // Component-level key handling is delegated to NumberInput, then
-        // wrapped in the app's Msg type.
-        if (self.quantity) |*quantity| {
-            if (quantity.handleEvent(event)) |msg| {
-                return .{ .quantity = msg };
-            }
+    fn clearStatus(self: *App) void {
+        if (self.status) |status| {
+            self.allocator.?.free(status);
+            self.status = null;
         }
-        return null;
     }
 };
 

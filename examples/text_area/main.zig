@@ -29,6 +29,25 @@ const App = struct {
         });
     }
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches('s', .{ .ctrl = true })) return .save;
+            },
+            else => {},
+        }
+
+        // Component-level editing is delegated to TextArea, then wrapped in the
+        // app's Msg type so update remains the only mutation point.
+        if (self.area) |*area| {
+            if (area.handleEvent(event)) |msg| {
+                return .{ .area = msg };
+            }
+        }
+        return null;
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .area => |area_msg| {
@@ -51,18 +70,6 @@ const App = struct {
                 }
                 ctx.quit();
             },
-        }
-    }
-
-    fn setSaved(self: *App, text: []const u8) !void {
-        self.clearSaved();
-        self.last_saved = try self.allocator.?.dupe(u8, text);
-    }
-
-    fn clearSaved(self: *App) void {
-        if (self.last_saved) |saved| {
-            self.allocator.?.free(saved);
-            self.last_saved = null;
         }
     }
 
@@ -103,23 +110,16 @@ const App = struct {
         }
     }
 
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches('s', .{ .ctrl = true })) return .save;
-            },
-            else => {},
-        }
+    fn setSaved(self: *App, text: []const u8) !void {
+        self.clearSaved();
+        self.last_saved = try self.allocator.?.dupe(u8, text);
+    }
 
-        // Component-level editing is delegated to TextArea, then wrapped in the
-        // app's Msg type so update remains the only mutation point.
-        if (self.area) |*area| {
-            if (area.handleEvent(event)) |msg| {
-                return .{ .area = msg };
-            }
+    fn clearSaved(self: *App) void {
+        if (self.last_saved) |saved| {
+            self.allocator.?.free(saved);
+            self.last_saved = null;
         }
-        return null;
     }
 };
 

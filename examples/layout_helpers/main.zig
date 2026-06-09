@@ -12,6 +12,21 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
+            else => null,
+        };
+    }
+
+    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
+        _ = self;
+        switch (msg) {
+            .quit => ctx.quit(),
+        }
+    }
+
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         const root = surfaceRect(sfc);
         const title = ui.layout.takeTop(root, 1);
@@ -156,21 +171,6 @@ const App = struct {
         _ = card.borrowTextAt(0, 0, "center()", .{ .bold = true, .fg = .{ .index = 5 } });
         _ = card.borrowTextAt(0, 2, "clamps size", .{});
         _ = card.borrowTextAt(0, 3, "to parent", .{});
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
-            else => null,
-        };
-    }
-
-    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
-        _ = self;
-        switch (msg) {
-            .quit => ctx.quit(),
-        }
     }
 };
 

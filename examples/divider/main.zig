@@ -14,6 +14,21 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
+            else => null,
+        };
+    }
+
+    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
+        _ = self;
+        switch (msg) {
+            .quit => ctx.quit(),
+        }
+    }
+
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         _ = sfc.borrowTextAt(0, 0, "Divider Example", .{ .bold = true });
         _ = sfc.borrowTextAt(0, 1, "Esc: quit", .{ .fg = .gray });
@@ -46,21 +61,6 @@ const App = struct {
             .glyph = "=",
             .style = .{ .bold = true },
         });
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
-            else => null,
-        };
-    }
-
-    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
-        _ = self;
-        switch (msg) {
-            .quit => ctx.quit(),
-        }
     }
 };
 

@@ -21,6 +21,20 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) return .quit,
+            else => {},
+        }
+
+        // App-level shortcuts get first chance. Remaining events are delegated
+        // to SelectableList and wrapped in the app's Msg type.
+        if (self.list.handleEvent(event)) |msg| {
+            return .{ .list = msg };
+        }
+        return null;
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .list => |list_msg| self.list.update(list_msg),
@@ -51,20 +65,6 @@ const App = struct {
 
         _ = sfc.borrowTextAt(30, 6, "SelectableList owns focus", .{ .dim = true });
         _ = sfc.borrowTextAt(30, 7, "and selected index", .{ .dim = true });
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) return .quit,
-            else => {},
-        }
-
-        // App-level shortcuts get first chance. Remaining events are delegated
-        // to SelectableList and wrapped in the app's Msg type.
-        if (self.list.handleEvent(event)) |msg| {
-            return .{ .list = msg };
-        }
-        return null;
     }
 };
 

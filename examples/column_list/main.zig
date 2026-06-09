@@ -54,7 +54,7 @@ const rows = [_]ui.ColumnList.Row{
     &row_python,
 };
 
-// ColumnList is for selectable list screens that need column layout.
+// This example shows ColumnList for selectable screens that need column layout.
 //
 // It owns focus state like List, but each row is split into cells. The app
 // still owns what activation means; here Enter/Space copies the focused row
@@ -70,6 +70,19 @@ const App = struct {
         list: ui.ColumnList.Msg,
         quit,
     };
+
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) return .quit,
+            else => {},
+        }
+
+        // Delegate normal list navigation to ColumnList after app shortcuts.
+        if (self.list.handleEvent(event)) |msg| {
+            return .{ .list = msg };
+        }
+        return null;
+    }
 
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
@@ -107,19 +120,6 @@ const App = struct {
 
         _ = sfc.borrowTextAt(40, 7, "List owns focus", .{ .dim = true });
         _ = sfc.borrowTextAt(40, 8, "Cells own display data", .{ .dim = true });
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) return .quit,
-            else => {},
-        }
-
-        // Delegate normal list navigation to ColumnList after app shortcuts.
-        if (self.list.handleEvent(event)) |msg| {
-            return .{ .list = msg };
-        }
-        return null;
     }
 };
 

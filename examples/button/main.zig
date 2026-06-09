@@ -23,6 +23,23 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches(chasen.Key.left, .{}) or key.matches(chasen.Key.up, .{})) return .move_prev;
+                if (key.matches(chasen.Key.right, .{}) or key.matches(chasen.Key.down, .{})) return .move_next;
+            },
+            else => {},
+        }
+
+        return switch (self.focus.focused()) {
+            0 => if (self.save_button.handleEvent(event)) |msg| .{ .save = msg } else null,
+            1 => if (self.cancel_button.handleEvent(event)) |msg| .{ .cancel = msg } else null,
+            else => null,
+        };
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .save => |button_msg| switch (button_msg) {
@@ -62,23 +79,6 @@ const App = struct {
             };
             _ = sfc.borrowTextAt(0, 5, label, .{ .fg = .{ .index = 2 } });
         }
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches(chasen.Key.left, .{}) or key.matches(chasen.Key.up, .{})) return .move_prev;
-                if (key.matches(chasen.Key.right, .{}) or key.matches(chasen.Key.down, .{})) return .move_next;
-            },
-            else => {},
-        }
-
-        return switch (self.focus.focused()) {
-            0 => if (self.save_button.handleEvent(event)) |msg| .{ .save = msg } else null,
-            1 => if (self.cancel_button.handleEvent(event)) |msg| .{ .cancel = msg } else null,
-            else => null,
-        };
     }
 };
 

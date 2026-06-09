@@ -23,6 +23,21 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
+            else => null,
+        };
+    }
+
+    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
+        _ = self;
+        switch (msg) {
+            .quit => ctx.quit(),
+        }
+    }
+
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         const size = sfc.size();
         const width = @min(size.width, 72);
@@ -76,21 +91,6 @@ const App = struct {
 
         const footer_row = size.height -| 1;
         _ = sfc.borrowTextAt(0, footer_row, "Collapsed sections still reserve no body rows; the app decides when that changes.", .{ .dim = true });
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
-            else => null,
-        };
-    }
-
-    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
-        _ = self;
-        switch (msg) {
-            .quit => ctx.quit(),
-        }
     }
 };
 

@@ -20,6 +20,20 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) return .quit,
+            else => {},
+        }
+
+        // App-level shortcuts get first chance. Remaining events are delegated
+        // to Tabs and wrapped in the app's Msg type.
+        if (self.tabs.handleEvent(event)) |msg| {
+            return .{ .tabs = msg };
+        }
+        return null;
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .tabs => |tabs_msg| self.tabs.update(tabs_msg),
@@ -59,20 +73,6 @@ const App = struct {
 
         _ = sfc.borrowTextAt(0, 10, "Tabs owns focus and active index", .{ .dim = true });
         _ = sfc.borrowTextAt(0, 11, "Panel meaning stays in app", .{ .dim = true });
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) return .quit,
-            else => {},
-        }
-
-        // App-level shortcuts get first chance. Remaining events are delegated
-        // to Tabs and wrapped in the app's Msg type.
-        if (self.tabs.handleEvent(event)) |msg| {
-            return .{ .tabs = msg };
-        }
-        return null;
     }
 };
 

@@ -36,6 +36,19 @@ const App = struct {
         ctx.frame().request();
     }
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .frame => |frame| .{ .frame = frame },
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches('r', .{})) return .reset;
+                return null;
+            },
+            else => null,
+        };
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .frame => |frame| {
@@ -101,19 +114,6 @@ const App = struct {
         // full. The component clamps out-of-range values, but this example keeps
         // the app state inside that range.
         return @as(f32, @floatFromInt(self.elapsed_ns)) / @as(f32, @floatFromInt(duration_ns));
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .frame => |frame| .{ .frame = frame },
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches('r', .{})) return .reset;
-                return null;
-            },
-            else => null,
-        };
     }
 };
 

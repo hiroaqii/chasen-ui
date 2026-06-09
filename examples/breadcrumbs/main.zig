@@ -20,6 +20,14 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
+            else => null,
+        };
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         _ = self;
         switch (msg) {
@@ -44,14 +52,6 @@ const App = struct {
         _ = sfc.borrowTextAt(12, 6, self.breadcrumbs.currentLabel() orelse "None", .{});
         _ = sfc.borrowTextAt(0, 8, "Breadcrumbs owns no navigation state", .{ .dim = true });
         _ = sfc.borrowTextAt(0, 9, "Route behavior stays in app", .{ .dim = true });
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
-            else => null,
-        };
     }
 };
 

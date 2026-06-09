@@ -39,6 +39,20 @@ const App = struct {
         ctx.frame().request();
     }
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .frame => |frame| .{ .frame = frame },
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches(' ', .{})) return .toggle;
+                if (key.matches('r', .{})) return .reset;
+                return null;
+            },
+            else => null,
+        };
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .frame => {
@@ -114,20 +128,6 @@ const App = struct {
         // ProgressBar only receives the final normalized value.
         const frame = self.frame_counter.frame % (progress_frames + 1);
         return anim.ease.inOutQuad(anim.progress(frame, progress_frames));
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .frame => |frame| .{ .frame = frame },
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches(' ', .{})) return .toggle;
-                if (key.matches('r', .{})) return .reset;
-                return null;
-            },
-            else => null,
-        };
     }
 };
 

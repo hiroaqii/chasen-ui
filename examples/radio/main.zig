@@ -2,6 +2,10 @@ const std = @import("std");
 const chasen = @import("chasen");
 const ui = @import("chasen_ui");
 
+// This example shows a Radio group built from independent Radio components.
+//
+// Radio owns the single option state. The app owns group policy: selecting one
+// option clears the rest.
 const App = struct {
     // Radio does not allocate. The app owns group policy: when one option is
     // selected, the app clears the other options.
@@ -21,6 +25,26 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        // App-level shortcuts and navigation get first chance. Up/Down changes
+        // which radio option receives input.
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches(chasen.Key.up, .{})) return .move_up;
+                if (key.matches(chasen.Key.down, .{})) return .move_down;
+            },
+            else => {},
+        }
+
+        // Component-level key handling is delegated to the focused radio, then
+        // wrapped in the app's Msg type. The app update owns group policy.
+        if (self.radios[self.focus.focused()].handleEvent(event)) |msg| {
+            return .{ .radio = msg };
+        }
+        return null;
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .radio => |radio_msg| {
@@ -33,12 +57,6 @@ const App = struct {
             .move_up => self.focus.movePrev(),
             .move_down => self.focus.moveNext(),
             .quit => ctx.quit(),
-        }
-    }
-
-    fn selectFocused(self: *App) void {
-        for (&self.radios, 0..) |*radio, i| {
-            radio.update(.{ .set_selected = self.focus.isFocused(i) });
         }
     }
 
@@ -62,24 +80,10 @@ const App = struct {
         }
     }
 
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        // App-level shortcuts and navigation get first chance. Up/Down changes
-        // which radio option receives input.
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches(chasen.Key.up, .{})) return .move_up;
-                if (key.matches(chasen.Key.down, .{})) return .move_down;
-            },
-            else => {},
+    fn selectFocused(self: *App) void {
+        for (&self.radios, 0..) |*radio, i| {
+            radio.update(.{ .set_selected = self.focus.isFocused(i) });
         }
-
-        // Component-level key handling is delegated to the focused radio, then
-        // wrapped in the app's Msg type. The app update owns group policy.
-        if (self.radios[self.focus.focused()].handleEvent(event)) |msg| {
-            return .{ .radio = msg };
-        }
-        return null;
     }
 };
 

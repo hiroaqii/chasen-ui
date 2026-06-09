@@ -22,6 +22,20 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) return .quit,
+            else => {},
+        }
+
+        // App-level shortcuts get first chance. Remaining events are delegated
+        // to Menu and wrapped in the app's Msg type.
+        if (self.menu.handleEvent(event)) |msg| {
+            return .{ .menu = msg };
+        }
+        return null;
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .menu => |menu_msg| switch (menu_msg) {
@@ -59,20 +73,6 @@ const App = struct {
 
         _ = sfc.borrowTextAt(40, 7, "Menu owns focus only", .{ .dim = true });
         _ = sfc.borrowTextAt(40, 8, "Activation stays in app", .{ .dim = true });
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) return .quit,
-            else => {},
-        }
-
-        // App-level shortcuts get first chance. Remaining events are delegated
-        // to Menu and wrapped in the app's Msg type.
-        if (self.menu.handleEvent(event)) |msg| {
-            return .{ .menu = msg };
-        }
-        return null;
     }
 };
 

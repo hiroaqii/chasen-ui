@@ -35,6 +35,21 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
+            else => null,
+        };
+    }
+
+    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
+        _ = self;
+        switch (msg) {
+            .quit => ctx.quit(),
+        }
+    }
+
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         // Top status line: editor mode, current file, and dirty state.
         var title_area = sfc.child(.{ .col = 0, .row = 0, .width = 60, .height = 1 });
@@ -63,21 +78,6 @@ const App = struct {
             .style = .{ .fg = .{ .index = 15 } },
             .fill_style = .{ .bg = .{ .index = 4 } },
         });
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .key_press => |key| if (key.matches(chasen.Key.escape, .{})) .quit else null,
-            else => null,
-        };
-    }
-
-    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
-        _ = self;
-        switch (msg) {
-            .quit => ctx.quit(),
-        }
     }
 };
 

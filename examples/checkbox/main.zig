@@ -2,6 +2,10 @@ const std = @import("std");
 const chasen = @import("chasen");
 const ui = @import("chasen_ui");
 
+// This example shows multiple Checkbox components with app-owned focus.
+//
+// Checkbox owns only its checked state and local input handling. The app owns
+// which checkbox is focused and routes component messages to that checkbox.
 const App = struct {
     // Checkbox does not allocate, so the app can store components directly in
     // its model without an init/deinit hook.
@@ -20,6 +24,27 @@ const App = struct {
         move_down,
         quit,
     };
+
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        // App-level shortcuts and navigation get first chance. Up/Down changes
+        // the selected row instead of being forwarded to a checkbox.
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches(chasen.Key.up, .{})) return .move_up;
+                if (key.matches(chasen.Key.down, .{})) return .move_down;
+            },
+            else => {},
+        }
+
+        // Component-level key handling is delegated to the selected checkbox,
+        // then wrapped in the app's Msg type so update remains the only
+        // mutation point.
+        if (self.checkboxes[self.focus.focused()].handleEvent(event)) |msg| {
+            return .{ .checkbox = msg };
+        }
+        return null;
+    }
 
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
@@ -50,27 +75,6 @@ const App = struct {
         for (self.checkboxes, 0..) |checkbox, i| {
             _ = sfc.borrowTextAt(@intCast(9 + i * 5), 7, if (checkbox.checked()) "yes" else "no", .{});
         }
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        // App-level shortcuts and navigation get first chance. Up/Down changes
-        // the selected row instead of being forwarded to a checkbox.
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches(chasen.Key.up, .{})) return .move_up;
-                if (key.matches(chasen.Key.down, .{})) return .move_down;
-            },
-            else => {},
-        }
-
-        // Component-level key handling is delegated to the selected checkbox,
-        // then wrapped in the app's Msg type so update remains the only
-        // mutation point.
-        if (self.checkboxes[self.focus.focused()].handleEvent(event)) |msg| {
-            return .{ .checkbox = msg };
-        }
-        return null;
     }
 };
 

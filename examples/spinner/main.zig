@@ -30,6 +30,19 @@ const App = struct {
         ctx.frame().request();
     }
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .frame => |frame| .{ .frame = frame },
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches(' ', .{})) return .toggle;
+                return null;
+            },
+            else => null,
+        };
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .frame => |frame| {
@@ -76,19 +89,6 @@ const App = struct {
             "frame index: {d}  elapsed: {d:.1}s  {s}",
             .{ self.frame_index, elapsed_seconds, status },
         );
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .frame => |frame| .{ .frame = frame },
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches(' ', .{})) return .toggle;
-                return null;
-            },
-            else => null,
-        };
     }
 };
 

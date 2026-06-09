@@ -34,6 +34,24 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches(chasen.Key.tab, .{})) return .move_focus;
+            },
+            else => {},
+        }
+
+        // The app owns focus routing. Only the focused Select receives events.
+        if (self.focus.isFocused(0)) {
+            if (self.theme.handleEvent(event)) |msg| return .{ .theme = msg };
+        } else if (self.focus.isFocused(1)) {
+            if (self.density.handleEvent(event)) |msg| return .{ .density = msg };
+        }
+        return null;
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .theme => |select_msg| switch (select_msg) {
@@ -78,24 +96,6 @@ const App = struct {
         _ = sfc.borrowTextAt(10, 9, theme_items[self.saved_theme], .{});
         _ = sfc.borrowTextAt(0, 10, "Density:", .{ .fg = .gray });
         _ = sfc.borrowTextAt(10, 10, density_items[self.saved_density], .{});
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches(chasen.Key.tab, .{})) return .move_focus;
-            },
-            else => {},
-        }
-
-        // The app owns focus routing. Only the focused Select receives events.
-        if (self.focus.isFocused(0)) {
-            if (self.theme.handleEvent(event)) |msg| return .{ .theme = msg };
-        } else if (self.focus.isFocused(1)) {
-            if (self.density.handleEvent(event)) |msg| return .{ .density = msg };
-        }
-        return null;
     }
 };
 

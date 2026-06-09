@@ -2,6 +2,10 @@ const std = @import("std");
 const chasen = @import("chasen");
 const ui = @import("chasen_ui");
 
+// This example shows a TextInput component that owns editable text memory.
+//
+// The app initializes the component with the app allocator, routes input
+// events through handleEvent, and decides what submit means in update.
 const App = struct {
     allocator: ?std.mem.Allocator = null,
     input: ?ui.TextInput = null,
@@ -20,6 +24,26 @@ const App = struct {
         self.input = try ui.TextInput.init(self.allocator.?, .{
             .placeholder = "Type something and press Enter",
         });
+    }
+
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        // App-level shortcuts get first chance. Escape quits instead of being
+        // forwarded to the TextInput.
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+            },
+            else => {},
+        }
+
+        // Component-level key handling is delegated to TextInput, then wrapped
+        // in the app's Msg type so update remains the only mutation point.
+        if (self.input) |*input| {
+            if (input.handleEvent(event)) |msg| {
+                return .{ .input = msg };
+            }
+        }
+        return null;
     }
 
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
@@ -49,18 +73,6 @@ const App = struct {
         }
     }
 
-    fn setSubmitted(self: *App, text: []const u8) !void {
-        self.clearSubmitted();
-        self.last_submitted = try self.allocator.?.dupe(u8, text);
-    }
-
-    fn clearSubmitted(self: *App) void {
-        if (self.last_submitted) |submitted| {
-            self.allocator.?.free(submitted);
-            self.last_submitted = null;
-        }
-    }
-
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         _ = sfc.borrowTextAt(0, 0, "TextInput Example", .{ .bold = true });
         _ = sfc.borrowTextAt(0, 1, "Enter: submit  Esc: quit", .{ .fg = .gray });
@@ -81,24 +93,16 @@ const App = struct {
         }
     }
 
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        // App-level shortcuts get first chance. Escape quits instead of being
-        // forwarded to the TextInput.
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-            },
-            else => {},
-        }
+    fn setSubmitted(self: *App, text: []const u8) !void {
+        self.clearSubmitted();
+        self.last_submitted = try self.allocator.?.dupe(u8, text);
+    }
 
-        // Component-level key handling is delegated to TextInput, then wrapped
-        // in the app's Msg type so update remains the only mutation point.
-        if (self.input) |*input| {
-            if (input.handleEvent(event)) |msg| {
-                return .{ .input = msg };
-            }
+    fn clearSubmitted(self: *App) void {
+        if (self.last_submitted) |submitted| {
+            self.allocator.?.free(submitted);
+            self.last_submitted = null;
         }
-        return null;
     }
 };
 

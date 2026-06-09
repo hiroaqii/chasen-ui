@@ -26,6 +26,20 @@ const App = struct {
         ctx.frame().request();
     }
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .frame => |frame| .{ .frame = frame },
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches('n', .{})) return .notify;
+                if (key.matches('d', .{})) return .dismiss;
+                return null;
+            },
+            else => null,
+        };
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .frame => |frame| {
@@ -87,20 +101,6 @@ const App = struct {
     fn remainingProgress(self: *const App) f32 {
         const used = @as(f32, @floatFromInt(self.elapsed_ns)) / @as(f32, @floatFromInt(lifetime_ns));
         return 1.0 - used;
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .frame => |frame| .{ .frame = frame },
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches('n', .{})) return .notify;
-                if (key.matches('d', .{})) return .dismiss;
-                return null;
-            },
-            else => null,
-        };
     }
 };
 

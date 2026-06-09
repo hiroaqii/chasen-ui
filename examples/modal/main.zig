@@ -25,6 +25,25 @@ const App = struct {
         quit,
     };
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        _ = self;
+        return switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches('m', .{})) return .toggle_modal;
+                return null;
+            },
+            else => null,
+        };
+    }
+
+    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
+        switch (msg) {
+            .toggle_modal => self.show_modal = !self.show_modal,
+            .quit => ctx.quit(),
+        }
+    }
+
     pub fn view(self: *const App, sfc: *chasen.Surface) !void {
         const size = sfc.size();
         _ = sfc.borrowTextAt(0, 0, "Modal Example - app-owned visibility", .{ .bold = true });
@@ -82,25 +101,6 @@ const App = struct {
                 .key_style = .{ .bold = true, .fg = .{ .index = 6 } },
                 .action_style = .{ .dim = true },
             });
-        }
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        _ = self;
-        return switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches('m', .{})) return .toggle_modal;
-                return null;
-            },
-            else => null,
-        };
-    }
-
-    pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
-        switch (msg) {
-            .toggle_modal => self.show_modal = !self.show_modal,
-            .quit => ctx.quit(),
         }
     }
 };

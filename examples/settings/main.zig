@@ -94,6 +94,50 @@ const App = struct {
         });
     }
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        // App-level shortcuts and navigation get first chance. This keeps
+        // cross-component focus policy outside the individual components.
+        //
+        // Left/Right are reserved for the Save/Reset button row in this
+        // example, so they are not forwarded to TextInput for cursor movement.
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches(chasen.Key.up, .{})) return .move_up;
+                if (key.matches(chasen.Key.down, .{})) return .move_down;
+                if (key.matches(chasen.Key.left, .{})) return .move_left;
+                if (key.matches(chasen.Key.right, .{})) return .move_right;
+            },
+            else => {},
+        }
+
+        // Component-level key handling is delegated only to the selected
+        // component, then wrapped in the app Msg type. This is the same
+        // handleEvent -> app Msg -> update flow used by the smaller examples.
+        return switch (self.selected) {
+            .username => if (self.username) |*username|
+                if (username.handleEvent(event)) |msg| .{ .username = msg } else null
+            else
+                null,
+            .notifications => if (self.notifications.handleEvent(event)) |msg|
+                .{ .notifications = msg }
+            else
+                null,
+            .compact_layout => if (self.compact_layout.handleEvent(event)) |msg|
+                .{ .compact_layout = msg }
+            else
+                null,
+            .save => if (self.save_button.handleEvent(event)) |msg|
+                .{ .save = msg }
+            else
+                null,
+            .reset => if (self.reset_button.handleEvent(event)) |msg|
+                .{ .reset = msg }
+            else
+                null,
+        };
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .username => |input_msg| {
@@ -133,34 +177,6 @@ const App = struct {
                 }
                 ctx.quit();
             },
-        }
-    }
-
-    fn saveSummary(self: *App) !void {
-        self.clearSaved();
-        self.saved = try std.fmt.allocPrint(
-            self.allocator.?,
-            "Saved username='{s}', notifications={s}, compact={s}",
-            .{
-                self.username.?.text(),
-                if (self.notifications.checked()) "yes" else "no",
-                if (self.compact_layout.checked()) "yes" else "no",
-            },
-        );
-    }
-
-    fn resetSettings(self: *App) !void {
-        self.clearSaved();
-        try self.username.?.update(.clear);
-        self.notifications.update(.{ .set_checked = false });
-        self.compact_layout.update(.{ .set_checked = false });
-        self.saved = try std.fmt.allocPrint(self.allocator.?, "Reset settings", .{});
-    }
-
-    fn clearSaved(self: *App) void {
-        if (self.saved) |saved| {
-            self.allocator.?.free(saved);
-            self.saved = null;
         }
     }
 
@@ -260,48 +276,32 @@ const App = struct {
         }
     }
 
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        // App-level shortcuts and navigation get first chance. This keeps
-        // cross-component focus policy outside the individual components.
-        //
-        // Left/Right are reserved for the Save/Reset button row in this
-        // example, so they are not forwarded to TextInput for cursor movement.
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches(chasen.Key.up, .{})) return .move_up;
-                if (key.matches(chasen.Key.down, .{})) return .move_down;
-                if (key.matches(chasen.Key.left, .{})) return .move_left;
-                if (key.matches(chasen.Key.right, .{})) return .move_right;
+    fn saveSummary(self: *App) !void {
+        self.clearSaved();
+        self.saved = try std.fmt.allocPrint(
+            self.allocator.?,
+            "Saved username='{s}', notifications={s}, compact={s}",
+            .{
+                self.username.?.text(),
+                if (self.notifications.checked()) "yes" else "no",
+                if (self.compact_layout.checked()) "yes" else "no",
             },
-            else => {},
-        }
+        );
+    }
 
-        // Component-level key handling is delegated only to the selected
-        // component, then wrapped in the app Msg type. This is the same
-        // handleEvent -> app Msg -> update flow used by the smaller examples.
-        return switch (self.selected) {
-            .username => if (self.username) |*username|
-                if (username.handleEvent(event)) |msg| .{ .username = msg } else null
-            else
-                null,
-            .notifications => if (self.notifications.handleEvent(event)) |msg|
-                .{ .notifications = msg }
-            else
-                null,
-            .compact_layout => if (self.compact_layout.handleEvent(event)) |msg|
-                .{ .compact_layout = msg }
-            else
-                null,
-            .save => if (self.save_button.handleEvent(event)) |msg|
-                .{ .save = msg }
-            else
-                null,
-            .reset => if (self.reset_button.handleEvent(event)) |msg|
-                .{ .reset = msg }
-            else
-                null,
-        };
+    fn resetSettings(self: *App) !void {
+        self.clearSaved();
+        try self.username.?.update(.clear);
+        self.notifications.update(.{ .set_checked = false });
+        self.compact_layout.update(.{ .set_checked = false });
+        self.saved = try std.fmt.allocPrint(self.allocator.?, "Reset settings", .{});
+    }
+
+    fn clearSaved(self: *App) void {
+        if (self.saved) |saved| {
+            self.allocator.?.free(saved);
+            self.saved = null;
+        }
     }
 };
 

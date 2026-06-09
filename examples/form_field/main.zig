@@ -58,6 +58,28 @@ const App = struct {
         });
     }
 
+    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(chasen.Key.escape, .{})) return .quit;
+                if (key.matches(chasen.Key.up, .{})) return .move_up;
+                if (key.matches(chasen.Key.down, .{})) return .move_down;
+            },
+            else => {},
+        }
+
+        return switch (self.selected) {
+            .username => if (self.username) |*username|
+                if (username.handleEvent(event)) |msg| .{ .username = msg } else null
+            else
+                null,
+            .project => if (self.project) |*project|
+                if (project.handleEvent(event)) |msg| .{ .project = msg } else null
+            else
+                null,
+        };
+    }
+
     pub fn update(self: *App, msg: Msg, ctx: *chasen.Ctx(Msg)) !void {
         switch (msg) {
             .username => |input_msg| {
@@ -127,28 +149,6 @@ const App = struct {
         }
 
         _ = sfc.borrowTextAt(0, 12, "FormField owns chrome only; submit/save policy stays in app.", .{ .dim = true });
-    }
-
-    pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
-        switch (event) {
-            .key_press => |key| {
-                if (key.matches(chasen.Key.escape, .{})) return .quit;
-                if (key.matches(chasen.Key.up, .{})) return .move_up;
-                if (key.matches(chasen.Key.down, .{})) return .move_down;
-            },
-            else => {},
-        }
-
-        return switch (self.selected) {
-            .username => if (self.username) |*username|
-                if (username.handleEvent(event)) |msg| .{ .username = msg } else null
-            else
-                null,
-            .project => if (self.project) |*project|
-                if (project.handleEvent(event)) |msg| .{ .project = msg } else null
-            else
-                null,
-        };
     }
 };
 
