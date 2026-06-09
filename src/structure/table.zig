@@ -69,6 +69,8 @@ pub const Table = struct {
         width: u16,
         /// Alignment used for header and cell text.
         alignment: Align = .left,
+        /// Optional style override for this column's body cells.
+        cell_style: ?chasen.TextStyle = null,
     };
 
     /// One borrowed row. Missing cells are rendered as empty strings.
@@ -94,6 +96,8 @@ pub const Table = struct {
         show_header: bool = true,
         /// Whether to draw a separator row after the header.
         show_separator: bool = true,
+        /// Whether `.full` grid mode draws separator rows between body rows.
+        body_separators: bool = true,
         /// Style used for header text.
         header_style: chasen.TextStyle = .{ .bold = true },
         /// Style used for separator glyphs.
@@ -137,11 +141,24 @@ pub const Table = struct {
         return height - header_rows;
     }
 
-    /// Return how many body rows can be fully drawn for a grid mode.
+    /// Return how many body rows can be drawn for a grid mode.
+    ///
+    /// This scalar helper keeps the original API shape. For `.full` grids,
+    /// `show_separator` is treated as both the header separator and body-row
+    /// separator setting. Use `visibleRowCapacityForOptions` when the table
+    /// view uses `ViewOptions.body_separators`.
     pub fn visibleRowCapacityFor(self: *const Table, height: u16, show_header: bool, show_separator: bool, grid: Grid) usize {
         return switch (grid) {
             .none, .minimal => self.visibleRowCapacity(height, show_header, show_separator),
-            .full => fullGridVisibleRowCapacity(height, show_header, show_separator),
+            .full => fullGridVisibleRowCapacity(height, show_header, show_separator, show_separator),
+        };
+    }
+
+    /// Return how many body rows can be drawn for a concrete `ViewOptions`.
+    pub fn visibleRowCapacityForOptions(self: *const Table, height: u16, opts: ViewOptions) usize {
+        return switch (opts.grid) {
+            .none, .minimal => self.visibleRowCapacity(height, opts.show_header, opts.show_separator),
+            .full => fullGridVisibleRowCapacity(height, opts.show_header, opts.show_separator, opts.body_separators),
         };
     }
 
@@ -199,12 +216,12 @@ fn headerHeight(show_header: bool, show_separator: bool) u16 {
     return if (show_separator) 2 else 1;
 }
 
-fn fullGridVisibleRowCapacity(height: u16, show_header: bool, show_separator: bool) usize {
+fn fullGridVisibleRowCapacity(height: u16, show_header: bool, show_separator: bool, body_separators: bool) usize {
     if (height <= 1) return 0;
     const header_rows: u16 = if (!show_header) 0 else if (show_separator) 2 else 1;
     if (height <= 1 + header_rows) return 0;
     const body_space = height - 1 - header_rows;
-    return if (show_separator) body_space / 2 else body_space;
+    return if (body_separators) body_space / 2 else body_space;
 }
 
 fn drawFullGrid(
@@ -237,9 +254,12 @@ fn drawFullGrid(
         drawGridContentRow(surface, row, columns, cells, opts.grid_style, opts.separator_style, opts.cell_style, max_width);
         row += 1;
         if (row >= max_height) return;
-        if (opts.show_separator or i + 1 == rows.len) {
-            const line_kind: GridLineKind = if (i + 1 == rows.len) .bottom else .middle;
-            drawGridLine(surface, row, columns, opts.grid_style, line_kind, opts.separator_style, max_width);
+        if (i + 1 == rows.len) {
+            drawGridLine(surface, row, columns, opts.grid_style, .bottom, opts.separator_style, max_width);
+            row += 1;
+            if (row >= max_height) return;
+        } else if (opts.body_separators) {
+            drawGridLine(surface, row, columns, opts.grid_style, .middle, opts.separator_style, max_width);
             row += 1;
             if (row >= max_height) return;
         }
@@ -281,7 +301,7 @@ fn drawGridContentRow(
     maybe_cells: ?Table.Row,
     grid_style: Table.GridStyle,
     grid_text_style: chasen.TextStyle,
-    text_style: chasen.TextStyle,
+    default_text_style: chasen.TextStyle,
     max_width: u16,
 ) void {
     var cursor: u16 = 0;
@@ -293,7 +313,8 @@ fn drawGridContentRow(
         const width = @min(column.width, remaining);
         if (width > 0) {
             const text = if (maybe_cells) |cells| cellText(cells, i) else column.header;
-            drawCell(surface, cursor, row, width, text, column.alignment, text_style);
+            const style = if (maybe_cells != null) column.cell_style orelse default_text_style else default_text_style;
+            drawCell(surface, cursor, row, width, text, column.alignment, style);
         }
         cursor +|= column.width;
         drawGridGlyph(surface, &cursor, row, grid_style.vertical, grid_text_style, max_width);
@@ -377,7 +398,7 @@ fn drawRow(
         const remaining = max_width - cursor;
         const width = @min(column.width, remaining);
         if (width > 0) {
-            drawCell(surface, cursor, row, width, cellText(cells, i), column.alignment, style);
+            drawCell(surface, cursor, row, width, cellText(cells, i), column.alignment, column.cell_style orelse style);
         }
         cursor +|= column.width;
     }
@@ -493,6 +514,54 @@ test "Table visibleRowCapacityFor accounts for full grid lines" {
     try std.testing.expectEqual(@as(usize, 3), table.visibleRowCapacityFor(7, false, true, .full));
     try std.testing.expectEqual(@as(usize, 6), table.visibleRowCapacityFor(7, false, false, .full));
     try std.testing.expectEqual(@as(usize, 5), table.visibleRowCapacityFor(7, true, true, .minimal));
+}
+
+test "Table visibleRowCapacityForOptions accounts for body separators" {
+    const table = Table.init(.{});
+
+    try std.testing.expectEqual(@as(usize, 2), table.visibleRowCapacityForOptions(7, .{
+        .grid = .full,
+        .show_header = true,
+        .show_separator = true,
+        .body_separators = true,
+    }));
+    try std.testing.expectEqual(@as(usize, 4), table.visibleRowCapacityForOptions(7, .{
+        .grid = .full,
+        .show_header = true,
+        .show_separator = true,
+        .body_separators = false,
+    }));
+    try std.testing.expectEqual(@as(usize, 5), table.visibleRowCapacityForOptions(7, .{
+        .grid = .minimal,
+        .show_header = true,
+        .show_separator = true,
+        .body_separators = false,
+    }));
+}
+
+test "Table column cell_style overrides body cell style" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(16, 3);
+    defer ts.deinit();
+
+    const accent = chasen.Color{ .rgb = .{ 203, 166, 247 } };
+    const columns = [_]Table.Column{
+        .{ .header = "A", .width = 3 },
+        .{ .header = "B", .width = 3, .cell_style = .{ .fg = accent } },
+    };
+    const rows = [_]Table.Row{
+        &.{ "one", "two" },
+    };
+    const table = Table.init(.{ .columns = &columns, .rows = &rows });
+
+    table.view(&ts.surface, .{
+        .grid = .none,
+        .show_header = false,
+        .cell_style = .{},
+    });
+
+    try std.testing.expect(!ts.surface.readCell(0, 0).?.style.fg.eql(accent.toVaxis()));
+    try std.testing.expect(ts.surface.readCell(5, 0).?.style.fg.eql(accent.toVaxis()));
 }
 
 test "Table alignedCol respects display width" {
