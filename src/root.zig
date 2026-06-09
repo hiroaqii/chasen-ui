@@ -39,6 +39,9 @@ pub const List = list.List;
 pub const list_view = @import("navigation/list_view.zig");
 pub const ListViewport = list_view.ListViewport;
 
+pub const block_viewport = @import("navigation/block_viewport.zig");
+pub const BlockViewport = block_viewport.BlockViewport;
+
 pub const list_filter = @import("navigation/list_filter.zig");
 pub const ListFilter = list_filter.ListFilter;
 

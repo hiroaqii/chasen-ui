@@ -36,6 +36,7 @@ pub fn build(b: *std.Build) void {
         "radio",
         "button",
         "list",
+        "block_viewport",
         "column_list",
         "selectable_list",
         "multi_select_list",
