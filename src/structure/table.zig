@@ -76,6 +76,12 @@ pub const Table = struct {
     /// One borrowed row. Missing cells are rendered as empty strings.
     pub const Row = []const []const u8;
 
+    /// Horizontal padding inside a fixed-width table cell.
+    pub const CellPadding = struct {
+        left: u16 = 0,
+        right: u16 = 0,
+    };
+
     /// Initial values used when constructing a `Table`.
     pub const Options = struct {
         /// Column definitions borrowed by the component for its lifetime.
@@ -104,6 +110,8 @@ pub const Table = struct {
         separator_style: chasen.TextStyle = .{ .dim = true },
         /// Style used for body cell text.
         cell_style: chasen.TextStyle = .{},
+        /// Left/right padding inside header and body cells.
+        cell_padding: CellPadding = .{},
     };
 
     /// Rendered-row slice for partial table drawing.
@@ -193,7 +201,7 @@ pub const Table = struct {
 
         var sink = RowSliceSink.init(slice, height);
         if (opts.show_header) {
-            if (sink.nextRow()) |row| drawHeader(surface, row, self.columns, opts.column_gap, opts.header_style, width);
+            if (sink.nextRow()) |row| drawHeader(surface, row, self.columns, opts.column_gap, opts.header_style, opts.cell_padding, width);
             if (sink.done()) return;
         }
 
@@ -203,7 +211,7 @@ pub const Table = struct {
         }
 
         for (self.rows) |cells| {
-            if (sink.nextRow()) |row| drawRow(surface, row, self.columns, cells, opts.column_gap, opts.cell_style, width);
+            if (sink.nextRow()) |row| drawRow(surface, row, self.columns, cells, opts.column_gap, opts.cell_style, opts.cell_padding, width);
             if (sink.done()) break;
         }
     }
@@ -306,7 +314,7 @@ fn drawFullGrid(
     if (sink.done()) return;
 
     if (opts.show_header) {
-        if (sink.nextRow()) |row| drawGridContentRow(surface, row, columns, null, opts.grid_style, opts.separator_style, opts.header_style, max_width);
+        if (sink.nextRow()) |row| drawGridContentRow(surface, row, columns, null, opts.grid_style, opts.separator_style, opts.header_style, opts.cell_padding, max_width);
         if (sink.done()) return;
         if (opts.show_separator) {
             if (sink.nextRow()) |row| drawGridLine(surface, row, columns, opts.grid_style, .middle, opts.separator_style, max_width);
@@ -315,7 +323,7 @@ fn drawFullGrid(
     }
 
     for (rows, 0..) |cells, i| {
-        if (sink.nextRow()) |row| drawGridContentRow(surface, row, columns, cells, opts.grid_style, opts.separator_style, opts.cell_style, max_width);
+        if (sink.nextRow()) |row| drawGridContentRow(surface, row, columns, cells, opts.grid_style, opts.separator_style, opts.cell_style, opts.cell_padding, max_width);
         if (sink.done()) return;
         if (i + 1 == rows.len) {
             if (sink.nextRow()) |row| drawGridLine(surface, row, columns, opts.grid_style, .bottom, opts.separator_style, max_width);
@@ -363,6 +371,7 @@ fn drawGridContentRow(
     grid_style: Table.GridStyle,
     grid_text_style: chasen.TextStyle,
     default_text_style: chasen.TextStyle,
+    padding: Table.CellPadding,
     max_width: u16,
 ) void {
     var cursor: u16 = 0;
@@ -375,7 +384,7 @@ fn drawGridContentRow(
         if (width > 0) {
             const text = if (maybe_cells) |cells| cellText(cells, i) else column.header;
             const style = if (maybe_cells != null) column.cell_style orelse default_text_style else default_text_style;
-            drawCell(surface, cursor, row, width, text, column.alignment, style);
+            drawCell(surface, cursor, row, width, text, column.alignment, style, padding);
         }
         cursor +|= column.width;
         drawGridGlyph(surface, &cursor, row, grid_style.vertical, grid_text_style, max_width);
@@ -426,6 +435,7 @@ fn drawHeader(
     columns: []const Table.Column,
     column_gap: u16,
     style: chasen.TextStyle,
+    padding: Table.CellPadding,
     max_width: u16,
 ) void {
     var cursor: u16 = 0;
@@ -436,7 +446,7 @@ fn drawHeader(
         const remaining = max_width - cursor;
         const width = @min(column.width, remaining);
         if (width > 0) {
-            drawCell(surface, cursor, row, width, column.header, column.alignment, style);
+            drawCell(surface, cursor, row, width, column.header, column.alignment, style, padding);
         }
         cursor +|= column.width;
     }
@@ -449,6 +459,7 @@ fn drawRow(
     cells: Table.Row,
     column_gap: u16,
     style: chasen.TextStyle,
+    padding: Table.CellPadding,
     max_width: u16,
 ) void {
     var cursor: u16 = 0;
@@ -459,7 +470,7 @@ fn drawRow(
         const remaining = max_width - cursor;
         const width = @min(column.width, remaining);
         if (width > 0) {
-            drawCell(surface, cursor, row, width, cellText(cells, i), column.alignment, column.cell_style orelse style);
+            drawCell(surface, cursor, row, width, cellText(cells, i), column.alignment, column.cell_style orelse style, padding);
         }
         cursor +|= column.width;
     }
@@ -496,14 +507,31 @@ fn drawCell(
     text: []const u8,
     alignment: Table.Align,
     style: chasen.TextStyle,
+    padding: Table.CellPadding,
 ) void {
+    const left = @min(padding.left, width);
+    const right = @min(padding.right, width - left);
+    const text_width = width - left - right;
+
+    fillCellRange(surface, col, row, left, style);
+    fillCellRange(surface, col + left + text_width, row, right, style);
+
+    if (text_width == 0) return;
+
     var child = surface.child(.{
-        .col = col,
+        .col = col + left,
         .row = row,
-        .width = width,
+        .width = text_width,
         .height = 1,
     });
-    _ = child.borrowTextAt(alignedCol(text, width, alignment), 0, text, style);
+    _ = child.borrowTextAt(alignedCol(text, text_width, alignment), 0, text, style);
+}
+
+fn fillCellRange(surface: *chasen.Surface, col: u16, row: u16, width: u16, style: chasen.TextStyle) void {
+    var offset: u16 = 0;
+    while (offset < width) : (offset += 1) {
+        _ = surface.borrowTextAt(col + offset, row, " ", style);
+    }
 }
 
 fn cellText(cells: Table.Row, index: usize) []const u8 {
@@ -705,6 +733,141 @@ test "Table column cell_style overrides body cell style" {
 
     try std.testing.expect(!ts.surface.readCell(0, 0).?.style.fg.eql(accent.toVaxis()));
     try std.testing.expect(ts.surface.readCell(5, 0).?.style.fg.eql(accent.toVaxis()));
+}
+
+test "Table cell_padding draws header and body padding with their styles" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(8, 4);
+    defer ts.deinit();
+
+    const header_color = chasen.Color{ .rgb = .{ 137, 180, 250 } };
+    const body_color = chasen.Color{ .rgb = .{ 166, 227, 161 } };
+    const columns = [_]Table.Column{
+        .{ .header = "H", .width = 5 },
+    };
+    const rows = [_]Table.Row{
+        &.{"a"},
+    };
+    const table = Table.init(.{ .columns = &columns, .rows = &rows });
+
+    table.view(&ts.surface, .{
+        .grid = .minimal,
+        .header_style = .{ .fg = header_color },
+        .cell_style = .{ .fg = body_color },
+        .cell_padding = .{ .left = 1, .right = 1 },
+    });
+
+    try ts.expectCellText(0, 0, " ");
+    try ts.expectCellText(1, 0, "H");
+    try ts.expectCellText(4, 0, " ");
+    try std.testing.expect(ts.surface.readCell(0, 0).?.style.fg.eql(header_color.toVaxis()));
+    try std.testing.expect(ts.surface.readCell(4, 0).?.style.fg.eql(header_color.toVaxis()));
+
+    try ts.expectCellText(0, 2, " ");
+    try ts.expectCellText(1, 2, "a");
+    try ts.expectCellText(4, 2, " ");
+    try std.testing.expect(ts.surface.readCell(0, 2).?.style.fg.eql(body_color.toVaxis()));
+    try std.testing.expect(ts.surface.readCell(4, 2).?.style.fg.eql(body_color.toVaxis()));
+}
+
+test "Table empty cell_padding does not fill unused cell area" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(8, 2);
+    defer ts.deinit();
+
+    _ = ts.surface.borrowTextAt(3, 0, "z", .{});
+
+    const columns = [_]Table.Column{
+        .{ .header = "A", .width = 5 },
+    };
+    const rows = [_]Table.Row{
+        &.{"x"},
+    };
+    const table = Table.init(.{ .columns = &columns, .rows = &rows });
+
+    table.view(&ts.surface, .{
+        .grid = .none,
+        .show_header = false,
+        .cell_style = .{ .fg = chasen.Color{ .rgb = .{ 166, 227, 161 } } },
+    });
+
+    try ts.expectCellText(0, 0, "x");
+    try ts.expectCellText(3, 0, "z");
+    try std.testing.expect(!ts.surface.readCell(3, 0).?.style.fg.eql((chasen.Color{ .rgb = .{ 166, 227, 161 } }).toVaxis()));
+}
+
+test "Table cell_padding uses column cell_style for padding" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(8, 2);
+    defer ts.deinit();
+
+    const accent = chasen.Color{ .rgb = .{ 203, 166, 247 } };
+    const columns = [_]Table.Column{
+        .{ .header = "A", .width = 5, .cell_style = .{ .fg = accent } },
+    };
+    const rows = [_]Table.Row{
+        &.{"x"},
+    };
+    const table = Table.init(.{ .columns = &columns, .rows = &rows });
+
+    table.view(&ts.surface, .{
+        .grid = .none,
+        .show_header = false,
+        .cell_padding = .{ .left = 1, .right = 1 },
+    });
+
+    try ts.expectCellText(0, 0, " ");
+    try ts.expectCellText(1, 0, "x");
+    try ts.expectCellText(4, 0, " ");
+    try std.testing.expect(ts.surface.readCell(0, 0).?.style.fg.eql(accent.toVaxis()));
+    try std.testing.expect(ts.surface.readCell(4, 0).?.style.fg.eql(accent.toVaxis()));
+}
+
+test "Table cell_padding clips text when padding consumes width" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(4, 2);
+    defer ts.deinit();
+
+    const columns = [_]Table.Column{
+        .{ .header = "A", .width = 2 },
+    };
+    const rows = [_]Table.Row{
+        &.{"x"},
+    };
+    const table = Table.init(.{ .columns = &columns, .rows = &rows });
+
+    table.view(&ts.surface, .{
+        .grid = .none,
+        .show_header = false,
+        .cell_padding = .{ .left = 1, .right = 1 },
+    });
+
+    try ts.expectCellText(0, 0, " ");
+    try ts.expectCellText(1, 0, " ");
+}
+
+test "Table cell_padding aligns text inside padded content width" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(8, 2);
+    defer ts.deinit();
+
+    const columns = [_]Table.Column{
+        .{ .header = "A", .width = 6, .alignment = .right },
+    };
+    const rows = [_]Table.Row{
+        &.{"x"},
+    };
+    const table = Table.init(.{ .columns = &columns, .rows = &rows });
+
+    table.view(&ts.surface, .{
+        .grid = .none,
+        .show_header = false,
+        .cell_padding = .{ .left = 1, .right = 1 },
+    });
+
+    try ts.expectCellText(0, 0, " ");
+    try ts.expectCellText(4, 0, "x");
+    try ts.expectCellText(5, 0, " ");
 }
 
 test "Table alignedCol respects display width" {

@@ -3,10 +3,10 @@ const chasen = @import("chasen");
 const ui = @import("chasen_ui");
 
 const columns = [_]ui.Table.Column{
-    .{ .header = "Rank", .width = 4, .alignment = .right },
-    .{ .header = "Title", .width = 26 },
-    .{ .header = "Year", .width = 4, .alignment = .right },
-    .{ .header = "Rating", .width = 6, .alignment = .right },
+    .{ .header = "Rank", .width = 6, .alignment = .right },
+    .{ .header = "Title", .width = 28 },
+    .{ .header = "Year", .width = 6, .alignment = .right },
+    .{ .header = "Rating", .width = 8, .alignment = .right },
 };
 
 const rows = [_]ui.Table.Row{
@@ -91,7 +91,7 @@ const App = struct {
         // viewSlice uses rendered-row units. The offset can land on the top
         // border, header, separator, body row, or bottom border. Table remains
         // display-only; the app owns the offset and clamps it in update().
-        _ = sfc.borrowTextAt(0, 10, "full grid partial view", .{ .bold = true, .fg = .{ .index = 6 } });
+        _ = sfc.borrowTextAt(0, 10, "full grid partial view with cell padding", .{ .bold = true, .fg = .{ .index = 6 } });
         var partial_area = sfc.child(.{ .col = 0, .row = 11, .width = @min(size.width, self.table.naturalWidthFor(0, .full)), .height = @min(partial_height, size.height -| @min(size.height, 11)) });
         self.table.viewSlice(&partial_area, partialTableOptions(), .{
             .skip_rows = self.table_offset,
@@ -114,6 +114,7 @@ fn partialTableOptions() ui.Table.ViewOptions {
         .header_style = .{ .bold = true, .fg = .{ .index = 6 } },
         .separator_style = .{ .fg = .gray },
         .body_separators = false,
+        .cell_padding = .{ .left = 1, .right = 1 },
     };
 }
 
