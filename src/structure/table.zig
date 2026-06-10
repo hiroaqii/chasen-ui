@@ -106,6 +106,18 @@ pub const Table = struct {
         cell_style: chasen.TextStyle = .{},
     };
 
+    /// Rendered-row slice for partial table drawing.
+    ///
+    /// `skip_rows` and `max_rows` count rendered terminal rows, including table
+    /// chrome such as full-grid borders, headers, and separators. This matches
+    /// `BlockViewport` row units.
+    pub const ViewSlice = struct {
+        /// Number of rendered table rows to skip before drawing.
+        skip_rows: usize = 0,
+        /// Maximum rendered table rows to draw. `null` means no explicit limit.
+        max_rows: ?usize = null,
+    };
+
     /// Column definitions borrowed by the component.
     columns: []const Column = &.{},
     /// Row cells borrowed by the component.
@@ -164,32 +176,77 @@ pub const Table = struct {
 
     /// Draw the table into the provided clipped surface region.
     pub fn view(self: *const Table, surface: *chasen.Surface, opts: ViewOptions) void {
+        self.viewSlice(surface, opts, .{});
+    }
+
+    /// Draw a rendered-row slice of the table into the provided clipped region.
+    pub fn viewSlice(self: *const Table, surface: *chasen.Surface, opts: ViewOptions, slice: ViewSlice) void {
         const size = surface.size();
         const width = size.width;
         const height = size.height;
         if (width == 0 or height == 0 or self.columns.len == 0) return;
 
         if (opts.grid == .full) {
-            drawFullGrid(surface, self.columns, self.rows, opts, width, height);
+            drawFullGrid(surface, self.columns, self.rows, opts, slice, width, height);
             return;
         }
 
-        var row: u16 = 0;
+        var sink = RowSliceSink.init(slice, height);
         if (opts.show_header) {
-            drawHeader(surface, row, self.columns, opts.column_gap, opts.header_style, width);
-            row += 1;
+            if (sink.nextRow()) |row| drawHeader(surface, row, self.columns, opts.column_gap, opts.header_style, width);
+            if (sink.done()) return;
         }
 
-        if (opts.grid == .minimal and opts.show_header and opts.show_separator and row < height) {
-            drawSeparator(surface, row, self.columns, opts.column_gap, opts.separator_style, width);
-            row += 1;
+        if (opts.grid == .minimal and opts.show_header and opts.show_separator) {
+            if (sink.nextRow()) |row| drawSeparator(surface, row, self.columns, opts.column_gap, opts.separator_style, width);
+            if (sink.done()) return;
         }
 
         for (self.rows) |cells| {
-            if (row >= height) break;
-            drawRow(surface, row, self.columns, cells, opts.column_gap, opts.cell_style, width);
-            row += 1;
+            if (sink.nextRow()) |row| drawRow(surface, row, self.columns, cells, opts.column_gap, opts.cell_style, width);
+            if (sink.done()) break;
         }
+    }
+
+    /// Return the number of rendered terminal rows for these view options.
+    pub fn renderedRowCountForOptions(self: *const Table, opts: ViewOptions) usize {
+        return switch (opts.grid) {
+            .none => (if (opts.show_header) @as(usize, 1) else 0) + self.rows.len,
+            .minimal => (if (opts.show_header) @as(usize, if (opts.show_separator) 2 else 1) else 0) + self.rows.len,
+            .full => fullGridRenderedRowCount(self.rows.len, opts.show_header, opts.show_separator, opts.body_separators),
+        };
+    }
+};
+
+const RowSliceSink = struct {
+    skip_rows: usize,
+    max_rows: usize,
+    source_row: usize = 0,
+    drawn_rows: u16 = 0,
+    surface_height: u16,
+
+    fn init(slice: Table.ViewSlice, surface_height: u16) RowSliceSink {
+        const max_rows = slice.max_rows orelse std.math.maxInt(usize);
+        return .{
+            .skip_rows = slice.skip_rows,
+            .max_rows = max_rows,
+            .surface_height = surface_height,
+        };
+    }
+
+    fn nextRow(self: *RowSliceSink) ?u16 {
+        defer self.source_row += 1;
+        if (self.source_row < self.skip_rows) return null;
+        if (self.drawn_rows >= self.surface_height) return null;
+        if (@as(usize, self.drawn_rows) >= self.max_rows) return null;
+
+        const row = self.drawn_rows;
+        self.drawn_rows += 1;
+        return row;
+    }
+
+    fn done(self: *const RowSliceSink) bool {
+        return self.drawn_rows >= self.surface_height or @as(usize, self.drawn_rows) >= self.max_rows;
     }
 };
 
@@ -224,49 +281,53 @@ fn fullGridVisibleRowCapacity(height: u16, show_header: bool, show_separator: bo
     return if (body_separators) body_space / 2 else body_space;
 }
 
+fn fullGridRenderedRowCount(row_count: usize, show_header: bool, show_separator: bool, body_separators: bool) usize {
+    var count: usize = 1; // top border
+    if (show_header) count += if (show_separator) 2 else 1;
+    count += row_count;
+    if (row_count == 0) return count + 1; // bottom border
+    if (body_separators and row_count > 1) count += row_count - 1;
+    return count + 1; // bottom border
+}
+
 fn drawFullGrid(
     surface: *chasen.Surface,
     columns: []const Table.Column,
     rows: []const Table.Row,
     opts: Table.ViewOptions,
+    slice: Table.ViewSlice,
     max_width: u16,
     max_height: u16,
 ) void {
     if (max_width == 0 or max_height == 0) return;
 
-    var row: u16 = 0;
-    drawGridLine(surface, row, columns, opts.grid_style, .top, opts.separator_style, max_width);
-    row += 1;
-    if (row >= max_height) return;
+    var sink = RowSliceSink.init(slice, max_height);
+    if (sink.nextRow()) |row| drawGridLine(surface, row, columns, opts.grid_style, .top, opts.separator_style, max_width);
+    if (sink.done()) return;
 
     if (opts.show_header) {
-        drawGridContentRow(surface, row, columns, null, opts.grid_style, opts.separator_style, opts.header_style, max_width);
-        row += 1;
-        if (row >= max_height) return;
+        if (sink.nextRow()) |row| drawGridContentRow(surface, row, columns, null, opts.grid_style, opts.separator_style, opts.header_style, max_width);
+        if (sink.done()) return;
         if (opts.show_separator) {
-            drawGridLine(surface, row, columns, opts.grid_style, .middle, opts.separator_style, max_width);
-            row += 1;
-            if (row >= max_height) return;
+            if (sink.nextRow()) |row| drawGridLine(surface, row, columns, opts.grid_style, .middle, opts.separator_style, max_width);
+            if (sink.done()) return;
         }
     }
 
     for (rows, 0..) |cells, i| {
-        drawGridContentRow(surface, row, columns, cells, opts.grid_style, opts.separator_style, opts.cell_style, max_width);
-        row += 1;
-        if (row >= max_height) return;
+        if (sink.nextRow()) |row| drawGridContentRow(surface, row, columns, cells, opts.grid_style, opts.separator_style, opts.cell_style, max_width);
+        if (sink.done()) return;
         if (i + 1 == rows.len) {
-            drawGridLine(surface, row, columns, opts.grid_style, .bottom, opts.separator_style, max_width);
-            row += 1;
-            if (row >= max_height) return;
+            if (sink.nextRow()) |row| drawGridLine(surface, row, columns, opts.grid_style, .bottom, opts.separator_style, max_width);
+            if (sink.done()) return;
         } else if (opts.body_separators) {
-            drawGridLine(surface, row, columns, opts.grid_style, .middle, opts.separator_style, max_width);
-            row += 1;
-            if (row >= max_height) return;
+            if (sink.nextRow()) |row| drawGridLine(surface, row, columns, opts.grid_style, .middle, opts.separator_style, max_width);
+            if (sink.done()) return;
         }
     }
 
     if (rows.len == 0) {
-        drawGridLine(surface, row, columns, opts.grid_style, .bottom, opts.separator_style, max_width);
+        if (sink.nextRow()) |row| drawGridLine(surface, row, columns, opts.grid_style, .bottom, opts.separator_style, max_width);
     }
 }
 
@@ -537,6 +598,88 @@ test "Table visibleRowCapacityForOptions accounts for body separators" {
         .show_separator = true,
         .body_separators = false,
     }));
+}
+
+test "Table renderedRowCountForOptions accounts for full grid chrome" {
+    const rows = [_]Table.Row{
+        &.{"one"},
+        &.{"two"},
+    };
+    const table = Table.init(.{ .rows = &rows });
+
+    try std.testing.expectEqual(@as(usize, 7), table.renderedRowCountForOptions(.{
+        .grid = .full,
+        .show_header = true,
+        .show_separator = true,
+        .body_separators = true,
+    }));
+    try std.testing.expectEqual(@as(usize, 6), table.renderedRowCountForOptions(.{
+        .grid = .full,
+        .show_header = true,
+        .show_separator = true,
+        .body_separators = false,
+    }));
+    try std.testing.expectEqual(@as(usize, 4), table.renderedRowCountForOptions(.{
+        .grid = .minimal,
+        .show_header = true,
+        .show_separator = true,
+    }));
+}
+
+test "Table viewSlice skips rendered rows in full grid" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(8, 2);
+    defer ts.deinit();
+
+    const columns = [_]Table.Column{
+        .{ .header = "A", .width = 3 },
+    };
+    const rows = [_]Table.Row{
+        &.{"one"},
+        &.{"two"},
+    };
+    const table = Table.init(.{ .columns = &columns, .rows = &rows });
+
+    table.viewSlice(&ts.surface, .{
+        .grid = .full,
+        .show_header = true,
+        .show_separator = true,
+        .body_separators = false,
+    }, .{
+        .skip_rows = 3,
+        .max_rows = 2,
+    });
+
+    try ts.expectCellText(1, 0, "o");
+    try ts.expectCellText(1, 1, "t");
+}
+
+test "Table viewSlice draws real bottom border only when visible" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(8, 2);
+    defer ts.deinit();
+
+    const columns = [_]Table.Column{
+        .{ .header = "A", .width = 3 },
+    };
+    const rows = [_]Table.Row{
+        &.{"one"},
+        &.{"two"},
+    };
+    const table = Table.init(.{ .columns = &columns, .rows = &rows });
+
+    table.viewSlice(&ts.surface, .{
+        .grid = .full,
+        .show_header = true,
+        .show_separator = true,
+        .body_separators = false,
+    }, .{
+        .skip_rows = 4,
+        .max_rows = 2,
+    });
+
+    try ts.expectCellText(1, 0, "t");
+    try ts.expectCellText(0, 1, "+");
 }
 
 test "Table column cell_style overrides body cell style" {
