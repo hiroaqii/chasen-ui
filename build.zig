@@ -59,6 +59,7 @@ pub fn build(b: *std.Build) void {
         "label",
         "paragraph",
         "status_line",
+        "key_hint",
         "select",
         "help",
         "settings",

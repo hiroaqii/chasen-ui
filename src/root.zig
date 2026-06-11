@@ -117,6 +117,8 @@ pub const Paragraph = paragraph.Paragraph;
 pub const status_line = @import("display/status_line.zig");
 pub const StatusLine = status_line.StatusLine;
 
+pub const key_hint = @import("display/key_hint.zig");
+
 pub const select = @import("input/select.zig");
 pub const Select = select.Select;
 
