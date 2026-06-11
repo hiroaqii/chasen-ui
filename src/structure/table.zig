@@ -731,8 +731,8 @@ test "Table column cell_style overrides body cell style" {
         .cell_style = .{},
     });
 
-    try std.testing.expect(!ts.surface.readCell(0, 0).?.style.fg.eql(accent.toVaxis()));
-    try std.testing.expect(ts.surface.readCell(5, 0).?.style.fg.eql(accent.toVaxis()));
+    try std.testing.expect(!ts.surface.readCell(0, 0).?.style.fg.eql(accent));
+    try std.testing.expect(ts.surface.readCell(5, 0).?.style.fg.eql(accent));
 }
 
 test "Table cell_padding draws header and body padding with their styles" {
@@ -760,14 +760,14 @@ test "Table cell_padding draws header and body padding with their styles" {
     try ts.expectCellText(0, 0, " ");
     try ts.expectCellText(1, 0, "H");
     try ts.expectCellText(4, 0, " ");
-    try std.testing.expect(ts.surface.readCell(0, 0).?.style.fg.eql(header_color.toVaxis()));
-    try std.testing.expect(ts.surface.readCell(4, 0).?.style.fg.eql(header_color.toVaxis()));
+    try std.testing.expect(ts.surface.readCell(0, 0).?.style.fg.eql(header_color));
+    try std.testing.expect(ts.surface.readCell(4, 0).?.style.fg.eql(header_color));
 
     try ts.expectCellText(0, 2, " ");
     try ts.expectCellText(1, 2, "a");
     try ts.expectCellText(4, 2, " ");
-    try std.testing.expect(ts.surface.readCell(0, 2).?.style.fg.eql(body_color.toVaxis()));
-    try std.testing.expect(ts.surface.readCell(4, 2).?.style.fg.eql(body_color.toVaxis()));
+    try std.testing.expect(ts.surface.readCell(0, 2).?.style.fg.eql(body_color));
+    try std.testing.expect(ts.surface.readCell(4, 2).?.style.fg.eql(body_color));
 }
 
 test "Table empty cell_padding does not fill unused cell area" {
@@ -793,7 +793,7 @@ test "Table empty cell_padding does not fill unused cell area" {
 
     try ts.expectCellText(0, 0, "x");
     try ts.expectCellText(3, 0, "z");
-    try std.testing.expect(!ts.surface.readCell(3, 0).?.style.fg.eql((chasen.Color{ .rgb = .{ 166, 227, 161 } }).toVaxis()));
+    try std.testing.expect(!ts.surface.readCell(3, 0).?.style.fg.eql(chasen.Color{ .rgb = .{ 166, 227, 161 } }));
 }
 
 test "Table cell_padding uses column cell_style for padding" {
@@ -819,8 +819,8 @@ test "Table cell_padding uses column cell_style for padding" {
     try ts.expectCellText(0, 0, " ");
     try ts.expectCellText(1, 0, "x");
     try ts.expectCellText(4, 0, " ");
-    try std.testing.expect(ts.surface.readCell(0, 0).?.style.fg.eql(accent.toVaxis()));
-    try std.testing.expect(ts.surface.readCell(4, 0).?.style.fg.eql(accent.toVaxis()));
+    try std.testing.expect(ts.surface.readCell(0, 0).?.style.fg.eql(accent));
+    try std.testing.expect(ts.surface.readCell(4, 0).?.style.fg.eql(accent));
 }
 
 test "Table cell_padding clips text when padding consumes width" {

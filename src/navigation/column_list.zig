@@ -481,7 +481,7 @@ test "ColumnList merges row style with column and cell patches" {
     const cell = ts.surface.readCell(8, 0).?;
     try std.testing.expect(cell.style.bold);
     try std.testing.expect(cell.style.dim);
-    try std.testing.expect(cell.style.fg.eql(accent.toVaxis()));
+    try std.testing.expect(cell.style.fg.eql(accent));
 }
 
 test "ColumnList truncates cells without allocation" {

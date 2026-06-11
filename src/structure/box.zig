@@ -51,7 +51,7 @@ pub const Box = struct {
 
         surface.fillAll(.{
             .char = .{ .grapheme = " ", .width = 1 },
-            .style = opts.fill_style.toVaxis(),
+            .style = opts.fill_style,
         });
     }
 };
