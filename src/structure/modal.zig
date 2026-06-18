@@ -76,6 +76,29 @@ pub const Modal = struct {
         return panel.Panel.contentRectFor(dialog_rect, padding);
     }
 
+    /// Return the content size inside the centered dialog.
+    ///
+    /// Use this when the app only needs the available width/height for layout
+    /// decisions, such as choosing a one-column or two-column modal body.
+    pub fn contentSize(surface: *chasen.Surface, opts: ViewOptions) chasen.Size {
+        return rectSize(contentRect(surface, opts));
+    }
+
+    /// Return the content size for an already resolved dialog rectangle.
+    ///
+    /// This is the size-only sibling of `contentRectFor`.
+    pub fn contentSizeForDialog(dialog_rect: chasen.Rect, padding: layout.Insets) chasen.Size {
+        return rectSize(contentRectFor(dialog_rect, padding));
+    }
+
+    /// Return the content size for an overlay rectangle and modal options.
+    ///
+    /// This resolves the centered/clamped dialog first and then applies the
+    /// dialog border and padding, matching the rectangle used by `view`.
+    pub fn contentSizeForOverlay(overlay_rect: chasen.Rect, opts: ViewOptions) chasen.Size {
+        return contentSizeForDialog(dialogRectFor(overlay_rect, opts), opts.padding);
+    }
+
     /// Return the maximum title text width available inside the dialog border.
     ///
     /// This mirrors the title clipping constraint enforced by `Panel`, which
@@ -117,6 +140,10 @@ pub const Modal = struct {
         });
     }
 };
+
+fn rectSize(rect: chasen.Rect) chasen.Size {
+    return .{ .width = rect.width, .height = rect.height };
+}
 
 test "Modal initializes from options" {
     const modal = Modal.init(.{});
@@ -169,6 +196,72 @@ test "Modal contentRectFor removes dialog border and padding" {
     try std.testing.expectEqual(@as(u16, 7), rect.row);
     try std.testing.expectEqual(@as(u16, 18), rect.width);
     try std.testing.expectEqual(@as(u16, 4), rect.height);
+}
+
+test "Modal contentSizeForDialog matches contentRectFor dimensions" {
+    const dialog_rect = chasen.Rect{
+        .col = 10,
+        .row = 5,
+        .width = 24,
+        .height = 8,
+    };
+    const padding = layout.Insets{ .top = 1, .right = 2, .bottom = 1, .left = 2 };
+
+    const rect = Modal.contentRectFor(dialog_rect, padding);
+    const size = Modal.contentSizeForDialog(dialog_rect, padding);
+
+    try std.testing.expectEqual(rect.width, size.width);
+    try std.testing.expectEqual(rect.height, size.height);
+}
+
+test "Modal contentSize matches contentRect dimensions" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(30, 12);
+    defer ts.deinit();
+
+    const opts = Modal.ViewOptions{
+        .dialog_width = 20,
+        .dialog_height = 8,
+        .padding = .{ .top = 1, .right = 2, .bottom = 1, .left = 2 },
+    };
+
+    const rect = Modal.contentRect(&ts.surface, opts);
+    const size = Modal.contentSize(&ts.surface, opts);
+
+    try std.testing.expectEqual(rect.width, size.width);
+    try std.testing.expectEqual(rect.height, size.height);
+}
+
+test "Modal contentSizeForOverlay accounts for clamped dialog and padding" {
+    const size = Modal.contentSizeForOverlay(.{
+        .col = 3,
+        .row = 4,
+        .width = 8,
+        .height = 5,
+    }, .{
+        .dialog_width = 20,
+        .dialog_height = 10,
+        .padding = .{ .top = 1, .right = 1, .bottom = 1, .left = 1 },
+    });
+
+    try std.testing.expectEqual(@as(u16, 4), size.width);
+    try std.testing.expectEqual(@as(u16, 1), size.height);
+}
+
+test "Modal contentSizeForOverlay collapses without underflow" {
+    const size = Modal.contentSizeForOverlay(.{
+        .col = 0,
+        .row = 0,
+        .width = 2,
+        .height = 2,
+    }, .{
+        .dialog_width = 2,
+        .dialog_height = 2,
+        .padding = .all(4),
+    });
+
+    try std.testing.expectEqual(@as(u16, 0), size.width);
+    try std.testing.expectEqual(@as(u16, 0), size.height);
 }
 
 test "Modal titleMaxWidthFor keeps title text before right border" {
