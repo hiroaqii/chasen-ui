@@ -318,22 +318,17 @@ fn drawTextInCell(
 ) void {
     if (width == 0) return;
 
-    const text_width = chasen.text.displayWidth(text);
-    if (text_width <= width) {
-        drawText(surface, col + alignedOffset(text_width, width, alignment), row, text, style, focused, opts);
+    const clipped = chasen.text.clipToWidthWithMarker(text, width, opts.truncate_marker);
+    if (!clipped.clipped) {
+        const text_width = chasen.text.displayWidth(clipped.prefix);
+        drawText(surface, col + alignedOffset(text_width, width, alignment), row, clipped.prefix, style, focused, opts);
         return;
     }
 
-    const truncate_marker = opts.truncate_marker;
-    const marker_width = chasen.text.displayWidth(truncate_marker);
-    if (marker_width == 0 or marker_width > width) {
-        drawText(surface, col, row, chasen.text.clipToWidth(text, width), style, focused, opts);
-        return;
+    drawText(surface, col, row, clipped.prefix, style, focused, opts);
+    if (clipped.marker.len > 0) {
+        _ = surface.borrowTextAt(col + chasen.text.displayWidth(clipped.prefix), row, clipped.marker, style);
     }
-
-    const clipped = chasen.text.clipToWidth(text, width - marker_width);
-    drawText(surface, col, row, clipped, style, focused, opts);
-    _ = surface.borrowTextAt(col + chasen.text.displayWidth(clipped), row, truncate_marker, style);
 }
 
 fn drawText(
@@ -499,4 +494,20 @@ test "ColumnList truncates cells without allocation" {
     try ts.expectCellText(2, 0, "a");
     try ts.expectCellText(4, 0, "c");
     try ts.expectCellText(5, 0, "…");
+}
+
+test "ColumnList falls back to plain clipping when truncate marker cannot fit" {
+    const columns = [_]ColumnList.Column{.{ .width = .{ .fixed = 1 } }};
+    const row = [_]ColumnList.Cell{.{ .text = "abcdef" }};
+    const rows = [_]ColumnList.Row{&row};
+    const list = ColumnList.init(.{ .columns = &columns, .rows = &rows });
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(5, 1);
+    defer ts.deinit();
+
+    list.view(&ts.surface, .{ .show_cursor = false, .truncate_marker = "xx" });
+
+    try ts.expectCellText(2, 0, "a");
+    try std.testing.expect(ts.surface.readCell(3, 0).?.isBlank());
 }
