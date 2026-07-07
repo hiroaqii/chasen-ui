@@ -2,6 +2,7 @@ const std = @import("std");
 const chasen = @import("chasen");
 const Viewport = @import("../viewport.zig").Viewport;
 const list_component = @import("list.zig");
+const nav_util = @import("nav_util.zig");
 
 /// Stateless viewport helpers for `List`.
 ///
@@ -44,7 +45,12 @@ pub const ListViewport = struct {
 
             _ = surface.borrowTextAt(0, row, marker, opts.marker_style);
             if (size.width > 2) {
-                _ = surface.borrowTextAt(2, row, item, itemStyle(opts, focused, selected));
+                _ = surface.borrowTextAt(2, row, item, nav_util.fourStateStyle(.{
+                    .normal = opts.item_style,
+                    .focused = opts.focused_style,
+                    .selected = opts.selected_style,
+                    .focused_selected = opts.focused_selected_style,
+                }, focused, selected));
             }
         }
 
@@ -69,13 +75,6 @@ pub const ListViewport = struct {
     }
 };
 
-fn itemStyle(opts: list_component.List.ViewOptions, focused: bool, selected: bool) chasen.TextStyle {
-    if (focused and selected) return opts.focused_selected_style;
-    if (focused) return opts.focused_style;
-    if (selected) return opts.selected_style;
-    return opts.item_style;
-}
-
 test "ListViewport visible range keeps focused item in view" {
     try std.testing.expectEqual(ListViewport.Range{ .start = 0, .end = 0 }, ListViewport.visibleRange(0, 0, 5));
     try std.testing.expectEqual(ListViewport.Range{ .start = 0, .end = 0 }, ListViewport.visibleRange(10, 0, 0));
@@ -83,6 +82,10 @@ test "ListViewport visible range keeps focused item in view" {
     try std.testing.expectEqual(ListViewport.Range{ .start = 0, .end = 5 }, ListViewport.visibleRange(10, 0, 5));
     try std.testing.expectEqual(ListViewport.Range{ .start = 1, .end = 6 }, ListViewport.visibleRange(10, 5, 5));
     try std.testing.expectEqual(ListViewport.Range{ .start = 5, .end = 10 }, ListViewport.visibleRange(10, 99, 5));
+}
+
+test {
+    _ = nav_util;
 }
 
 test "ListViewport renders focused item inside the visible range" {

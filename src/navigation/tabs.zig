@@ -1,6 +1,7 @@
 const std = @import("std");
 const chasen = @import("chasen");
 const FocusList = @import("focus_list.zig").FocusList;
+const nav_util = @import("nav_util.zig");
 const selectable = @import("selectable.zig");
 
 /// A one-line tab strip with local focus and active tab state.
@@ -71,7 +72,7 @@ pub const Tabs = struct {
         return .{
             .items = opts.items,
             .focus = FocusList.init(opts.items.len),
-            .active_index = clampedIndex(opts.active_index, opts.items.len),
+            .active_index = nav_util.clampedIndex(opts.active_index, opts.items.len),
         };
     }
 
@@ -93,7 +94,7 @@ pub const Tabs = struct {
     /// When the tab strip is empty, this returns `0`.
     pub fn activeIndex(self: *const Tabs) usize {
         if (self.empty()) return 0;
-        return clampedIndex(self.active_index, self.items.len);
+        return nav_util.clampedIndex(self.active_index, self.items.len);
     }
 
     /// Return the active tab label, or null when there are no tabs.
@@ -107,8 +108,8 @@ pub const Tabs = struct {
         switch (msg) {
             .move_prev => self.focus.movePrev(),
             .move_next => self.focus.moveNext(),
-            .set_active => |index| self.active_index = clampedIndex(index, self.items.len),
-            .activate => |index| self.active_index = clampedIndex(index, self.items.len),
+            .set_active => |index| self.active_index = nav_util.clampedIndex(index, self.items.len),
+            .activate => |index| self.active_index = nav_util.clampedIndex(index, self.items.len),
         }
     }
 
@@ -147,7 +148,12 @@ pub const Tabs = struct {
 
             _ = surface.borrowTextAt(col, 0, opts.left_marker, opts.marker_style);
             if (tab_width > 1) {
-                _ = surface.borrowTextAt(col + 1, 0, item, itemStyle(opts, focused, active));
+                _ = surface.borrowTextAt(col + 1, 0, item, nav_util.fourStateStyle(.{
+                    .normal = opts.item_style,
+                    .focused = opts.focused_style,
+                    .selected = opts.active_style,
+                    .focused_selected = opts.focused_active_style,
+                }, focused, active));
             }
             if (tab_width > 2) {
                 _ = surface.borrowTextAt(col + tab_width - 1, 0, opts.right_marker, opts.marker_style);
@@ -174,20 +180,8 @@ fn keyToMsg(tabs: *const Tabs, key: chasen.Key) ?Tabs.Msg {
     return null;
 }
 
-fn itemStyle(opts: Tabs.ViewOptions, focused: bool, active: bool) chasen.TextStyle {
-    if (focused and active) return opts.focused_active_style;
-    if (focused) return opts.focused_style;
-    if (active) return opts.active_style;
-    return opts.item_style;
-}
-
 fn tabWidth(opts: Tabs.ViewOptions, label: []const u8) u16 {
     return chasen.text.displayWidth(opts.left_marker) + chasen.text.displayWidth(label) + chasen.text.displayWidth(opts.right_marker);
-}
-
-fn clampedIndex(index: usize, len: usize) usize {
-    if (len == 0) return 0;
-    return @min(index, len - 1);
 }
 
 test "Tabs initializes with borrowed items and active index" {
@@ -199,6 +193,10 @@ test "Tabs initializes with borrowed items and active index" {
     try std.testing.expectEqual(@as(usize, 1), tabs.activeIndex());
     try std.testing.expectEqualStrings("Details", tabs.activeLabel().?);
     try std.testing.expect(!tabs.empty());
+}
+
+test {
+    _ = nav_util;
 }
 
 test "Tabs clamps initial and explicit active index" {

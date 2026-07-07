@@ -1,6 +1,7 @@
 const std = @import("std");
 const chasen = @import("chasen");
 const FocusList = @import("focus_list.zig").FocusList;
+const nav_util = @import("nav_util.zig");
 const selectable = @import("selectable.zig");
 
 /// A fixed list of borrowed text items with local focus state.
@@ -119,7 +120,12 @@ pub const List = struct {
             const row: u16 = @intCast(i);
             const focused = self.focus.isFocused(i);
             const selected = opts.selected_index != null and opts.selected_index.? == i;
-            const item_style = itemStyle(opts, focused, selected);
+            const item_style = nav_util.fourStateStyle(.{
+                .normal = opts.item_style,
+                .focused = opts.focused_style,
+                .selected = opts.selected_style,
+                .focused_selected = opts.focused_selected_style,
+            }, focused, selected);
             const marker = if (focused) opts.focused_marker else opts.marker;
 
             _ = surface.borrowTextAt(0, row, marker, opts.marker_style);
@@ -145,13 +151,6 @@ fn keyToMsg(list: *const List, key: chasen.Key) ?List.Msg {
     return null;
 }
 
-fn itemStyle(opts: List.ViewOptions, focused: bool, selected: bool) chasen.TextStyle {
-    if (focused and selected) return opts.focused_selected_style;
-    if (focused) return opts.focused_style;
-    if (selected) return opts.selected_style;
-    return opts.item_style;
-}
-
 test "List initializes with borrowed items and focus at first item" {
     const items = [_][]const u8{ "Alpha", "Beta" };
     const list = List.init(.{ .items = &items });
@@ -160,6 +159,10 @@ test "List initializes with borrowed items and focus at first item" {
     try std.testing.expectEqualStrings("Alpha", list.items[0]);
     try std.testing.expectEqual(@as(usize, 0), list.focusedIndex());
     try std.testing.expect(!list.empty());
+}
+
+test {
+    _ = nav_util;
 }
 
 test "List handles empty items" {

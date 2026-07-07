@@ -325,12 +325,13 @@ Use these when the app owns collections, focus, filtering, or scroll state:
 - `Viewport`: offset clamp and visible range helper for fixed-size collections
 - `ListViewport`: visible range and focus visibility for fixed-height rows
 - `ListFilter`: small filter state helper for app-owned lists
-- `ColumnList`: table-like list rows with per-column styling and alignment
+- `ColumnList`: table-like list rows with per-column styling and alignment, up
+  to `ColumnList.max_columns`
 - `BlockViewport`: scrollable content made of variable-height blocks
 - `FocusList`: fixed-length focus state for app-owned event routing
 - `List`
 - `SelectableList`
-- `MultiSelectList`
+- `MultiSelectList`: local focus and 64-bit selection mask with derived visible range
 - `Menu`
 - `Tabs`
 - `Breadcrumbs`

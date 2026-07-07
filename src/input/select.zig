@@ -1,5 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
+const nav_util = @import("../navigation/nav_util.zig");
 const selectable = @import("../navigation/selectable.zig");
 
 /// A small one-line option picker with local selected state.
@@ -64,7 +65,7 @@ pub const Select = struct {
     pub fn init(opts: Options) Select {
         return .{
             .items = opts.items,
-            .selected_index = clampedIndex(opts.selected_index, opts.items.len),
+            .selected_index = nav_util.clampedIndex(opts.selected_index, opts.items.len),
         };
     }
 
@@ -81,7 +82,7 @@ pub const Select = struct {
     /// were changed directly.
     pub fn selectedIndex(self: *const Select) usize {
         if (self.empty()) return 0;
-        return clampedIndex(self.selected_index, self.items.len);
+        return nav_util.clampedIndex(self.selected_index, self.items.len);
     }
 
     /// Return the selected item label, or `null` when the select is empty.
@@ -95,7 +96,7 @@ pub const Select = struct {
         switch (msg) {
             .move_prev => self.movePrev(),
             .move_next => self.moveNext(),
-            .set_selected => |index| self.selected_index = clampedIndex(index, self.items.len),
+            .set_selected => |index| self.selected_index = nav_util.clampedIndex(index, self.items.len),
             .activate => {},
         }
     }
@@ -157,16 +158,15 @@ fn keyToMsg(select: *const Select, key: chasen.Key) ?Select.Msg {
     return null;
 }
 
-fn clampedIndex(index: usize, len: usize) usize {
-    if (len == 0) return 0;
-    return @min(index, len - 1);
-}
-
 fn drawClippedLabel(surface: *chasen.Surface, col: u16, max_col: u16, label: []const u8, style: chasen.TextStyle) void {
     if (label.len == 0 or col >= max_col) return;
     const clipped = chasen.text.clipToWidth(label, max_col - col);
     if (clipped.len == 0) return;
     _ = surface.borrowTextAt(col, 0, clipped, style);
+}
+
+test {
+    _ = nav_util;
 }
 
 test "Select initializes with borrowed items and selected index" {

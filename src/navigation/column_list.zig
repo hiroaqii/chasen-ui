@@ -4,6 +4,7 @@ const FocusList = @import("focus_list.zig").FocusList;
 const List = @import("list.zig").List;
 const ListViewport = @import("list_view.zig").ListViewport;
 const layout = @import("../layout.zig");
+const nav_util = @import("nav_util.zig");
 const selectable = @import("selectable.zig");
 
 /// A focused vertical list whose rows are rendered as aligned columns.
@@ -13,6 +14,11 @@ const selectable = @import("selectable.zig");
 /// filtering, data loading, source-index mapping, and the meaning of row
 /// activation.
 pub const ColumnList = struct {
+    /// Maximum number of columns rendered by the allocation-free width cache.
+    ///
+    /// Columns and cells beyond this limit are ignored by `view`.
+    pub const max_columns = 32;
+
     /// Column width policy.
     pub const Width = union(enum) {
         /// Fixed terminal-cell width.
@@ -56,6 +62,8 @@ pub const ColumnList = struct {
     /// Initial values used when constructing a `ColumnList`.
     pub const Options = struct {
         /// Column definitions borrowed by the component for its lifetime.
+        ///
+        /// `view` renders at most `ColumnList.max_columns` columns.
         columns: []const Column = &.{},
         /// Row cells borrowed by the component for its lifetime.
         rows: []const Row = &.{},
@@ -161,6 +169,9 @@ pub const ColumnList = struct {
     }
 
     /// Draw the column list into the provided surface.
+    ///
+    /// Only the first `ColumnList.max_columns` columns and matching cells are
+    /// rendered. This keeps width storage allocation-free in the initial API.
     pub fn view(self: *const ColumnList, surface: *chasen.Surface, opts: ViewOptions) void {
         const size = surface.size();
         if (size.width == 0 or size.height == 0 or self.columns.len == 0) return;
@@ -170,8 +181,9 @@ pub const ColumnList = struct {
         if (body_col >= size.width) return;
 
         const header_height: u16 = if (opts.show_header) 1 else 0;
+        const widths = computeWidths(self.columns, size.width - body_col, opts.column_gap);
         if (opts.show_header) {
-            drawHeader(self.columns, surface, body_col, computeWidths(self.columns, size.width - body_col, opts.column_gap), opts);
+            drawHeader(self.columns, surface, body_col, widths, opts);
         }
 
         const body_height = size.height -| header_height;
@@ -180,7 +192,6 @@ pub const ColumnList = struct {
         const range = ListViewport.visibleRange(self.rows.len, self.focusedIndex(), body_height);
         if (range.end <= range.start) return;
 
-        const widths = computeWidths(self.columns, size.width - body_col, opts.column_gap);
         const focused_index = self.focusedIndex();
         for (self.rows[range.start..range.end], 0..) |row_cells, local_index| {
             const global_index = range.start + local_index;
@@ -192,7 +203,12 @@ pub const ColumnList = struct {
             const marker = if (focused) opts.focused_marker else opts.marker;
             _ = surface.borrowTextAt(0, row, marker, opts.marker_style);
 
-            const base_style = rowStyle(opts, focused, selected);
+            const base_style = nav_util.fourStateStyle(.{
+                .normal = opts.row_style,
+                .focused = opts.focused_style,
+                .selected = opts.selected_style,
+                .focused_selected = opts.focused_selected_style,
+            }, focused, selected);
             drawCells(self.columns, row_cells, surface, body_col, row, widths, base_style, focused, opts);
         }
 
@@ -202,8 +218,6 @@ pub const ColumnList = struct {
         }
     }
 };
-
-const max_columns = 32;
 
 fn keyToMsg(list: *const ColumnList, key: chasen.Key) ?ColumnList.Msg {
     if (key.matches(chasen.Key.up, .{})) return .move_prev;
@@ -219,9 +233,9 @@ fn markerWidth(opts: ColumnList.ViewOptions) u16 {
     return @max(chasen.text.displayWidth(opts.marker), chasen.text.displayWidth(opts.focused_marker));
 }
 
-fn computeWidths(columns: []const ColumnList.Column, body_width: u16, column_gap: u16) [max_columns]u16 {
-    var widths = [_]u16{0} ** max_columns;
-    const count = @min(columns.len, max_columns);
+fn computeWidths(columns: []const ColumnList.Column, body_width: u16, column_gap: u16) [ColumnList.max_columns]u16 {
+    var widths = [_]u16{0} ** ColumnList.max_columns;
+    const count = @min(columns.len, ColumnList.max_columns);
     if (count == 0 or body_width == 0) return widths;
 
     const gap_count: u16 = @intCast(count - 1);
@@ -262,11 +276,11 @@ fn drawHeader(
     columns: []const ColumnList.Column,
     surface: *chasen.Surface,
     start_col: u16,
-    widths: [max_columns]u16,
+    widths: [ColumnList.max_columns]u16,
     opts: ColumnList.ViewOptions,
 ) void {
     var col = start_col;
-    for (columns[0..@min(columns.len, max_columns)], 0..) |column, index| {
+    for (columns[0..@min(columns.len, ColumnList.max_columns)], 0..) |column, index| {
         const width = widths[index];
         if (width > 0 and column.header != null) {
             const style = column.header_style orelse opts.header_style;
@@ -282,13 +296,13 @@ fn drawCells(
     surface: *chasen.Surface,
     start_col: u16,
     row: u16,
-    widths: [max_columns]u16,
+    widths: [ColumnList.max_columns]u16,
     base_style: chasen.TextStyle,
     focused: bool,
     opts: ColumnList.ViewOptions,
 ) void {
     var col = start_col;
-    for (columns[0..@min(columns.len, max_columns)], 0..) |column, index| {
+    for (columns[0..@min(columns.len, ColumnList.max_columns)], 0..) |column, index| {
         const width = widths[index];
         const maybe_cell = if (index < cells.len) cells[index] else null;
         const text = if (maybe_cell) |cell| cell.text else "";
@@ -342,13 +356,6 @@ fn drawText(
         }
     }
     _ = surface.borrowTextAt(col, row, text, style);
-}
-
-fn rowStyle(opts: ColumnList.ViewOptions, focused: bool, selected: bool) chasen.TextStyle {
-    if (focused and selected) return opts.focused_selected_style;
-    if (focused) return opts.focused_style;
-    if (selected) return opts.selected_style;
-    return opts.row_style;
 }
 
 fn applyPatch(base: chasen.TextStyle, patch: ColumnList.StylePatch) chasen.TextStyle {
@@ -495,4 +502,24 @@ test "ColumnList falls back to plain clipping when truncate marker cannot fit" {
 
     try ts.expectCellText(2, 0, "a");
     try std.testing.expect(ts.surface.readCell(3, 0).?.isBlank());
+}
+
+test "ColumnList ignores columns beyond max_columns" {
+    const columns = [_]ColumnList.Column{.{ .width = .{ .fixed = 1 } }} ** (ColumnList.max_columns + 1);
+    const cells = [_]ColumnList.Cell{.{ .text = "A" }} ** ColumnList.max_columns ++ [_]ColumnList.Cell{.{ .text = "Z" }};
+    const rows = [_]ColumnList.Row{&cells};
+    const list = ColumnList.init(.{ .columns = &columns, .rows = &rows });
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(80, 1);
+    defer ts.deinit();
+
+    list.view(&ts.surface, .{ .column_gap = 0, .show_cursor = false });
+
+    const ignored_cell = ts.surface.readCell(34, 0);
+    try std.testing.expect(ignored_cell == null or ignored_cell.?.isBlank());
+}
+
+test {
+    _ = nav_util;
 }

@@ -1,6 +1,8 @@
 const std = @import("std");
 const chasen = @import("chasen");
 const FocusList = @import("focus_list.zig").FocusList;
+const ListViewport = @import("list_view.zig").ListViewport;
+const nav_util = @import("nav_util.zig");
 const selectable = @import("selectable.zig");
 
 /// A vertical list with local focus and multi-selection state.
@@ -9,7 +11,10 @@ const selectable = @import("selectable.zig");
 /// Applications still decide what the selected items mean and how to apply
 /// them to the surrounding model.
 pub const MultiSelectList = struct {
-    /// Maximum number of selectable items in the initial implementation.
+    /// Maximum number of selectable/rendered items in the initial implementation.
+    ///
+    /// Items beyond this limit are ignored by focus, selection, and view until
+    /// the API grows beyond its current 64-bit selection mask.
     pub const max_items = 64;
 
     /// Item labels borrowed by the component.
@@ -120,21 +125,30 @@ pub const MultiSelectList = struct {
         const height = size.height;
         if (width == 0 or height == 0) return;
 
-        const visible_count = @min(@min(self.items.len, max_items), @as(usize, height));
-        for (self.items[0..visible_count], 0..) |item, i| {
-            const row: u16 = @intCast(i);
-            const focused = self.focus.isFocused(i);
-            const selected = self.isSelected(i);
+        const item_count = maxSelectable(self.items.len);
+        const range = ListViewport.visibleRange(item_count, self.focusedIndex(), height);
+        if (range.end <= range.start) return;
+
+        for (self.items[range.start..range.end], 0..) |item, local_index| {
+            const global_index = range.start + local_index;
+            const row: u16 = @intCast(local_index);
+            const focused = self.focus.isFocused(global_index);
+            const selected = self.isSelected(global_index);
             const marker = if (selected) opts.selected_marker else opts.marker;
 
             _ = surface.borrowTextAt(0, row, marker, opts.marker_style);
             if (width > 4) {
-                _ = surface.borrowTextAt(4, row, item, itemStyle(opts, focused, selected));
+                _ = surface.borrowTextAt(4, row, item, nav_util.fourStateStyle(.{
+                    .normal = opts.item_style,
+                    .focused = opts.focused_style,
+                    .selected = opts.selected_style,
+                    .focused_selected = opts.focused_selected_style,
+                }, focused, selected));
             }
         }
 
-        if (opts.show_cursor and self.items.len > 0 and self.focusedIndex() < visible_count) {
-            const cursor_row: u16 = @intCast(self.focusedIndex());
+        if (opts.show_cursor and self.focusedIndex() >= range.start and self.focusedIndex() < range.end) {
+            const cursor_row: u16 = @intCast(self.focusedIndex() - range.start);
             surface.showCursor(@min(@as(u16, 4), width - 1), cursor_row);
         }
     }
@@ -153,13 +167,6 @@ fn keyToMsg(list: *const MultiSelectList, key: chasen.Key) ?MultiSelectList.Msg 
         return .{ .toggle = list.focusedIndex() };
     }
     return null;
-}
-
-fn itemStyle(opts: MultiSelectList.ViewOptions, focused: bool, selected: bool) chasen.TextStyle {
-    if (focused and selected) return opts.focused_selected_style;
-    if (focused) return opts.focused_style;
-    if (selected) return opts.selected_style;
-    return opts.item_style;
 }
 
 fn validMask(len: usize) u64 {
@@ -244,10 +251,35 @@ test "MultiSelectList maps keyboard events to messages" {
     }).?);
 }
 
+test "MultiSelectList view keeps focused item visible after first page" {
+    const items = [_][]const u8{ "Zero", "One", "Two", "Three", "Four", "Five" };
+    var list = MultiSelectList.init(.{ .items = &items, .selected_mask = bit(4) });
+    for (0..4) |_| list.update(.move_next);
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(12, 3);
+    defer ts.deinit();
+
+    list.view(&ts.surface, .{});
+
+    try ts.expectCellText(4, 0, "T");
+    try ts.expectCellText(4, 1, "T");
+    try ts.expectCellText(0, 2, "[");
+    try ts.expectCellText(1, 2, "x");
+    try ts.expectCellText(4, 2, "F");
+    try std.testing.expect(ts.screen.cursor_vis);
+    try std.testing.expectEqual(@as(u16, 4), ts.screen.cursor.col);
+    try std.testing.expectEqual(@as(u16, 2), ts.screen.cursor.row);
+}
+
 test "MultiSelectList does not toggle empty lists" {
     var list = MultiSelectList.init(.{});
 
     try std.testing.expect(list.handleEvent(.{
         .key_press = .{ .codepoint = '\r' },
     }) == null);
+}
+
+test {
+    _ = nav_util;
 }
