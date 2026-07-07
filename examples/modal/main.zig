@@ -8,16 +8,15 @@ const ui = @import("chasen_ui");
 // not decide whether the dialog is visible, what Esc means, where focus goes,
 // or what child content belongs inside. Those decisions remain app state.
 const App = struct {
+    const help_items = [_]ui.key_hint.Item{
+        ui.key_hint.item("m", "toggle modal"),
+        ui.key_hint.item("Esc", "quit"),
+    };
+
     show_modal: bool = true,
     modal: ui.Modal = ui.Modal.init(.{}),
     paragraph: ui.Paragraph = ui.Paragraph.init(.{
         .text = "Visibility, dismissal, focus, and action semantics are owned by the app. Modal only draws the backdrop and dialog chrome.",
-    }),
-    help: ui.Help = ui.Help.init(.{
-        .items = &.{
-            .{ .key = "m", .action = "toggle modal" },
-            .{ .key = "Esc", .action = "quit" },
-        },
     }),
 
     pub const Msg = union(enum) {
@@ -97,7 +96,7 @@ const App = struct {
                 .width = content_area.size().width,
                 .height = 1,
             });
-            self.help.view(&help_area, .{
+            _ = try ui.key_hint.draw(&help_area, 0, 0, &help_items, .{
                 .key_style = .{ .bold = true, .fg = .{ .index = 6 } },
                 .action_style = .{ .dim = true },
             });

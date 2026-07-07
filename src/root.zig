@@ -122,9 +122,6 @@ pub const key_hint = @import("display/key_hint.zig");
 pub const select = @import("input/select.zig");
 pub const Select = select.Select;
 
-pub const help = @import("display/help.zig");
-pub const Help = help.Help;
-
 pub const message_block = @import("display/message_block.zig");
 pub const MessageBlock = message_block.MessageBlock;
 

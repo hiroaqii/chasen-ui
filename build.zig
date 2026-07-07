@@ -61,7 +61,6 @@ pub fn build(b: *std.Build) void {
         "status_line",
         "key_hint",
         "select",
-        "help",
         "settings",
     };
     const check_examples_step = b.step("check-examples", "Build all examples");

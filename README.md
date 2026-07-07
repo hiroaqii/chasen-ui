@@ -16,8 +16,10 @@ useful when an app starts to grow beyond direct `Surface` drawing:
 - input components such as `TextInput`, `TextArea`, `Checkbox`, and `Select`
 - structure components such as `Panel`, `Overlay`, `Modal`, `Box`, and `Table`
 - navigation helpers such as `ListViewport`, `ColumnList`, and `BlockViewport`
-- display helpers such as `Paragraph`, `StatusLine`, `Help`, `Badge`, and
+- display helpers such as `Paragraph`, `StatusLine`, `Badge`, and
   `Spinner`
+- key/action hint helpers such as `key_hint` for footer rows, help rows, and
+  modal shortcut summaries
 - small layout helpers for calculating `Rect` values
 
 The package is intentionally small. Applications still own their state, screen
@@ -150,7 +152,6 @@ Examples:
 - `Divider`
 - `Paragraph`
 - `StatusLine`
-- `Help`
 - `Table`
 
 Interactive components may hold local component state, but the app still owns
@@ -352,7 +353,7 @@ Use these for display-only UI:
 
 - `Paragraph`
 - `StatusLine`
-- `Help`
+- `key_hint`
 - `MessageBlock`
 - `Spinner`
 - `ProgressBar`
@@ -452,7 +453,7 @@ zig build --help
 - `Label`
 - `Paragraph`
 - `StatusLine`
-- `Help`
+- `key_hint`
 - `MessageBlock`
 
 ## Development

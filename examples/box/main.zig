@@ -9,15 +9,14 @@ const ui = @import("chasen_ui");
 // Use Panel when the container needs visible chrome; use Box when the app only
 // needs a filled or padded region for composition.
 const App = struct {
+    const help_items = [_]ui.key_hint.Item{
+        ui.key_hint.item("Esc", "quit"),
+        ui.key_hint.item("Box", "padding + fill"),
+    };
+
     box: ui.Box = ui.Box.init(.{}),
     paragraph: ui.Paragraph = ui.Paragraph.init(.{
         .text = "Box is intentionally quieter than Panel. It gives app code a padded inner rectangle and optional background fill, then gets out of the way.",
-    }),
-    help: ui.Help = ui.Help.init(.{
-        .items = &.{
-            .{ .key = "Esc", .action = "quit" },
-            .{ .key = "Box", .action = "padding + fill" },
-        },
     }),
 
     pub const Msg = union(enum) {
@@ -89,7 +88,7 @@ const App = struct {
                 .width = content_area.size().width,
                 .height = 1,
             });
-            self.help.view(&help_area, .{
+            _ = try ui.key_hint.draw(&help_area, 0, 0, &help_items, .{
                 .key_style = .{ .bold = true, .fg = .{ .index = 6 } },
                 .action_style = .{ .dim = true },
             });
