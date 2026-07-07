@@ -100,20 +100,21 @@ pub const Toast = struct {
         var row: u16 = 0;
         const content_col = @min(opts.padding, width);
         const content_width = width -| opts.padding *| 2;
+        const content_max_col = content_col +| content_width;
 
         if (hasHeader(opts) and row < height) {
             var cursor = content_col;
-            drawText(surface, &cursor, row, opts.marker, opts.marker_style, width);
+            drawText(surface, &cursor, row, opts.marker, opts.marker_style, content_max_col);
             if (opts.marker.len > 0 and opts.title.len > 0) {
-                drawSpaces(surface, &cursor, row, opts.gap, opts.title_style, width);
+                drawSpaces(surface, &cursor, row, opts.gap, opts.title_style, content_max_col);
             }
-            drawText(surface, &cursor, row, opts.title, opts.title_style, width);
+            drawText(surface, &cursor, row, opts.title, opts.title_style, content_max_col);
             row +|= 1;
         }
 
         if (opts.body.len > 0 and row < height) {
             var cursor = content_col;
-            drawText(surface, &cursor, row, opts.body, opts.body_style, width);
+            drawText(surface, &cursor, row, opts.body, opts.body_style, content_max_col);
             row +|= 1;
         }
 
@@ -154,8 +155,10 @@ fn fillRegion(surface: *chasen.Surface, width: u16, height: u16, style: chasen.T
 
 fn drawText(surface: *chasen.Surface, cursor: *u16, row: u16, text: []const u8, style: chasen.TextStyle, width: u16) void {
     if (text.len == 0 or cursor.* >= width) return;
-    _ = surface.borrowTextAt(cursor.*, row, text, style);
-    cursor.* +|= chasen.text.displayWidth(text);
+    const clipped = chasen.text.clipToWidth(text, width - cursor.*);
+    if (clipped.len == 0) return;
+    _ = surface.borrowTextAt(cursor.*, row, clipped, style);
+    cursor.* +|= chasen.text.displayWidth(clipped);
 }
 
 fn drawSpaces(surface: *chasen.Surface, cursor: *u16, row: u16, count: u16, style: chasen.TextStyle, width: u16) void {
@@ -200,6 +203,29 @@ test "Toast contentHeight counts header body and progress rows" {
         .body = "Settings updated",
         .progress = 0.5,
     }));
+}
+
+test "Toast clips header and body to content width" {
+    const toast = Toast.init(.{});
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(8, 2);
+    defer ts.deinit();
+
+    toast.view(&ts.surface, .{
+        .title = "ABCDEFG",
+        .body = "abcdefg",
+        .padding = 2,
+    });
+
+    try ts.expectCellText(2, 0, "A");
+    try ts.expectCellText(5, 0, "D");
+    try ts.expectCellText(6, 0, " ");
+    try ts.expectCellText(7, 0, " ");
+    try ts.expectCellText(2, 1, "a");
+    try ts.expectCellText(5, 1, "d");
+    try ts.expectCellText(6, 1, " ");
+    try ts.expectCellText(7, 1, " ");
 }
 
 test "Toast progressFilledCount maps progress to filled cells" {

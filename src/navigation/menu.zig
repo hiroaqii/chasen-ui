@@ -125,7 +125,12 @@ pub const Menu = struct {
 
             _ = surface.borrowTextAt(0, row, marker, opts.marker_style);
             if (width > 2) {
-                _ = surface.borrowTextAt(2, row, item.label, label_style);
+                const label_col: u16 = 2;
+                const label_limit = if (item.shortcut != null and opts.shortcut_col > label_col)
+                    @min(opts.shortcut_col, width)
+                else
+                    width;
+                drawClippedLabel(surface, label_col, row, label_limit, item.label, label_style);
             }
             if (item.shortcut) |shortcut| {
                 if (opts.shortcut_col < width) {
@@ -149,6 +154,13 @@ fn keyToMsg(menu: *const Menu, key: chasen.Key) ?Menu.Msg {
         return .{ .activate = menu.focusedIndex() };
     }
     return null;
+}
+
+fn drawClippedLabel(surface: *chasen.Surface, col: u16, row: u16, max_col: u16, label: []const u8, style: chasen.TextStyle) void {
+    if (label.len == 0 or col >= max_col) return;
+    const clipped = chasen.text.clipToWidth(label, max_col - col);
+    if (clipped.len == 0) return;
+    _ = surface.borrowTextAt(col, row, clipped, style);
 }
 
 test "Menu initializes with borrowed items and focus at first item" {
@@ -190,6 +202,21 @@ test "Menu update moves focus with clamp behavior" {
 
     menu.update(.move_prev);
     try std.testing.expectEqual(@as(usize, 0), menu.focusedIndex());
+}
+
+test "Menu clips labels before shortcut column" {
+    const items = [_]Menu.Item{.{ .label = "abcdef", .shortcut = "x" }};
+    const menu = Menu.init(.{ .items = &items });
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(10, 1);
+    defer ts.deinit();
+
+    menu.view(&ts.surface, .{ .shortcut_col = 6, .show_cursor = false });
+
+    try ts.expectCellText(2, 0, "a");
+    try ts.expectCellText(5, 0, "d");
+    try ts.expectCellText(6, 0, "x");
 }
 
 test "Menu maps keyboard events to messages" {

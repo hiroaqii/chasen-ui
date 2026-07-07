@@ -82,7 +82,8 @@ pub const PasswordInput = struct {
                 _ = surface.borrowTextAt(0, 0, self.input.placeholder, opts.placeholder_style);
             }
         } else {
-            drawMask(surface, visibleSecretCount(self.input.value.items, self.input.cursor, width), opts.mask, opts.style, width);
+            const mask_width = chasen.text.displayWidth(opts.mask);
+            drawMask(surface, visibleSecretCount(self.input.value.items, self.input.cursor, width, mask_width), opts.mask, opts.style, width);
         }
 
         if (opts.show_cursor) {
@@ -97,21 +98,23 @@ fn drawMask(surface: *chasen.Surface, count: u16, mask: []const u8, style: chase
 
     var col: u16 = 0;
     var index: u16 = 0;
-    while (index < count and col < width) : (index += 1) {
+    while (index < count and width - col >= mask_width) : (index += 1) {
         _ = surface.borrowTextAt(col, 0, mask, style);
         col +|= mask_width;
     }
 }
 
-fn visibleSecretCount(bytes: []const u8, cursor: usize, width: u16) u16 {
-    if (width == 0 or bytes.len == 0) return 0;
+fn visibleSecretCount(bytes: []const u8, cursor: usize, width: u16, mask_width: u16) u16 {
+    if (width == 0 or mask_width == 0 or bytes.len == 0) return 0;
 
-    const start = visibleStart(bytes, cursor, width);
+    const start = visibleStart(bytes, cursor, width, mask_width);
     var count: u16 = 0;
+    var used_width: u16 = 0;
     var iter = chasen.text.graphemeIterator(bytes[start..]);
     while (iter.next()) |_| {
+        if (width - used_width < mask_width) break;
         count +|= 1;
-        if (count >= width) break;
+        used_width +|= mask_width;
     }
     return count;
 }
@@ -119,9 +122,10 @@ fn visibleSecretCount(bytes: []const u8, cursor: usize, width: u16) u16 {
 fn visibleCursorCol(bytes: []const u8, cursor: usize, width: u16, mask: []const u8) u16 {
     if (width == 0) return 0;
 
-    const start = visibleStart(bytes, cursor, width);
     const mask_width = chasen.text.displayWidth(mask);
     if (mask_width == 0) return 0;
+
+    const start = visibleStart(bytes, cursor, width, mask_width);
 
     var col: u16 = 0;
     var iter = chasen.text.graphemeIterator(bytes[start..cursor]);
@@ -131,8 +135,8 @@ fn visibleCursorCol(bytes: []const u8, cursor: usize, width: u16, mask: []const 
     return @min(width - 1, col);
 }
 
-fn visibleStart(bytes: []const u8, cursor: usize, width: u16) usize {
-    if (width == 0) return cursor;
+fn visibleStart(bytes: []const u8, cursor: usize, width: u16, mask_width: u16) usize {
+    if (width == 0 or mask_width == 0) return cursor;
 
     const max_width_before_cursor = width - 1;
     var iter = chasen.text.graphemeIterator(bytes);
@@ -141,7 +145,7 @@ fn visibleStart(bytes: []const u8, cursor: usize, width: u16) usize {
         const grapheme_end = grapheme.start + grapheme.len;
         if (grapheme_end > cursor) break;
 
-        if (maskedWidth(bytes[grapheme.start..cursor]) <= max_width_before_cursor) {
+        if (maskedWidth(bytes[grapheme.start..cursor], mask_width) <= max_width_before_cursor) {
             return grapheme.start;
         }
     }
@@ -149,11 +153,11 @@ fn visibleStart(bytes: []const u8, cursor: usize, width: u16) usize {
     return cursor;
 }
 
-fn maskedWidth(bytes: []const u8) u16 {
+fn maskedWidth(bytes: []const u8, mask_width: u16) u16 {
     var width: u16 = 0;
     var iter = chasen.text.graphemeIterator(bytes);
     while (iter.next()) |_| {
-        width +|= 1;
+        width +|= mask_width;
     }
     return width;
 }
@@ -185,9 +189,26 @@ test "PasswordInput maps key events through TextInput" {
 }
 
 test "PasswordInput visible mask count keeps cursor in view" {
-    try std.testing.expectEqual(@as(u16, 4), visibleSecretCount("abcdef", 6, 5));
-    try std.testing.expectEqual(@as(u16, 5), visibleSecretCount("abcdef", 2, 5));
-    try std.testing.expectEqual(@as(u16, 3), visibleSecretCount("aあb", "aあb".len, 5));
+    try std.testing.expectEqual(@as(u16, 4), visibleSecretCount("abcdef", 6, 5, 1));
+    try std.testing.expectEqual(@as(u16, 5), visibleSecretCount("abcdef", 2, 5, 1));
+    try std.testing.expectEqual(@as(u16, 3), visibleSecretCount("aあb", "aあb".len, 5, 1));
+}
+
+test "PasswordInput full-fits multi-cell masks" {
+    try std.testing.expectEqual(@as(u16, 2), visibleSecretCount("abcdef", 6, 5, 2));
+    try std.testing.expectEqual(@as(u16, 4), visibleCursorCol("abcdef", 6, 5, "##"));
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(5, 1);
+    defer ts.deinit();
+
+    drawMask(&ts.surface, 3, "##", .{}, 5);
+
+    try ts.expectCellText(0, 0, "#");
+    try ts.expectCellText(1, 0, "#");
+    try ts.expectCellText(2, 0, "#");
+    try ts.expectCellText(3, 0, "#");
+    try ts.expectCellText(4, 0, " ");
 }
 
 test "PasswordInput visible cursor column uses mask width" {

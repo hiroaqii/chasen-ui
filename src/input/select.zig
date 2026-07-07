@@ -126,9 +126,9 @@ pub const Select = struct {
         const label = self.selectedLabel() orelse opts.empty_label;
         const label_style = if (self.empty()) opts.empty_style else opts.item_style;
         if (width > 4) {
-            _ = surface.borrowTextAt(2, 0, label, label_style);
+            drawClippedLabel(surface, 2, width - 1, label, label_style);
         } else if (width > 2) {
-            _ = surface.borrowTextAt(1, 0, label, label_style);
+            drawClippedLabel(surface, 1, width - 1, label, label_style);
         }
 
         if (opts.show_cursor) {
@@ -160,6 +160,13 @@ fn keyToMsg(select: *const Select, key: chasen.Key) ?Select.Msg {
 fn clampedIndex(index: usize, len: usize) usize {
     if (len == 0) return 0;
     return @min(index, len - 1);
+}
+
+fn drawClippedLabel(surface: *chasen.Surface, col: u16, max_col: u16, label: []const u8, style: chasen.TextStyle) void {
+    if (label.len == 0 or col >= max_col) return;
+    const clipped = chasen.text.clipToWidth(label, max_col - col);
+    if (clipped.len == 0) return;
+    _ = surface.borrowTextAt(col, 0, clipped, style);
 }
 
 test "Select initializes with borrowed items and selected index" {
@@ -198,6 +205,22 @@ test "Select handles empty items" {
     try std.testing.expect(select.empty());
     try std.testing.expectEqual(@as(usize, 0), select.selectedIndex());
     try std.testing.expect(select.selectedLabel() == null);
+}
+
+test "Select clips long labels before right marker" {
+    const items = [_][]const u8{"abcdef"};
+    const select = Select.init(.{ .items = &items });
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(6, 1);
+    defer ts.deinit();
+
+    select.view(&ts.surface, .{ .show_cursor = false });
+
+    try ts.expectCellText(0, 0, "<");
+    try ts.expectCellText(2, 0, "a");
+    try ts.expectCellText(4, 0, "c");
+    try ts.expectCellText(5, 0, ">");
 }
 
 test "Select update moves selection with clamp behavior" {
