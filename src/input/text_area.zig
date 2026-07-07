@@ -1,5 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
+const text_edit = @import("text_edit.zig");
 
 /// A small multi-line text input component.
 ///
@@ -131,8 +132,8 @@ pub const TextArea = struct {
             .insert_newline => try self.insertBytes("\n"),
             .backspace => self.backspace(),
             .delete => self.delete(),
-            .move_left => self.cursor = previousGraphemeStart(self.value.items, self.cursor),
-            .move_right => self.cursor = nextGraphemeEnd(self.value.items, self.cursor),
+            .move_left => self.cursor = text_edit.previousGraphemeStart(self.value.items, self.cursor),
+            .move_right => self.cursor = text_edit.nextGraphemeEnd(self.value.items, self.cursor),
             .move_up => self.moveVertical(.up),
             .move_down => self.moveVertical(.down),
             .home => self.cursor = lineStart(self.value.items, self.cursor),
@@ -193,21 +194,21 @@ pub const TextArea = struct {
     }
 
     fn insertBytes(self: *TextArea, bytes: []const u8) !void {
-        self.cursor = insertionBoundary(self.value.items, self.cursor);
+        self.cursor = text_edit.insertionBoundary(self.value.items, self.cursor);
         try self.value.insertSlice(self.allocator, self.cursor, bytes);
         self.cursor += bytes.len;
     }
 
     fn backspace(self: *TextArea) void {
         if (self.cursor == 0) return;
-        const range = graphemeBeforeOrContaining(self.value.items, self.cursor);
+        const range = text_edit.graphemeBeforeOrContaining(self.value.items, self.cursor);
         self.value.replaceRangeAssumeCapacity(range.start, range.end - range.start, "");
         self.cursor = range.start;
     }
 
     fn delete(self: *TextArea) void {
         if (self.cursor >= self.value.items.len) return;
-        const range = graphemeAtOrContaining(self.value.items, self.cursor);
+        const range = text_edit.graphemeAtOrContaining(self.value.items, self.cursor);
         self.value.replaceRangeAssumeCapacity(range.start, range.end - range.start, "");
         self.cursor = range.start;
     }
@@ -247,105 +248,10 @@ fn keyToMsg(key: chasen.Key) ?TextArea.Msg {
     if (key.matches(chasen.Key.home, .{})) return .home;
     if (key.matches(chasen.Key.end, .{})) return .end;
 
-    if (keyTextCodepoint(key)) |codepoint| {
+    if (text_edit.keyTextCodepoint(key)) |codepoint| {
         return .{ .insert = codepoint };
     }
     return null;
-}
-
-fn keyTextCodepoint(key: chasen.Key) ?u21 {
-    if (key.mods.ctrl or key.mods.alt or key.mods.super or key.mods.hyper or key.mods.meta) {
-        return null;
-    }
-
-    const text = key.text orelse return null;
-    if (text.len == 0) return null;
-
-    const len = std.unicode.utf8ByteSequenceLength(text[0]) catch return null;
-    if (len != text.len) return null;
-
-    const codepoint = std.unicode.utf8Decode(text) catch return null;
-    if (!isPrintable(codepoint)) return null;
-    return codepoint;
-}
-
-fn isPrintable(codepoint: u21) bool {
-    return codepoint >= 0x20 and codepoint != 0x7f and !(codepoint >= 0x80 and codepoint <= 0x9f);
-}
-
-fn previousGraphemeStart(bytes: []const u8, index: usize) usize {
-    const target = @min(index, bytes.len);
-    if (target == 0) return 0;
-
-    var previous: usize = 0;
-    var iter = chasen.text.graphemeIterator(bytes);
-    while (iter.next()) |grapheme| {
-        if (grapheme.start >= target) break;
-        const end = grapheme.start + grapheme.len;
-        if (end >= target) return grapheme.start;
-        previous = grapheme.start;
-    }
-    return previous;
-}
-
-fn nextGraphemeEnd(bytes: []const u8, index: usize) usize {
-    const target = @min(index, bytes.len);
-    if (target >= bytes.len) return bytes.len;
-
-    var iter = chasen.text.graphemeIterator(bytes);
-    while (iter.next()) |grapheme| {
-        const end = grapheme.start + grapheme.len;
-        if (grapheme.start <= target and target < end) return end;
-        if (grapheme.start > target) return end;
-    }
-    return bytes.len;
-}
-
-const GraphemeRange = struct {
-    start: usize,
-    end: usize,
-};
-
-fn graphemeBeforeOrContaining(bytes: []const u8, index: usize) GraphemeRange {
-    const target = @min(index, bytes.len);
-    var previous: GraphemeRange = .{ .start = 0, .end = 0 };
-    var iter = chasen.text.graphemeIterator(bytes);
-    while (iter.next()) |grapheme| {
-        const range: GraphemeRange = .{
-            .start = grapheme.start,
-            .end = grapheme.start + grapheme.len,
-        };
-        if (range.start < target and target <= range.end) return range;
-        if (range.end >= target) return previous;
-        previous = range;
-    }
-    return previous;
-}
-
-fn graphemeAtOrContaining(bytes: []const u8, index: usize) GraphemeRange {
-    const target = @min(index, bytes.len);
-    var iter = chasen.text.graphemeIterator(bytes);
-    while (iter.next()) |grapheme| {
-        const range: GraphemeRange = .{
-            .start = grapheme.start,
-            .end = grapheme.start + grapheme.len,
-        };
-        if (range.start <= target and target < range.end) return range;
-        if (range.start > target) return range;
-    }
-    return .{ .start = bytes.len, .end = bytes.len };
-}
-
-fn insertionBoundary(bytes: []const u8, index: usize) usize {
-    const target = @min(index, bytes.len);
-    var iter = chasen.text.graphemeIterator(bytes);
-    while (iter.next()) |grapheme| {
-        const end = grapheme.start + grapheme.len;
-        if (target == grapheme.start or target == end) return target;
-        if (grapheme.start < target and target < end) return grapheme.start;
-        if (grapheme.start > target) return grapheme.start;
-    }
-    return bytes.len;
 }
 
 fn lineStart(bytes: []const u8, index: usize) usize {
