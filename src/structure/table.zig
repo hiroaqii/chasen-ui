@@ -1,5 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
+const layout = @import("../layout.zig");
 
 /// A small display-only table component.
 ///
@@ -8,13 +9,6 @@ const chasen = @import("chasen");
 /// scrolling, column resizing, or data loading. Applications prepare the rows
 /// they want to show and decide what each cell means.
 pub const Table = struct {
-    /// Horizontal alignment for a column.
-    pub const Align = enum {
-        left,
-        center,
-        right,
-    };
-
     /// Table grid style.
     pub const Grid = enum {
         /// Draw cells only, without header separator or borders.
@@ -68,7 +62,7 @@ pub const Table = struct {
         /// Fixed column width in terminal cells.
         width: u16,
         /// Alignment used for header and cell text.
-        alignment: Align = .left,
+        alignment: layout.HorizontalAlign = .left,
         /// Optional style override for this column's body cells.
         cell_style: ?chasen.TextStyle = null,
     };
@@ -505,7 +499,7 @@ fn drawCell(
     row: u16,
     width: u16,
     text: []const u8,
-    alignment: Table.Align,
+    alignment: layout.HorizontalAlign,
     style: chasen.TextStyle,
     padding: Table.CellPadding,
 ) void {
@@ -524,7 +518,9 @@ fn drawCell(
         .width = text_width,
         .height = 1,
     });
-    _ = child.borrowTextAt(alignedCol(text, text_width, alignment), 0, text, style);
+    const drawn_width = chasen.text.displayWidth(text);
+    const offset = layout.horizontalOffset(text_width, drawn_width, alignment);
+    _ = child.borrowTextAt(offset, 0, text, style);
 }
 
 fn fillCellRange(surface: *chasen.Surface, col: u16, row: u16, width: u16, style: chasen.TextStyle) void {
@@ -537,16 +533,6 @@ fn fillCellRange(surface: *chasen.Surface, col: u16, row: u16, width: u16, style
 fn cellText(cells: Table.Row, index: usize) []const u8 {
     if (index >= cells.len) return "";
     return cells[index];
-}
-
-fn alignedCol(text: []const u8, width: u16, alignment: Table.Align) u16 {
-    const text_width = chasen.text.displayWidth(text);
-    if (text_width >= width) return 0;
-    return switch (alignment) {
-        .left => 0,
-        .center => (width - text_width) / 2,
-        .right => width - text_width,
-    };
 }
 
 test "Table initializes from options" {
@@ -870,9 +856,25 @@ test "Table cell_padding aligns text inside padded content width" {
     try ts.expectCellText(5, 0, " ");
 }
 
-test "Table alignedCol respects display width" {
-    try std.testing.expectEqual(@as(u16, 0), alignedCol("abcd", 4, .right));
-    try std.testing.expectEqual(@as(u16, 3), alignedCol("abc", 6, .right));
-    try std.testing.expectEqual(@as(u16, 1), alignedCol("abcd", 6, .center));
-    try std.testing.expectEqual(@as(u16, 2), alignedCol("あ", 4, .right));
+test "Table right-aligns wide text by display width" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(6, 1);
+    defer ts.deinit();
+
+    const columns = [_]Table.Column{
+        .{ .header = "A", .width = 4, .alignment = .right },
+    };
+    const rows = [_]Table.Row{
+        &.{"あ"},
+    };
+    const table = Table.init(.{ .columns = &columns, .rows = &rows });
+
+    table.view(&ts.surface, .{
+        .grid = .none,
+        .show_header = false,
+    });
+
+    try ts.expectCellText(0, 0, " ");
+    try ts.expectCellText(1, 0, " ");
+    try ts.expectCellText(2, 0, "あ");
 }

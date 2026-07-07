@@ -1,5 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
+const layout = @import("../layout.zig");
 
 /// A small one-line status component with left, center, and right text slots.
 ///
@@ -45,16 +46,12 @@ pub const StatusLine = struct {
 
     /// Return the start column for right-aligned text within `width`.
     pub fn rightCol(text: []const u8, width: u16) u16 {
-        const text_width = chasen.text.displayWidth(text);
-        if (text_width >= width) return 0;
-        return width - text_width;
+        return layout.horizontalOffset(width, chasen.text.displayWidth(text), .right);
     }
 
     /// Return the start column for centered text within `width`.
     pub fn centerCol(text: []const u8, width: u16) u16 {
-        const text_width = chasen.text.displayWidth(text);
-        if (text_width >= width) return 0;
-        return (width - text_width) / 2;
+        return layout.horizontalOffset(width, chasen.text.displayWidth(text), .center);
     }
 
     /// Draw the status line into the provided one-line surface region.

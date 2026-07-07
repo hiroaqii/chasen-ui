@@ -592,7 +592,8 @@ fn saturatingAdd(a: u16, b: u16) u16 {
     return a +| b;
 }
 
-fn horizontalOffset(parent_width: u16, child_width: u16, alignment: HorizontalAlign) u16 {
+/// Return the horizontal offset for a child width aligned inside a parent width.
+pub fn horizontalOffset(parent_width: u16, child_width: u16, alignment: HorizontalAlign) u16 {
     const remaining = parent_width -| @min(parent_width, child_width);
     return switch (alignment) {
         .left => 0,
@@ -699,6 +700,17 @@ test "align positions a child rectangle inside a parent" {
         .width = 4,
         .height = 2,
     }, alignRect(rect, .{ .width = 4, .height = 2 }, .bottom_right));
+}
+
+test "horizontalOffset aligns child width within parent width" {
+    try std.testing.expectEqual(@as(u16, 0), horizontalOffset(10, 4, .left));
+    try std.testing.expectEqual(@as(u16, 3), horizontalOffset(10, 4, .center));
+    try std.testing.expectEqual(@as(u16, 6), horizontalOffset(10, 4, .right));
+}
+
+test "horizontalOffset returns zero when child is at least parent width" {
+    try std.testing.expectEqual(@as(u16, 0), horizontalOffset(4, 4, .right));
+    try std.testing.expectEqual(@as(u16, 0), horizontalOffset(4, 8, .center));
 }
 
 test "align clamps child size to parent size" {

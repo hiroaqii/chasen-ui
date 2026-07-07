@@ -3,6 +3,7 @@ const chasen = @import("chasen");
 const FocusList = @import("focus_list.zig").FocusList;
 const List = @import("list.zig").List;
 const ListViewport = @import("list_view.zig").ListViewport;
+const layout = @import("../layout.zig");
 const selectable = @import("selectable.zig");
 
 /// A focused vertical list whose rows are rendered as aligned columns.
@@ -12,13 +13,6 @@ const selectable = @import("selectable.zig");
 /// filtering, data loading, source-index mapping, and the meaning of row
 /// activation.
 pub const ColumnList = struct {
-    /// Horizontal alignment for a cell within its computed column width.
-    pub const Align = enum {
-        left,
-        center,
-        right,
-    };
-
     /// Column width policy.
     pub const Width = union(enum) {
         /// Fixed terminal-cell width.
@@ -43,7 +37,7 @@ pub const ColumnList = struct {
         /// Column width policy.
         width: Width,
         /// Cell alignment for this column.
-        alignment: Align = .left,
+        alignment: layout.HorizontalAlign = .left,
         /// Style fields applied to body cells in this column.
         style: StylePatch = .{},
         /// Optional full header style override for this column.
@@ -311,7 +305,7 @@ fn drawTextInCell(
     row: u16,
     width: u16,
     text: []const u8,
-    alignment: ColumnList.Align,
+    alignment: layout.HorizontalAlign,
     style: chasen.TextStyle,
     focused: bool,
     opts: ColumnList.ViewOptions,
@@ -321,7 +315,8 @@ fn drawTextInCell(
     const clipped = chasen.text.clipToWidthWithMarker(text, width, opts.truncate_marker);
     if (!clipped.clipped) {
         const text_width = chasen.text.displayWidth(clipped.prefix);
-        drawText(surface, col + alignedOffset(text_width, width, alignment), row, clipped.prefix, style, focused, opts);
+        const offset = layout.horizontalOffset(width, text_width, alignment);
+        drawText(surface, col + offset, row, clipped.prefix, style, focused, opts);
         return;
     }
 
@@ -347,16 +342,6 @@ fn drawText(
         }
     }
     _ = surface.borrowTextAt(col, row, text, style);
-}
-
-fn alignedOffset(text_width: u16, width: u16, alignment: ColumnList.Align) u16 {
-    if (text_width >= width) return 0;
-    const remaining = width - text_width;
-    return switch (alignment) {
-        .left => 0,
-        .center => remaining / 2,
-        .right => remaining,
-    };
 }
 
 fn rowStyle(opts: ColumnList.ViewOptions, focused: bool, selected: bool) chasen.TextStyle {

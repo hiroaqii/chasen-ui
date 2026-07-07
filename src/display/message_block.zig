@@ -1,5 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
+const layout = @import("../layout.zig");
 
 /// A centered two-line message block for loading, empty, error, and guidance states.
 ///
@@ -96,7 +97,7 @@ pub fn drawCenteredText(surface: *chasen.Surface, row: u16, text: []const u8, st
 
 fn centeredCol(width: u16, text: []const u8) u16 {
     const text_width = chasen.text.displayWidth(text);
-    return if (text_width >= width) 0 else @intCast((width - text_width) / 2);
+    return layout.horizontalOffset(width, text_width, .center);
 }
 
 test "MessageBlock initializes from options" {
@@ -115,18 +116,18 @@ test "MessageBlock content height follows present lines" {
 
 test "MessageBlock layout exposes centered title and message points" {
     const block = MessageBlock.init(.{ .title = "Title", .message = "Message" });
-    const layout = block.layout(.{ .width = 20, .height = 6 });
+    const positions = block.layout(.{ .width = 20, .height = 6 });
 
-    try std.testing.expectEqual(MessageBlock.Point{ .col = 7, .row = 2 }, layout.title.?);
-    try std.testing.expectEqual(MessageBlock.Point{ .col = 6, .row = 3 }, layout.message.?);
+    try std.testing.expectEqual(MessageBlock.Point{ .col = 7, .row = 2 }, positions.title.?);
+    try std.testing.expectEqual(MessageBlock.Point{ .col = 6, .row = 3 }, positions.message.?);
 }
 
 test "MessageBlock layout clips message when surface has one row" {
     const block = MessageBlock.init(.{ .title = "Title", .message = "Message" });
-    const layout = block.layout(.{ .width = 20, .height = 1 });
+    const positions = block.layout(.{ .width = 20, .height = 1 });
 
-    try std.testing.expect(layout.title != null);
-    try std.testing.expect(layout.message == null);
+    try std.testing.expect(positions.title != null);
+    try std.testing.expect(positions.message == null);
 }
 
 test "MessageBlock centers message-only content on its single row" {
