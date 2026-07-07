@@ -8,7 +8,8 @@ const text = chasen.text;
 /// A key/action pair such as `Enter: open` or `Esc/q: quit`.
 ///
 /// Slices are borrowed. They must remain valid until `draw` or `width`
-/// returns.
+/// returns. `draw` copies rendered text into the frame arena before printing;
+/// `width` only reads the borrowed slices during the call.
 pub const Item = struct {
     keys: []const u8,
     action: []const u8,
@@ -97,7 +98,10 @@ pub fn width(items: []const Item, opts: DrawOptions) u16 {
 /// ellipsize. If an individual item is wider than the remaining line, only
 /// that item may be clipped by `text.clipToWidth`; Unicode grapheme clusters
 /// are not split.
-pub fn draw(surface: *Surface, x: u16, y: u16, items: []const Item, opts: DrawOptions) DrawResult {
+///
+/// Draw copies rendered text into the surface frame arena, so it can fail if
+/// the frame allocator cannot duplicate a rendered segment.
+pub fn draw(surface: *Surface, x: u16, y: u16, items: []const Item, opts: DrawOptions) !DrawResult {
     const size = surface.size();
     if (items.len == 0 or opts.max_lines == 0 or x >= size.width or y >= size.height) return .{};
 
@@ -122,17 +126,17 @@ pub fn draw(surface: *Surface, x: u16, y: u16, items: []const Item, opts: DrawOp
                 remaining = line_width;
             } else {
                 result.overflow = true;
-                drawEllipsis(surface, &cursor, size.width, drew_on_line, opts);
+                try drawEllipsis(surface, &cursor, size.width, drew_on_line, opts);
                 return result;
             }
         }
 
         if (drew_on_line) {
-            drawSegment(surface, &cursor, size.width, opts.separator, opts.separator_style orelse opts.style);
+            try drawSegment(surface, &cursor, size.width, opts.separator, opts.separator_style orelse opts.style);
         }
 
         const before_item_x = cursor.x;
-        drawKeyHintItem(surface, &cursor, size.width, footer_item, opts);
+        try drawKeyHintItem(surface, &cursor, size.width, footer_item, opts);
         if (cursor.x == before_item_x and itemWidth(footer_item, opts) > remainingWidth(size.width, cursor.x)) {
             result.overflow = true;
             return result;
@@ -149,31 +153,31 @@ const Cursor = struct {
     y: u16,
 };
 
-fn drawKeyHintItem(surface: *Surface, cursor: *Cursor, max_x: u16, footer_item: Item, opts: DrawOptions) void {
-    drawSegment(surface, cursor, max_x, footer_item.keys, opts.key_style orelse opts.style);
-    drawSegment(surface, cursor, max_x, opts.delimiter, opts.delimiter_style orelse opts.style);
-    drawSegment(surface, cursor, max_x, footer_item.action, opts.action_style orelse opts.style);
+fn drawKeyHintItem(surface: *Surface, cursor: *Cursor, max_x: u16, footer_item: Item, opts: DrawOptions) !void {
+    try drawSegment(surface, cursor, max_x, footer_item.keys, opts.key_style orelse opts.style);
+    try drawSegment(surface, cursor, max_x, opts.delimiter, opts.delimiter_style orelse opts.style);
+    try drawSegment(surface, cursor, max_x, footer_item.action, opts.action_style orelse opts.style);
 }
 
-fn drawEllipsis(surface: *Surface, cursor: *Cursor, max_x: u16, needs_separator: bool, opts: DrawOptions) void {
+fn drawEllipsis(surface: *Surface, cursor: *Cursor, max_x: u16, needs_separator: bool, opts: DrawOptions) !void {
     if (remainingWidth(max_x, cursor.x) == 0) return;
 
     // Keep ellipsis visually attached to previous items, but avoid drawing a
     // leading separator when the first item itself cannot fit.
     if (needs_separator and text.displayWidth(opts.separator) + text.displayWidth(opts.ellipsis) <= remainingWidth(max_x, cursor.x)) {
-        drawSegment(surface, cursor, max_x, opts.separator, opts.separator_style orelse opts.style);
+        try drawSegment(surface, cursor, max_x, opts.separator, opts.separator_style orelse opts.style);
     }
-    drawSegment(surface, cursor, max_x, opts.ellipsis, opts.separator_style orelse opts.style);
+    try drawSegment(surface, cursor, max_x, opts.ellipsis, opts.separator_style orelse opts.style);
 }
 
-fn drawSegment(surface: *Surface, cursor: *Cursor, max_x: u16, str: []const u8, ts: TextStyle) void {
+fn drawSegment(surface: *Surface, cursor: *Cursor, max_x: u16, str: []const u8, ts: TextStyle) !void {
     const remaining = remainingWidth(max_x, cursor.x);
     if (remaining == 0 or str.len == 0) return;
 
     const clipped = text.clipToWidth(str, remaining);
     if (clipped.len == 0) return;
 
-    _ = surface.borrowTextAt(cursor.x, cursor.y, clipped, ts);
+    _ = try surface.copyTextAt(cursor.x, cursor.y, clipped, ts);
     cursor.x += text.displayWidth(clipped);
 }
 
@@ -207,7 +211,7 @@ test "key hint draw writes styled key action items" {
     try ts.init(24, 2);
     defer ts.deinit();
 
-    const result = draw(&ts.surface, 0, 0, &.{
+    const result = try draw(&ts.surface, 0, 0, &.{
         item("q", "quit"),
         item("Enter", "open"),
     }, .{
@@ -232,7 +236,7 @@ test "key hint draw ellipsizes at item boundary" {
     try ts.init(22, 1);
     defer ts.deinit();
 
-    const result = draw(&ts.surface, 0, 0, &.{
+    const result = try draw(&ts.surface, 0, 0, &.{
         item("Up/Down/j/k", "move"),
         item("Enter", "detail"),
         item("q", "quit"),
@@ -251,7 +255,7 @@ test "key hint draw does not prefix ellipsis with separator before first item" {
     try ts.init(12, 1);
     defer ts.deinit();
 
-    const result = draw(&ts.surface, 5, 0, &.{
+    const result = try draw(&ts.surface, 5, 0, &.{
         item("LongKey", "long action"),
     }, .{});
 
@@ -268,7 +272,7 @@ test "key hint draw wraps at item boundary" {
     try ts.init(22, 2);
     defer ts.deinit();
 
-    const result = draw(&ts.surface, 0, 0, &.{
+    const result = try draw(&ts.surface, 0, 0, &.{
         item("Up/Down", "move"),
         item("Enter", "detail"),
         item("q", "quit"),
@@ -278,6 +282,21 @@ test "key hint draw wraps at item boundary" {
     try std.testing.expectEqual(@as(usize, 3), result.items_drawn);
     try std.testing.expect(!result.overflow);
     try std.testing.expectEqualStrings("E", ts.surface.readCell(0, 1).?.char.grapheme);
+}
+
+test "key hint draw copies stack-backed item text" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(20, 1);
+    defer ts.deinit();
+
+    var key_buf: [8]u8 = undefined;
+    const key = try std.fmt.bufPrint(&key_buf, "{c}", .{'c'});
+
+    const result = try draw(&ts.surface, 0, 0, &.{item(key, "commit")}, .{});
+    @memset(&key_buf, '%');
+
+    try std.testing.expectEqual(@as(usize, 1), result.items_drawn);
+    try std.testing.expectEqualStrings("c", ts.surface.readCell(0, 0).?.char.grapheme);
 }
 
 test {

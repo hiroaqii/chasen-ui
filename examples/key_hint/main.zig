@@ -17,7 +17,7 @@ const KeyHintExample = struct {
         _ = sfc.borrowTextAt(0, 0, "Key Hint Example", .{ .bold = true });
         _ = sfc.borrowTextAt(0, 2, "One-line hints use item-boundary ellipsis when they do not fit:", .{});
 
-        _ = ui.key_hint.draw(sfc, 0, 4, &.{
+        _ = try ui.key_hint.draw(sfc, 0, 4, &.{
             ui.key_hint.item("Up/Down/j/k", "move"),
             ui.key_hint.item("Enter", "open"),
             ui.key_hint.item("/", "filter"),
@@ -29,7 +29,7 @@ const KeyHintExample = struct {
 
         _ = sfc.borrowTextAt(0, 7, "Two-line hints wrap at item boundaries:", .{});
 
-        _ = ui.key_hint.draw(sfc, 0, 9, &.{
+        _ = try ui.key_hint.draw(sfc, 0, 9, &.{
             ui.key_hint.item("Up/Down/j/k", "move"),
             ui.key_hint.item("Enter", "detail"),
             ui.key_hint.item("/", "filter"),
