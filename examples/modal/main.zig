@@ -14,7 +14,6 @@ const App = struct {
     };
 
     show_modal: bool = true,
-    modal: ui.Modal = ui.Modal.init(.{}),
     paragraph: ui.Paragraph = ui.Paragraph.init(.{
         .text = "Visibility, dismissal, focus, and action semantics are owned by the app. Modal only draws the backdrop and dialog chrome.",
     }),
@@ -67,11 +66,10 @@ const App = struct {
         };
 
         var modal_area = sfc.child(.{ .col = 0, .row = 0, .width = size.width, .height = size.height });
-        self.modal.view(&modal_area, modal_opts);
-
-        const content = ui.Modal.contentRect(&modal_area, modal_opts);
-        if (content.width == 0 or content.height == 0) return;
-        var content_area = modal_area.child(content);
+        const frame = ui.Modal.frame(&modal_area, modal_opts) orelse return;
+        frame.view();
+        var content_area = frame.contentSurface();
+        const content = content_area.size();
 
         // The dialog content is regular app-owned drawing. Modal gives the app
         // a centered, padded rectangle but does not own the buttons, focus, or

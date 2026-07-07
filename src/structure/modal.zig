@@ -1,7 +1,6 @@
 const std = @import("std");
 const chasen = @import("chasen");
 const layout = @import("../layout.zig");
-const box = @import("box.zig");
 const panel = @import("panel.zig");
 
 /// A small display-only modal dialog chrome component.
@@ -9,12 +8,9 @@ const panel = @import("panel.zig");
 /// `Modal` can draw an optional backdrop and a centered bordered dialog. It
 /// does not own visibility, dismissal, focus trapping, child components, or
 /// overlay stack policy. Applications decide whether the modal is active and
-/// render content inside `contentRect`.
+/// render content inside `Frame.contentSurface()`.
 pub const Modal = struct {
-    /// Initial values used when constructing a `Modal`.
-    pub const Options = struct {};
-
-    /// Rendering options for `Modal.view`.
+    /// Rendering options for `Modal.frame`.
     pub const ViewOptions = struct {
         /// Requested dialog width, clamped to the overlay region.
         dialog_width: u16 = 48,
@@ -38,22 +34,93 @@ pub const Modal = struct {
         title_style: chasen.TextStyle = .{ .bold = true },
     };
 
-    /// Create a modal.
-    pub fn init(opts: Options) Modal {
-        _ = opts;
-        return .{};
-    }
-
-    /// Return the overlay rectangle inside the provided modal surface.
-    pub fn overlayRect(surface: *chasen.Surface) chasen.Rect {
-        return .{ .col = 0, .row = 0, .width = surface.size().width, .height = surface.size().height };
-    }
-
-    /// Return the dialog rectangle centered within the provided modal surface.
+    /// A resolved modal frame.
     ///
-    /// The returned rectangle is relative to the modal surface.
-    pub fn dialogRect(surface: *chasen.Surface, opts: ViewOptions) chasen.Rect {
-        return dialogRectFor(overlayRect(surface), opts);
+    /// The frame keeps surface, resolved geometry, and rendering options
+    /// together so callers can draw the modal chrome and then derive matching
+    /// dialog/content surfaces without repeating centering or padding math.
+    pub const Frame = struct {
+        surface: *chasen.Surface,
+        overlay_rect: chasen.Rect,
+        dialog_rect: chasen.Rect,
+        opts: ViewOptions,
+
+        /// Draw the optional backdrop and dialog chrome.
+        pub fn view(self: *const Frame) void {
+            if (self.opts.backdrop) {
+                var overlay_surface = self.surface.child(self.overlay_rect);
+                overlay_surface.fillAll(.{
+                    .char = .{ .grapheme = " ", .width = 1 },
+                    .style = self.opts.backdrop_style,
+                });
+            }
+
+            var dialog_surface = self.dialogSurface();
+            const dialog_panel = panel.Panel.frame(&dialog_surface, .{
+                .title = self.opts.title,
+                .title_gap = self.opts.title_gap,
+                .padding = self.opts.padding,
+                .border = self.opts.border,
+                .border_style = self.opts.border_style,
+                .title_style = self.opts.title_style,
+            });
+            dialog_panel.view();
+        }
+
+        /// Return the full modal overlay rectangle relative to the modal surface.
+        pub fn overlayRect(self: *const Frame) chasen.Rect {
+            return self.overlay_rect;
+        }
+
+        /// Return the dialog rectangle relative to the modal surface.
+        pub fn dialogRect(self: *const Frame) chasen.Rect {
+            return self.dialog_rect;
+        }
+
+        /// Return a clipped surface for the full dialog.
+        ///
+        /// This is useful when app code needs to make the dialog area opaque
+        /// before drawing chrome and content.
+        pub fn dialogSurface(self: *const Frame) chasen.Surface {
+            return self.surface.child(self.dialog_rect);
+        }
+
+        /// Return the content rectangle relative to the modal surface.
+        pub fn contentRect(self: *const Frame) chasen.Rect {
+            return Modal.contentRectFor(self.dialog_rect, self.opts.padding);
+        }
+
+        /// Return a clipped surface for app-owned content inside the dialog.
+        pub fn contentSurface(self: *const Frame) chasen.Surface {
+            return self.surface.child(self.contentRect());
+        }
+
+        /// Return the size of the content surface without constructing it.
+        pub fn contentSize(self: *const Frame) chasen.Size {
+            return rectSize(self.contentRect());
+        }
+    };
+
+    /// Resolve a modal frame for the provided surface and options.
+    ///
+    /// `null` is returned when no drawable content surface can be produced.
+    pub fn frame(surface: *chasen.Surface, opts: ViewOptions) ?Frame {
+        const size = surface.size();
+        if (size.width == 0 or size.height == 0) return null;
+
+        const overlay_rect = chasen.Rect{ .col = 0, .row = 0, .width = size.width, .height = size.height };
+        const dialog_rect = dialogRectFor(overlay_rect, opts);
+        if (dialog_rect.width == 0 or dialog_rect.height == 0) return null;
+
+        const content_rect = contentRectFor(dialog_rect, opts.padding);
+        if (content_rect.width == 0 or content_rect.height == 0) return null;
+
+        return .{
+            .surface = surface,
+            .overlay_rect = overlay_rect,
+            .dialog_rect = dialog_rect,
+            .opts = opts,
+        };
     }
 
     /// Return the dialog rectangle for an already resolved overlay rectangle.
@@ -64,39 +131,9 @@ pub const Modal = struct {
         }, .middle_center);
     }
 
-    /// Return the content rectangle inside the centered dialog.
-    ///
-    /// The returned rectangle is relative to the modal surface.
-    pub fn contentRect(surface: *chasen.Surface, opts: ViewOptions) chasen.Rect {
-        return contentRectFor(dialogRect(surface, opts), opts.padding);
-    }
-
     /// Return a content rectangle for an already resolved dialog rectangle.
     pub fn contentRectFor(dialog_rect: chasen.Rect, padding: layout.Insets) chasen.Rect {
         return panel.Panel.contentRectFor(dialog_rect, padding);
-    }
-
-    /// Return the content size inside the centered dialog.
-    ///
-    /// Use this when the app only needs the available width/height for layout
-    /// decisions, such as choosing a one-column or two-column modal body.
-    pub fn contentSize(surface: *chasen.Surface, opts: ViewOptions) chasen.Size {
-        return rectSize(contentRect(surface, opts));
-    }
-
-    /// Return the content size for an already resolved dialog rectangle.
-    ///
-    /// This is the size-only sibling of `contentRectFor`.
-    pub fn contentSizeForDialog(dialog_rect: chasen.Rect, padding: layout.Insets) chasen.Size {
-        return rectSize(contentRectFor(dialog_rect, padding));
-    }
-
-    /// Return the content size for an overlay rectangle and modal options.
-    ///
-    /// This resolves the centered/clamped dialog first and then applies the
-    /// dialog border and padding, matching the rectangle used by `view`.
-    pub fn contentSizeForOverlay(overlay_rect: chasen.Rect, opts: ViewOptions) chasen.Size {
-        return contentSizeForDialog(dialogRectFor(overlay_rect, opts), opts.padding);
     }
 
     /// Return the maximum title text width available inside the dialog border.
@@ -110,44 +147,10 @@ pub const Modal = struct {
         if (start >= dialog_rect.width - 1) return 0;
         return dialog_rect.width - 1 - start;
     }
-
-    /// Draw the modal backdrop and dialog chrome into the provided surface.
-    pub fn view(self: *const Modal, surface: *chasen.Surface, opts: ViewOptions) void {
-        _ = self;
-        const overlay = overlayRect(surface);
-        if (overlay.width == 0 or overlay.height == 0) return;
-
-        if (opts.backdrop) {
-            const backdrop_box = box.Box.init(.{});
-            backdrop_box.view(surface, .{
-                .fill = true,
-                .fill_style = opts.backdrop_style,
-            });
-        }
-
-        const dialog = dialogRectFor(overlay, opts);
-        if (dialog.width == 0 or dialog.height == 0) return;
-
-        const dialog_panel = panel.Panel.init(.{});
-        var dialog_surface = surface.child(dialog);
-        dialog_panel.view(&dialog_surface, .{
-            .title = opts.title,
-            .title_gap = opts.title_gap,
-            .padding = opts.padding,
-            .border = opts.border,
-            .border_style = opts.border_style,
-            .title_style = opts.title_style,
-        });
-    }
 };
 
 fn rectSize(rect: chasen.Rect) chasen.Size {
     return .{ .width = rect.width, .height = rect.height };
-}
-
-test "Modal initializes from options" {
-    const modal = Modal.init(.{});
-    _ = modal;
 }
 
 test "Modal dialogRectFor centers and clamps dialog" {
@@ -198,7 +201,7 @@ test "Modal contentRectFor removes dialog border and padding" {
     try std.testing.expectEqual(@as(u16, 4), rect.height);
 }
 
-test "Modal contentSizeForDialog matches contentRectFor dimensions" {
+test "Modal contentRectFor dimensions can be used as content size" {
     const dialog_rect = chasen.Rect{
         .col = 10,
         .row = 5,
@@ -208,13 +211,13 @@ test "Modal contentSizeForDialog matches contentRectFor dimensions" {
     const padding = layout.Insets{ .top = 1, .right = 2, .bottom = 1, .left = 2 };
 
     const rect = Modal.contentRectFor(dialog_rect, padding);
-    const size = Modal.contentSizeForDialog(dialog_rect, padding);
+    const size = rectSize(rect);
 
     try std.testing.expectEqual(rect.width, size.width);
     try std.testing.expectEqual(rect.height, size.height);
 }
 
-test "Modal contentSize matches contentRect dimensions" {
+test "Modal frame contentRect matches pure geometry helpers" {
     var ts: chasen.testing.TestSurface = undefined;
     try ts.init(30, 12);
     defer ts.deinit();
@@ -225,43 +228,69 @@ test "Modal contentSize matches contentRect dimensions" {
         .padding = .{ .top = 1, .right = 2, .bottom = 1, .left = 2 },
     };
 
-    const rect = Modal.contentRect(&ts.surface, opts);
-    const size = Modal.contentSize(&ts.surface, opts);
+    const frame = Modal.frame(&ts.surface, opts).?;
+    const expected_dialog = Modal.dialogRectFor(frame.overlayRect(), opts);
+    const expected_content = Modal.contentRectFor(expected_dialog, opts.padding);
 
-    try std.testing.expectEqual(rect.width, size.width);
-    try std.testing.expectEqual(rect.height, size.height);
+    try std.testing.expectEqual(expected_dialog, frame.dialogRect());
+    try std.testing.expectEqual(expected_content, frame.contentRect());
+    try std.testing.expectEqual(rectSize(expected_content), frame.contentSize());
 }
 
-test "Modal contentSizeForOverlay accounts for clamped dialog and padding" {
-    const size = Modal.contentSizeForOverlay(.{
-        .col = 3,
-        .row = 4,
-        .width = 8,
-        .height = 5,
-    }, .{
+test "Modal frame exposes dialog and content surfaces" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(30, 12);
+    defer ts.deinit();
+
+    const frame_value = Modal.frame(&ts.surface, .{
         .dialog_width = 20,
-        .dialog_height = 10,
-        .padding = .{ .top = 1, .right = 1, .bottom = 1, .left = 1 },
-    });
+        .dialog_height = 8,
+        .padding = .{ .top = 1, .right = 2, .bottom = 1, .left = 2 },
+    }).?;
+    var dialog = frame_value.dialogSurface();
+    var content = frame_value.contentSurface();
 
-    try std.testing.expectEqual(@as(u16, 4), size.width);
-    try std.testing.expectEqual(@as(u16, 1), size.height);
+    try std.testing.expectEqual(frame_value.dialogRect().width, dialog.size().width);
+    try std.testing.expectEqual(frame_value.dialogRect().height, dialog.size().height);
+    try std.testing.expectEqual(frame_value.contentSize(), content.size());
 }
 
-test "Modal contentSizeForOverlay collapses without underflow" {
-    const size = Modal.contentSizeForOverlay(.{
-        .col = 0,
-        .row = 0,
-        .width = 2,
-        .height = 2,
-    }, .{
+test "Modal frame returns null for zero overlay or content" {
+    var zero: chasen.testing.TestSurface = undefined;
+    try zero.init(0, 4);
+    defer zero.deinit();
+
+    try std.testing.expect(Modal.frame(&zero.surface, .{}) == null);
+
+    var tiny: chasen.testing.TestSurface = undefined;
+    try tiny.init(2, 2);
+    defer tiny.deinit();
+
+    try std.testing.expect(Modal.frame(&tiny.surface, .{
         .dialog_width = 2,
         .dialog_height = 2,
         .padding = .all(4),
-    });
+    }) == null);
+}
 
-    try std.testing.expectEqual(@as(u16, 0), size.width);
-    try std.testing.expectEqual(@as(u16, 0), size.height);
+test "Modal frame view fills backdrop and draws dialog chrome" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(12, 6);
+    defer ts.deinit();
+
+    const frame_value = Modal.frame(&ts.surface, .{
+        .dialog_width = 8,
+        .dialog_height = 5,
+        .title = "M",
+        .backdrop = true,
+        .backdrop_style = .{ .fg = .gray },
+    }).?;
+    frame_value.view();
+
+    try ts.expectCellText(0, 0, " ");
+    try ts.expectCellText(2, 0, "+");
+    try ts.expectCellText(4, 0, "M");
+    try std.testing.expect(ts.surface.readCell(0, 0).?.style.fg.eql(.gray));
 }
 
 test "Modal titleMaxWidthFor keeps title text before right border" {
