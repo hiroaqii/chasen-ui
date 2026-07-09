@@ -304,3 +304,22 @@ test "BlockViewport iterator skips zero-height blocks" {
     try std.testing.expectEqual(BlockViewport.VisibleBlock{ .index = 3, .skip_rows = 0, .max_rows = 2, .row = 1 }, it.next().?);
     try std.testing.expectEqual(@as(?BlockViewport.VisibleBlock, null), it.next());
 }
+
+test "BlockViewport saturates totals and clamps visible row to u16" {
+    const blocks = [_]BlockViewport.Block{
+        .{ .height = std.math.maxInt(usize) },
+        .{ .height = 10 },
+    };
+
+    try std.testing.expectEqual(std.math.maxInt(usize), BlockViewport.totalHeight(&blocks));
+
+    var it = BlockViewport.iterator(&blocks, std.math.maxInt(usize) - 2, 4);
+
+    try std.testing.expectEqual(BlockViewport.VisibleBlock{
+        .index = 0,
+        .skip_rows = std.math.maxInt(usize) - 4,
+        .max_rows = 4,
+        .row = 0,
+    }, it.next().?);
+    try std.testing.expectEqual(@as(?BlockViewport.VisibleBlock, null), it.next());
+}

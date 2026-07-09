@@ -572,6 +572,17 @@ test "Table naturalWidthFor supports full grid chrome" {
     try std.testing.expectEqual(@as(u16, 7), table.naturalWidthFor(0, .none));
 }
 
+test "Table natural widths saturate near u16 maximum" {
+    const columns = [_]Table.Column{
+        .{ .header = "A", .width = std.math.maxInt(u16) },
+        .{ .header = "B", .width = std.math.maxInt(u16) },
+    };
+    const table = Table.init(.{ .columns = &columns });
+
+    try std.testing.expectEqual(std.math.maxInt(u16), table.naturalWidth(1));
+    try std.testing.expectEqual(std.math.maxInt(u16), table.naturalWidthFor(1, .full));
+}
+
 test "Table visibleRowCapacity reserves header rows" {
     const table = Table.init(.{});
 

@@ -164,7 +164,7 @@ fn drawEllipsis(surface: *Surface, cursor: *Cursor, max_x: u16, needs_separator:
 
     // Keep ellipsis visually attached to previous items, but avoid drawing a
     // leading separator when the first item itself cannot fit.
-    if (needs_separator and text.displayWidth(opts.separator) + text.displayWidth(opts.ellipsis) <= remainingWidth(max_x, cursor.x)) {
+    if (needs_separator and saturatingAddWidth(text.displayWidth(opts.separator), text.displayWidth(opts.ellipsis)) <= remainingWidth(max_x, cursor.x)) {
         try drawSegment(surface, cursor, max_x, opts.separator, opts.separator_style orelse opts.style);
     }
     try drawSegment(surface, cursor, max_x, opts.ellipsis, opts.separator_style orelse opts.style);
@@ -265,6 +265,31 @@ test "key hint draw does not prefix ellipsis with separator before first item" {
     try std.testing.expectEqualStrings(".", ts.surface.readCell(5, 0).?.char.grapheme);
     try std.testing.expectEqualStrings(".", ts.surface.readCell(6, 0).?.char.grapheme);
     try std.testing.expectEqualStrings(".", ts.surface.readCell(7, 0).?.char.grapheme);
+}
+
+test "key hint draw handles oversized separator and ellipsis widths" {
+    const separator = try std.testing.allocator.alloc(u8, @as(usize, std.math.maxInt(u16)) + 1);
+    defer std.testing.allocator.free(separator);
+    @memset(separator, 's');
+
+    const ellipsis = try std.testing.allocator.alloc(u8, @as(usize, std.math.maxInt(u16)) + 1);
+    defer std.testing.allocator.free(ellipsis);
+    @memset(ellipsis, '.');
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(12, 1);
+    defer ts.deinit();
+
+    const result = try draw(&ts.surface, 0, 0, &.{
+        item("a", "b"),
+        item("long", "item"),
+    }, .{
+        .separator = separator,
+        .ellipsis = ellipsis,
+    });
+
+    try std.testing.expectEqual(@as(usize, 1), result.items_drawn);
+    try std.testing.expect(result.overflow);
 }
 
 test "key hint draw wraps at item boundary" {

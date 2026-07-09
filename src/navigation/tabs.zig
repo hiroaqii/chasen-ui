@@ -181,7 +181,7 @@ fn keyToMsg(tabs: *const Tabs, key: chasen.Key) ?Tabs.Msg {
 }
 
 fn tabWidth(opts: Tabs.ViewOptions, label: []const u8) u16 {
-    return chasen.text.displayWidth(opts.left_marker) + chasen.text.displayWidth(label) + chasen.text.displayWidth(opts.right_marker);
+    return chasen.text.displayWidth(opts.left_marker) +| chasen.text.displayWidth(label) +| chasen.text.displayWidth(opts.right_marker);
 }
 
 test "Tabs initializes with borrowed items and active index" {
@@ -264,4 +264,21 @@ test "Tabs ignores modified Space and does not activate empty tabs" {
     try std.testing.expect(empty.handleEvent(.{
         .key_press = .{ .codepoint = '\r' },
     }) == null);
+}
+
+test "Tabs view handles maximum-width label" {
+    const label = try std.testing.allocator.alloc(u8, @as(usize, std.math.maxInt(u16)) + 1);
+    defer std.testing.allocator.free(label);
+    @memset(label, 'x');
+
+    const items = [_][]const u8{label};
+    const tabs = Tabs.init(.{ .items = &items });
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(4, 1);
+    defer ts.deinit();
+
+    tabs.view(&ts.surface, .{});
+
+    try ts.expectCellText(0, 0, " ");
 }

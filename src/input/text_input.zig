@@ -403,6 +403,23 @@ test "TextInput visible start counts grapheme display width" {
     try std.testing.expectEqual(@as(u16, 4), input.visibleCursorCol(5));
 }
 
+test "TextInput visible helpers handle narrow and maximum widths" {
+    var input = try TextInput.init(std.testing.allocator, .{ .value = "abcdef" });
+    defer input.deinit();
+
+    try std.testing.expectEqual(@as(u16, 0), input.visibleCursorCol(1));
+    try std.testing.expectEqualStrings("", input.visibleText(1));
+
+    const long_value = try std.testing.allocator.alloc(u8, @as(usize, std.math.maxInt(u16)) + 1);
+    defer std.testing.allocator.free(long_value);
+    @memset(long_value, 'x');
+
+    var long_input = try TextInput.init(std.testing.allocator, .{ .value = long_value });
+    defer long_input.deinit();
+
+    try std.testing.expectEqual(std.math.maxInt(u16) - 1, long_input.visibleCursorCol(std.math.maxInt(u16)));
+}
+
 test {
     _ = text_edit;
 }

@@ -143,7 +143,7 @@ pub const Modal = struct {
     /// to draw title text without touching the right border.
     pub fn titleMaxWidthFor(dialog_rect: chasen.Rect, title_gap: u16) u16 {
         if (dialog_rect.width <= 2) return 0;
-        const start = @min(dialog_rect.width - 1, 1 + title_gap);
+        const start = @min(dialog_rect.width - 1, @as(u16, 1) +| title_gap);
         if (start >= dialog_rect.width - 1) return 0;
         return dialog_rect.width - 1 - start;
     }
@@ -215,6 +215,17 @@ test "Modal contentRectFor dimensions can be used as content size" {
 
     try std.testing.expectEqual(rect.width, size.width);
     try std.testing.expectEqual(rect.height, size.height);
+}
+
+test "Modal titleMaxWidthFor handles maximum title gap" {
+    const width = Modal.titleMaxWidthFor(.{
+        .col = 0,
+        .row = 0,
+        .width = 8,
+        .height = 4,
+    }, std.math.maxInt(u16));
+
+    try std.testing.expectEqual(@as(u16, 0), width);
 }
 
 test "Modal frame contentRect matches pure geometry helpers" {

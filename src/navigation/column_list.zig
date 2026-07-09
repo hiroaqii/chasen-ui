@@ -330,13 +330,13 @@ fn drawTextInCell(
     if (!clipped.clipped) {
         const text_width = chasen.text.displayWidth(clipped.prefix);
         const offset = layout.horizontalOffset(width, text_width, alignment);
-        drawText(surface, col + offset, row, clipped.prefix, style, focused, opts);
+        drawText(surface, col +| offset, row, clipped.prefix, style, focused, opts);
         return;
     }
 
     drawText(surface, col, row, clipped.prefix, style, focused, opts);
     if (clipped.marker.len > 0) {
-        _ = surface.borrowTextAt(col + chasen.text.displayWidth(clipped.prefix), row, clipped.marker, style);
+        _ = surface.borrowTextAt(col +| chasen.text.displayWidth(clipped.prefix), row, clipped.marker, style);
     }
 }
 
@@ -502,6 +502,16 @@ test "ColumnList falls back to plain clipping when truncate marker cannot fit" {
 
     try ts.expectCellText(2, 0, "a");
     try std.testing.expect(ts.surface.readCell(3, 0).?.isBlank());
+}
+
+test "ColumnList drawTextInCell handles saturated target columns" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(4, 1);
+    defer ts.deinit();
+
+    drawTextInCell(&ts.surface, std.math.maxInt(u16) - 2, 0, 4, "abcdef", .left, .{}, false, .{});
+
+    try ts.expectCellText(0, 0, " ");
 }
 
 test "ColumnList ignores columns beyond max_columns" {

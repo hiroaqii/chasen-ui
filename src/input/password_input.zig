@@ -216,3 +216,16 @@ test "PasswordInput visible cursor column uses mask width" {
     try std.testing.expectEqual(@as(u16, 6), visibleCursorCol("abcdef", 3, 8, "**"));
     try std.testing.expectEqual(@as(u16, 0), visibleCursorCol("abcdef", 3, 8, ""));
 }
+
+test "PasswordInput visible helpers handle narrow and maximum widths" {
+    try std.testing.expectEqual(@as(u16, 0), visibleSecretCount("abcdef", 6, 0, 1));
+    try std.testing.expectEqual(@as(u16, 0), visibleSecretCount("abcdef", 6, 1, 2));
+    try std.testing.expectEqual(@as(u16, 0), visibleCursorCol("abcdef", 6, 1, "*"));
+
+    const secret = try std.testing.allocator.alloc(u8, @as(usize, std.math.maxInt(u16)) + 1);
+    defer std.testing.allocator.free(secret);
+    @memset(secret, 'x');
+
+    try std.testing.expectEqual(std.math.maxInt(u16), maskedWidth(secret, 1));
+    try std.testing.expectEqual(std.math.maxInt(u16) - 1, visibleSecretCount(secret, secret.len, std.math.maxInt(u16), 1));
+}

@@ -241,7 +241,7 @@ fn drawHorizontal(surface: *chasen.Surface, row: u16, width: u16, glyph: []const
 fn drawTitle(surface: *chasen.Surface, width: u16, opts: Panel.ViewOptions) void {
     if (opts.title.len == 0 or width <= 2) return;
 
-    const start = @min(width - 1, 1 + opts.title_gap);
+    const start = @min(width - 1, @as(u16, 1) +| opts.title_gap);
     if (start >= width - 1) return;
 
     const max_width = width - 1 - start;
@@ -332,4 +332,20 @@ test "Panel frame content surface matches content rect" {
     try std.testing.expectEqual(@as(u16, 14), rect.width);
     try std.testing.expectEqual(@as(u16, 4), rect.height);
     try std.testing.expectEqual(content, child_size);
+}
+
+test "Panel view handles maximum title gap" {
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(4, 3);
+    defer ts.deinit();
+
+    const panel = Panel.init(.{});
+
+    panel.view(&ts.surface, .{
+        .title = "x",
+        .title_gap = std.math.maxInt(u16),
+    });
+
+    try ts.expectCellText(0, 0, "+");
+    try ts.expectCellText(3, 0, "+");
 }

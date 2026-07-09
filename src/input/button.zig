@@ -72,7 +72,7 @@ pub const Button = struct {
             _ = surface.borrowTextAt(1, 0, self.label, label_style);
         }
         if (width > 2) {
-            const close_col = @min(width - 1, @as(u16, 1) + chasen.text.displayWidth(self.label));
+            const close_col = @min(width - 1, @as(u16, 1) +| chasen.text.displayWidth(self.label));
             _ = surface.borrowTextAt(close_col, 0, "]", opts.style);
         }
 
@@ -111,4 +111,21 @@ test "Button ignores modified Space and unrelated events" {
     try std.testing.expect(button.handleEvent(.{
         .key_press = .{ .codepoint = 'x', .text = "x" },
     }) == null);
+}
+
+test "Button view handles maximum-width label" {
+    const label = try std.testing.allocator.alloc(u8, @as(usize, std.math.maxInt(u16)) + 1);
+    defer std.testing.allocator.free(label);
+    @memset(label, 'x');
+
+    var ts: chasen.testing.TestSurface = undefined;
+    try ts.init(3, 1);
+    defer ts.deinit();
+
+    const button = Button.init(.{ .label = label });
+
+    button.view(&ts.surface, .{});
+
+    try ts.expectCellText(0, 0, "[");
+    try ts.expectCellText(2, 0, "]");
 }

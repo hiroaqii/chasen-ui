@@ -175,3 +175,14 @@ test "Paragraph lineCount handles zero width" {
 
     try std.testing.expectEqual(@as(usize, 0), paragraph.lineCount(0));
 }
+
+test "Paragraph lineCount handles long text and maximum width" {
+    const text = try std.testing.allocator.alloc(u8, 4096);
+    defer std.testing.allocator.free(text);
+    @memset(text, 'x');
+
+    const paragraph = Paragraph.init(.{ .text = text });
+
+    try std.testing.expectEqual(@as(usize, 4096), paragraph.lineCount(1));
+    try std.testing.expectEqual(@as(usize, 1), paragraph.lineCount(std.math.maxInt(u16)));
+}

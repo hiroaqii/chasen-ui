@@ -547,7 +547,7 @@ fn splitPlan(total: u16, specs: []const SplitSpec) SplitPlan {
         if (spec.length) |length| {
             fixed = saturatingAdd(fixed, length);
         } else {
-            fill_weight += spec.fill;
+            fill_weight +|= spec.fill;
         }
     }
 
@@ -1012,4 +1012,18 @@ test "split returns only the output capacity" {
 
     try std.testing.expectEqual(@as(usize, 1), result.len);
     try std.testing.expectEqual(chasen.Rect{ .col = 0, .row = 0, .width = 5, .height = 1 }, result[0]);
+}
+
+test "splitPlan saturates excessive fill weight" {
+    const spec_count = 70_000;
+    const specs = try std.testing.allocator.alloc(SplitSpec, spec_count);
+    defer std.testing.allocator.free(specs);
+
+    @memset(specs, SplitSpec{ .fill = std.math.maxInt(u16) });
+
+    const plan = splitPlan(std.math.maxInt(u16), specs);
+
+    try std.testing.expectEqual(std.math.maxInt(u32), plan.fill_weight);
+    try std.testing.expect(plan.fill_space <= std.math.maxInt(u16));
+    try std.testing.expect(plan.fill_extra <= plan.fill_space);
 }
