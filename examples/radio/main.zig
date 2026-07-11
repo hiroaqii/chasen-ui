@@ -19,6 +19,8 @@ const App = struct {
     focus: ui.FocusList = ui.FocusList.init(3),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         radio: ui.Radio.Msg,
         move_up,
         move_down,

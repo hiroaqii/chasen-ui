@@ -36,6 +36,8 @@ const App = struct {
     table_offset: usize = 0,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         scroll_up,
         scroll_down,
         quit,

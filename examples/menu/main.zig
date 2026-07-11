@@ -18,6 +18,8 @@ const App = struct {
     active_index: ?usize = null,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         menu: ui.Menu.Msg,
         quit,
     };

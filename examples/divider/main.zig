@@ -11,6 +11,8 @@ const App = struct {
     divider: ui.Divider = ui.Divider.init(.{}),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         quit,
     };
 

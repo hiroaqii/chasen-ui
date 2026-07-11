@@ -16,6 +16,8 @@ const App = struct {
     last_action: ?Action = null,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         save: ui.Button.Msg,
         cancel: ui.Button.Msg,
         move_prev,

@@ -16,6 +16,8 @@ const App = struct {
     tabs: ui.Tabs = ui.Tabs.init(.{ .items = &tab_items }),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         tabs: ui.Tabs.Msg,
         quit,
     };

@@ -12,6 +12,8 @@ const App = struct {
     rating: ui.Rating = ui.Rating.init(.{}),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         quit,
     };
 

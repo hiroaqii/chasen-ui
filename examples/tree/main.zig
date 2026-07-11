@@ -24,6 +24,8 @@ const App = struct {
     tree: ui.Tree = ui.Tree.init(.{ .nodes = &package_nodes }),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         quit,
     };
 

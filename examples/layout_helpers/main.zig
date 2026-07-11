@@ -9,6 +9,8 @@ const ui = @import("chasen_ui");
 // then draws text or components inside that clipped child surface.
 const App = struct {
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         quit,
     };
 

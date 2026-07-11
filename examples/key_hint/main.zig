@@ -7,6 +7,8 @@ const ui = @import("chasen_ui");
 // the bottom of the screen.
 const KeyHintExample = struct {
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         quit,
     };
 

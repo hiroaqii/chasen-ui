@@ -28,6 +28,8 @@ const App = struct {
     saved_density: usize = 1,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         theme: ui.Select.Msg,
         density: ui.Select.Msg,
         move_focus,

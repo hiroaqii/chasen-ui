@@ -13,6 +13,8 @@ const App = struct {
     status: ?[]const u8 = null,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         password: ui.PasswordInput.Msg,
         quit,
     };

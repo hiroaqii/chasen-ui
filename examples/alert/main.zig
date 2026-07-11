@@ -12,6 +12,8 @@ const App = struct {
     alert: ui.Alert = ui.Alert.init(.{}),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         quit,
     };
 

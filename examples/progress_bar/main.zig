@@ -24,6 +24,8 @@ const App = struct {
     skip_next_frame_delta: bool = true,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         frame: chasen.Frame,
         reset,
         quit,

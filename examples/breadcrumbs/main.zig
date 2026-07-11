@@ -17,6 +17,8 @@ const App = struct {
     breadcrumbs: ui.Breadcrumbs = ui.Breadcrumbs.init(.{ .items = &path_items }),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         quit,
     };
 

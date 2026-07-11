@@ -67,6 +67,8 @@ const App = struct {
     selected_index: ?usize = null,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         list: ui.ColumnList.Msg,
         quit,
     };

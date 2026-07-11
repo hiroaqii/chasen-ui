@@ -12,6 +12,8 @@ const App = struct {
     last_submitted: ?[]const u8 = null,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         input: ui.TextInput.Msg,
         quit,
     };

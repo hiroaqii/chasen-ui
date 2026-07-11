@@ -17,6 +17,8 @@ const App = struct {
     list: ui.MultiSelectList = ui.MultiSelectList.init(.{ .items = &items }),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         list: ui.MultiSelectList.Msg,
         quit,
     };

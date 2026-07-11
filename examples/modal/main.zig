@@ -19,6 +19,8 @@ const App = struct {
     }),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         toggle_modal,
         quit,
     };

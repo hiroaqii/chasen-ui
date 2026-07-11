@@ -15,6 +15,8 @@ const App = struct {
     const items = [_][]const u8{ "default", "blue", "orange", "mono", "matcha" };
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         open_picker,
         cancel_picker,
         confirm_picker,

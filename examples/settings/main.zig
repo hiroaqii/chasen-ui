@@ -72,6 +72,8 @@ const App = struct {
     saved: ?[]const u8 = null,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         username: ui.TextInput.Msg,
         notifications: ui.Checkbox.Msg,
         compact_layout: ui.Checkbox.Msg,

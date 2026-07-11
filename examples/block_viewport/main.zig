@@ -152,6 +152,8 @@ const App = struct {
     terminal_size: chasen.Size = .{ .width = 80, .height = 24 },
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         terminal_resized: chasen.Size,
         scroll_up,
         scroll_down,

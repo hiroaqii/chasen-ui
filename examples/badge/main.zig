@@ -13,6 +13,8 @@ const App = struct {
     open_count: u16 = 12,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         quit,
     };
 

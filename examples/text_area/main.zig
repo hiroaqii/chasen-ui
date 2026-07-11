@@ -13,6 +13,8 @@ const App = struct {
     last_saved: ?[]const u8 = null,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         area: ui.TextArea.Msg,
         save,
         quit,

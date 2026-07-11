@@ -41,6 +41,8 @@ const App = struct {
     selected: Field = .username,
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         username: ui.TextInput.Msg,
         project: ui.TextInput.Msg,
         move_up,

@@ -16,6 +16,8 @@ const App = struct {
     status: ui.Label = ui.Label.init(.{ .text = "Unsaved changes" }),
 
     pub const Msg = union(enum) {
+        pub const undelivered_policy = .plain;
+
         quit,
     };
 
