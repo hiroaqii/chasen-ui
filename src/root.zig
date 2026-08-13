@@ -3,6 +3,8 @@ const chasen = @import("chasen");
 
 pub const layout = @import("layout.zig");
 
+pub const text_projection = @import("text/projection.zig");
+
 pub const viewport = @import("viewport.zig");
 pub const Viewport = viewport.Viewport;
 
