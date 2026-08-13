@@ -67,5 +67,6 @@
         "README.md",
         "examples",
         "src",
+        "test",
     },
 }

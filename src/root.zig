@@ -4,6 +4,7 @@ const chasen = @import("chasen");
 pub const layout = @import("layout.zig");
 
 pub const text_projection = @import("text/projection.zig");
+pub const text_presentation = @import("text/presentation.zig");
 
 pub const viewport = @import("viewport.zig");
 pub const Viewport = viewport.Viewport;

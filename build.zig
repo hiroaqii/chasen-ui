@@ -8,12 +8,13 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const chasen_mod = chasen_dep.module("chasen");
 
     const mod = b.addModule("chasen_ui", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .imports = &.{
-            .{ .name = "chasen", .module = chasen_dep.module("chasen") },
+            .{ .name = "chasen", .module = chasen_mod },
         },
     });
 
@@ -25,6 +26,31 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_mod_tests.step);
+
+    const vaxis_dep = chasen_dep.builder.dependency("vaxis", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const terminal_serialization_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("test/terminal_serialization.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "chasen_ui", .module = mod },
+                .{ .name = "chasen", .module = chasen_mod },
+                .{ .name = "vaxis", .module = vaxis_dep.module("vaxis") },
+            },
+        }),
+    });
+    const run_terminal_serialization_tests = b.addRunArtifact(terminal_serialization_tests);
+    test_step.dependOn(&run_terminal_serialization_tests.step);
+
+    const terminal_serialization_step = b.step(
+        "test-terminal-serialization",
+        "Run terminal serialization tests against pinned Vaxis",
+    );
+    terminal_serialization_step.dependOn(&run_terminal_serialization_tests.step);
 
     const example_names = [_][]const u8{
         "text_input",
