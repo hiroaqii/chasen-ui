@@ -132,6 +132,48 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const loading_test_step = b.step("test-loading-indicator", "Test the optional loading display");
+    const gallery_test_step = b.step("test-loading_indicators", "Test gallery timing and controls");
+    const gallery_check_step = b.step("check-loading_indicators", "Build the loading_indicators example");
+    const gallery_run_step = b.step("run-loading_indicators", "Run the loading_indicators example");
+
+    if (graphics_dep) |graphics| {
+        const graphics_ui_mod = b.addModule("chasen_ui_graphics", .{
+            .root_source_file = b.path("src/graphics.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "chasen", .module = chasen_mod },
+                .{ .name = "chasen_graphics", .module = graphics.module("chasen_graphics") },
+            },
+        });
+        const loading_tests = b.addRunArtifact(b.addTest(.{ .root_module = graphics_ui_mod }));
+        loading_test_step.dependOn(&loading_tests.step);
+        test_step.dependOn(&loading_tests.step);
+
+        if (anim_dep) |anim| {
+            const gallery_mod = b.createModule(.{
+                .root_source_file = b.path("examples/loading_indicators/main.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "chasen", .module = chasen_mod },
+                    .{ .name = "chasen_ui", .module = mod },
+                    .{ .name = "chasen_ui_graphics", .module = graphics_ui_mod },
+                    .{ .name = "chasen_anim", .module = anim.module("chasen_anim") },
+                    .{ .name = "chasen_graphics", .module = graphics.module("chasen_graphics") },
+                },
+            });
+            const gallery_exe = b.addExecutable(.{ .name = "loading_indicators", .root_module = gallery_mod });
+            gallery_check_step.dependOn(&gallery_exe.step);
+            check_examples_step.dependOn(&gallery_exe.step);
+            gallery_run_step.dependOn(&b.addRunArtifact(gallery_exe).step);
+            const gallery_tests = b.addRunArtifact(b.addTest(.{ .root_module = gallery_mod }));
+            gallery_test_step.dependOn(&gallery_tests.step);
+            test_step.dependOn(&gallery_tests.step);
+        }
+    }
+
     if (anim_dep != null and graphics_dep != null) {
         const animated_feedback_exe = b.addExecutable(.{
             .name = "animated_feedback",
