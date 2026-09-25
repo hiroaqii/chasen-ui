@@ -320,6 +320,31 @@ Use input components when the app needs editable state:
 - `Button`
 - `FormField`
 
+### Radio Markers
+
+`Radio.view` uses filled and empty circles (`●` / `○`) by default. Set
+`ViewOptions.marker` to choose a different appearance without changing the
+option state or group behavior:
+
+```zig
+const radio = ui.Radio.init(.{ .selected = true, .label = "All changes" });
+radio.view(&surface, .{ .marker = .ring });
+```
+
+| `ui.Radio.Marker` | Selected | Unselected |
+| --- | --- | --- |
+| `.circle` (default) | `●` | `○` |
+| `.ring` | `◉` | `○` |
+| `.diamond` | `◆` | `◇` |
+
+Marker colors still use `style` and `selected_style`; label colors use
+`label_style`. The label follows the marker with a one-cell gap (column 2 for
+these presets), and `show_cursor` places the cursor on the marker at column 0.
+This replaces the previous `(o)` / `( )` layout, whose label began at column 4;
+align app-owned descriptions with the new label position.
+
+Run `zig build run-radio` and press `1`, `2`, or `3` to compare the markers.
+
 ### Lists and Navigation
 
 Use these when the app owns collections, focus, filtering, or scroll state:
