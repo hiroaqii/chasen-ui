@@ -32,23 +32,22 @@
     // Once all dependencies are fetched, `zig build` no longer requires
     // internet connectivity.
     .dependencies = .{
-        // During early development, use the adjacent local chasen checkout so
-        // chasen core changes can be tested immediately from chasen-ui.
-        // Switch this to a Git URL + hash dependency once chasen is published
-        // and chasen-ui is ready to be consumed outside this workspace.
         .chasen = .{
-            .path = "../chasen",
+            .url = "git+https://github.com/hiroaqii/chasen.git#b559d0e2534e95ffbefb0cc59cdffff364a62b7a",
+            .hash = "chasen-0.1.0-lvlHSdgOBwD2HvfkrL4chkzeHCSSfP46xD9QZWOGO4nV",
         },
         // Used by integration examples. The chasen-ui module itself remains
         // independent of animation helpers.
         .chasen_anim = .{
-            .path = "../chasen-anim",
+            .url = "git+https://github.com/hiroaqii/chasen-anim.git#77928cc15eee0cdc04cebb07f41502e9e31c83f9",
+            .hash = "chasen_anim-0.1.0-EKZpPsH6AAAw-yGPz2w4Bps6LtmWsJcs_Rtd9c46JY2w",
             .lazy = true,
         },
-        // Used by integration examples for glyph/block presets. Components
-        // still accept plain borrowed labels through their ViewOptions.
+        // Used by the optional graphics adapter and integration examples.
+        // The main chasen_ui module remains independent of graphics.
         .chasen_graphics = .{
-            .path = "../chasen-graphics",
+            .url = "git+https://github.com/hiroaqii/chasen-graphics.git#bbd48203ffc85f894650b72a644d94d9b50a9a03",
+            .hash = "chasen_graphics-0.1.0-VJW4ul5XAwCsq3NcJUIOwaVP_MYN2nSVOFskq5EGCnwL",
             .lazy = true,
         },
     },
@@ -66,6 +65,7 @@
         "LICENSE",
         "README.md",
         "examples",
+        "docs",
         "src",
         "test",
     },
