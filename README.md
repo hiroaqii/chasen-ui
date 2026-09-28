@@ -10,20 +10,16 @@ The Zig module name is `chasen_ui`.
 Chasen core provides the runtime: terminal setup, event loop, typed messages,
 runtime effects, and immediate cell drawing through `Surface`.
 
-chasen-ui sits on top of that core. It provides reusable UI pieces that are
-useful when an app starts to grow beyond direct `Surface` drawing:
+chasen-ui builds on that core with reusable input behavior, drawing components,
+and layout and text helpers. Applications compose these pieces by passing
+app-positioned child surfaces to components.
 
-- input components such as `TextInput`, `TextArea`, `Checkbox`, and `Select`
-- structure components such as `Panel`, `Overlay`, `Modal`, `Box`, and `Table`
-- navigation helpers such as `ListViewport`, `ColumnList`, and `BlockViewport`
-- display helpers such as `Paragraph`, `StatusLine`, `Badge`, and
-  `Spinner`
-- key/action hint helpers such as `key_hint` for footer rows, help rows, and
-  modal shortcut summaries
-- small layout helpers for calculating `Rect` values
+The package is intentionally small. Applications own their semantic state,
+screen structure, layout policy, event routing, and visual design. Components
+may retain local interaction state, but do not take over those responsibilities.
 
-The package is intentionally small. Applications still own their state, screen
-structure, layout policy, event routing, and visual design.
+See [Components and Guides](#components-and-guides) for the available APIs and
+their usage guides.
 
 ## What chasen-ui Is Not
 
@@ -42,26 +38,40 @@ The usual pattern is: the app decides where something belongs, creates a child
 `Surface`, and asks a chasen-ui component or helper to draw inside that clipped
 region.
 
+## Requirements
+
+- Zig **0.16.0**, as declared by `minimum_zig_version`.
+
 ## How It Fits With Chasen
+
+Chasen calls the app's input/update callbacks and decides when to call `view`.
+The app chooses which components receive input and where they draw. This diagram
+shows those responsibilities, rather than a complete runtime event sequence.
 
 ```mermaid
 flowchart TD
     Runtime["Chasen runtime"]
-    EventUpdate["app.handleEvent / app.update"]
-    AppState["App state"]
-    AppView["app.view"]
-    Layout["App calculates Rect regions"]
-    ChildSurface["Surface.child(Rect)"]
-    Component["chasen-ui component"]
-    Draw["Draw inside provided Surface"]
 
-    Runtime --> EventUpdate
-    EventUpdate --> AppState
-    AppState --> AppView
-    AppView --> Layout
-    Layout --> ChildSurface
-    ChildSurface --> Component
-    Component --> Draw
+    subgraph Input["Input and updates"]
+        AppInput["app.handleEvent / app.update"]
+        ComponentInput["component.handleEvent / component.update"]
+        AppInput -->|"Optional delegation"| ComponentInput
+    end
+
+    subgraph Drawing["Drawing"]
+        AppView["app.view"]
+        Layout["App calculates Rect regions"]
+        ChildSurface["Surface.child(Rect)"]
+        ComponentView["component.view / draw"]
+        Draw["Draw cells inside provided Surface"]
+        AppView --> Layout
+        Layout --> ChildSurface
+        ChildSurface --> ComponentView
+        ComponentView --> Draw
+    end
+
+    Runtime -->|"Events / app messages"| AppInput
+    Runtime -->|"When rendering"| AppView
 
     classDef runtime fill:#f4f4f5,stroke:#71717a,color:#18181b;
     classDef app fill:#e8f5ff,stroke:#2f80ed,color:#0b2a42;
@@ -69,16 +79,17 @@ flowchart TD
     classDef ui fill:#f0fdf4,stroke:#22c55e,color:#052e16;
 
     class Runtime runtime;
-    class EventUpdate,AppState,AppView,Layout app;
+    class AppInput,AppView,Layout app;
     class ChildSurface,Draw core;
-    class Component ui;
+    class ComponentInput,ComponentView ui;
 ```
 
-This keeps ownership explicit:
+- Chasen owns terminal setup, event delivery, redraw decisions, and rendering.
+- The app owns component instances, event routing, and screen policy.
+- chasen-ui provides reusable input/update behavior and drawing inside supplied surfaces.
 
-- Chasen owns the terminal runtime.
-- The app owns state and screen policy.
-- chasen-ui owns small reusable drawing and input behavior.
+See [Component Model](docs/COMPONENTS.md#component-model) for message mapping,
+redraw behavior, and state and text lifetimes.
 
 ## Basic Usage
 
@@ -143,436 +154,55 @@ pub fn main(init: std.process.Init) !void {
 }
 ```
 
-## Component Model
+## Components and Guides
 
-Display-only components draw the values the app gives them.
-
-Examples:
-
-- `Label`
-- `Badge`
-- `Divider`
-- `Paragraph`
-- `StatusLine`
-- `Table`
-
-Interactive components may hold local component state, but the app still owns
-event routing and decides how component messages affect app state.
-
-Examples:
-
-- `TextInput`
-- `TextArea`
-- `PasswordInput`
-- `NumberInput`
-- `Select`
-- `Checkbox`
-- `Radio`
-- `Button`
-
-The common flow mirrors Chasen apps:
-
-```text
-app handleEvent -> component handleEvent -> app Msg -> app update -> component update
-```
-
-Display-only components use the simpler shape:
-
-```text
-app view -> component view/draw
-```
-
-Borrowed labels, placeholders, rows, frame lists, and other borrowed values must
-outlive the component or the current render call that uses them. Use Chasen's
-frame allocator or owned app state when generated text must live through a
-render.
-
-## Layout Ownership
-
-chasen-ui components do not carry placement fields such as `col`, `row`,
-`width`, or `height`.
-
-The layout vocabulary is small:
-
-```text
-Rect
-  = position + size inside a Surface
-
-ui.layout
-  = helpers that calculate Rect values
-
-Surface
-  = drawing target
-
-Surface.child(Rect)
-  = clipped child Surface for that Rect
-
-chasen-ui component
-  = draws inside the Surface it receives
-```
-
-In a typical `view`, the app calculates rectangles, creates child surfaces from
-those rectangles, and passes the child surfaces to components.
-
-The application calculates layout and creates clipped child surfaces:
-
-```zig
-const body_rect = chasen.Rect{
-    // Start 2 terminal cells from the left edge of the parent surface.
-    .col = 2,
-    // Start 4 terminal cells from the top edge of the parent surface.
-    .row = 4,
-    // Reserve 60 terminal cells horizontally.
-    .width = 60,
-    // Reserve 12 terminal cells vertically.
-    .height = 12,
-};
-
-var body = surface.child(body_rect);
-```
-
-For simple screens, writing `Rect` values directly is fine. For larger screens,
-use `ui.layout` to calculate regions:
-
-```text
-Root Surface
-┌────────────────────────────────────────────┐
-│ header                                     │
-├──────────────┬─────────────────────────────┤
-│ sidebar      │ content                     │
-│              │                             │
-│              │                             │
-├──────────────┴─────────────────────────────┤
-│ footer                                     │
-└────────────────────────────────────────────┘
-
-ui.layout computes the Rect values above.
-
-header_rect  -> Surface.child(header_rect)
-sidebar_rect -> Surface.child(sidebar_rect)
-content_rect -> Surface.child(content_rect)
-footer_rect  -> Surface.child(footer_rect)
-
-ui.Panel / ui.Table / ui.Paragraph / ...
-  -> draw inside those child surfaces
-```
-
-The same idea in code:
-
-```zig
-// Start with a Rect that covers the entire current surface.
-const root = chasen.Rect{
-    .col = 0,
-    .row = 0,
-    .width = surface.size().width,
-    .height = surface.size().height,
-};
-
-// takeTop returns the top band in `.taken` and the remaining area in `.rest`.
-const header = ui.layout.takeTop(root, 1);
-// Continue splitting the remaining area. Nothing has been drawn yet.
-const footer = ui.layout.takeBottom(header.rest, 1);
-const sidebar = ui.layout.takeLeft(footer.rest, 18);
-const content = sidebar.rest;
-
-// Turn each Rect into a clipped drawing target.
-var header_surface = surface.child(header.taken);
-var sidebar_surface = surface.child(sidebar.taken);
-var content_surface = surface.child(content);
-var footer_surface = surface.child(footer.taken);
-
-// Drawing at 0,0 is now local to each child surface.
-_ = header_surface.borrowTextAt(0, 0, "Header", .{ .bold = true });
-_ = sidebar_surface.borrowTextAt(0, 0, "Navigation", .{});
-_ = content_surface.borrowTextAt(0, 0, "Main content", .{});
-_ = footer_surface.borrowTextAt(0, 0, "Esc: quit", .{ .fg = .gray });
-```
-
-Common layout helpers include:
-
-- `inset`: shrink a rectangle by padding values
-- `takeTop`: split a top band from a rectangle
-- `takeBottom`: split a bottom band from a rectangle
-- `takeLeft`: split a left band from a rectangle
-- `takeRight`: split a right band from a rectangle
-- `center`: create a centered rectangle
-- `columns`: split a rectangle into equal-width columns
-- `rows`: split a rectangle into equal-height rows
-- `fixedGrid`: split a rectangle into fixed rows and columns
-- `stack`: place fixed-height rows with gaps
-
-The layout helpers only calculate rectangles. They do not render and they do
-not own component state.
-
-## Choosing Components
-
-### Input
-
-Use input components when the app needs editable state:
-
-- `TextInput`
-- `TextArea`
-- `PasswordInput`
-- `NumberInput`
-- `Select`
-- `Checkbox`
-- `Radio`
-- `Button`
-- `FormField`
-
-### Radio Markers
-
-`Radio.view` uses filled and empty circles (`●` / `○`) by default. Set
-`ViewOptions.marker` to choose a different appearance without changing the
-option state or group behavior:
-
-```zig
-const radio = ui.Radio.init(.{ .selected = true, .label = "All changes" });
-radio.view(&surface, .{ .marker = .ring });
-```
-
-| `ui.Radio.Marker` | Selected | Unselected |
+| Area | Examples | Guide |
 | --- | --- | --- |
-| `.circle` (default) | `●` | `○` |
-| `.ring` | `◉` | `○` |
-| `.diamond` | `◆` | `◇` |
+| Input | `TextInput`, `TextArea`, `Select`, `Checkbox`, `Radio`, `Button` | [Components](docs/COMPONENTS.md#input) |
+| Navigation | `ListViewport`, `ColumnList`, `BlockViewport`, `FocusList` | [Lists and navigation](docs/COMPONENTS.md#lists-and-navigation) |
+| Structure | `Panel`, `Overlay`, `Modal`, `Box`, `Table`, `Tree` | [Structure](docs/COMPONENTS.md#structure) |
+| Display | `Paragraph`, `StatusLine`, `Spinner`, `Badge`, `key_hint` | [Display](docs/COMPONENTS.md#display) |
+| Layout | `Rect` splitting, padding, grids, and stacks | [Layout and child surfaces](docs/LAYOUT.md) |
+| Text | `text_projection`, `text_presentation` | [Text geometry](docs/COMPONENTS.md#text-geometry-and-presentation) |
+| Optional graphics | `chasen_ui_graphics.LoadingIndicator` | [Loading indicators](docs/LOADING_INDICATORS.md) |
 
-Marker colors still use `style` and `selected_style`; label colors use
-`label_style`. The label follows the marker with a one-cell gap (column 2 for
-these presets), and `show_cursor` places the cursor on the marker at column 0.
-This replaces the previous `(o)` / `( )` layout, whose label began at column 4;
-align app-owned descriptions with the new label position.
-
-Run `zig build run-radio` and press `1`, `2`, or `3` to compare the markers.
-
-### Lists and Navigation
-
-Use these when the app owns collections, focus, filtering, or scroll state:
-
-- `Viewport`: offset clamp and visible range helper for fixed-size collections
-- `ListViewport`: visible range and focus visibility for fixed-height rows
-- `ListFilter`: small filter state helper for app-owned lists
-- `ColumnList`: table-like list rows with per-column styling and alignment, up
-  to `ColumnList.max_columns`
-- `BlockViewport`: scrollable content made of variable-height blocks
-- `FocusList`: fixed-length focus state for app-owned event routing
-- `List`
-- `SelectableList`
-- `MultiSelectList`: local focus and 64-bit selection mask with derived visible range
-- `Menu`
-- `Tabs`
-- `Breadcrumbs`
-- `Accordion`
-
-### Structure
-
-Use these to frame, layer, or group content:
-
-- `Panel`
-- `Overlay`
-- `Modal`
-- `Box`
-- `Table`
-- `Tree`
-
-### Display
-
-Use these for display-only UI:
-
-- `Paragraph`
-- `StatusLine`
-- `key_hint`
-- `MessageBlock`
-- `Spinner`
-- `ProgressBar`
-- `Gauge`
-- `Toast`
-- `Rating`
-- `Badge`
-- `Alert`
-- `Divider`
-- `Label`
+Applications own semantic state and route events into component updates.
+Components can retain local state, but do not own the runtime or the whole app's
+focus. Borrowed text must remain valid while retained and through terminal
+rendering; use frame-owned copies for text generated during `view`.
 
 ## Recommended Starting Examples
 
-The examples are intentionally small and component-specific. Start with these:
+From the `chasen-ui` checkout, run `zig build run-<name>`:
 
-- `layout_helpers`: calculate `Rect` values and create child surfaces
-- `panel`: draw a frame and compose app-owned content inside it
-- `column_list`: draw table-like list rows
-- `block_viewport`: scroll variable-height blocks
-- `overlay`: draw popup-style foreground UI
-- `text_input`: handle editable input state
-- `settings`: compose several primitives into a small screen
-
-Run an example from this package:
+| Example | Demonstrates |
+| --- | --- |
+| `layout_helpers` | Calculate rectangles and create child surfaces |
+| `panel` | Frame and app-owned content |
+| `column_list` | Table-like list rows |
+| `block_viewport` | Variable-height scrolling |
+| `overlay` | Popup foreground UI |
+| `text_input` | Editable input state |
+| `settings` | Compose several primitives |
+| `loading_indicators` | Spinner presets and optional multiline indicators |
 
 ```sh
 zig build run-panel
-```
-
-Use the example directory name after `run-`, for example:
-
-```sh
-zig build run-layout_helpers
-zig build run-column_list
-zig build run-block_viewport
-zig build run-overlay
-zig build run-text_input
-zig build run-settings
-```
-
-Build all examples, or list all available build steps:
-
-```sh
 zig build check-examples
 zig build --help
 ```
 
-## Component Catalog
-
-### Input
-
-- `TextInput`
-- `TextArea`
-- `PasswordInput`
-- `NumberInput`
-- `Select`
-- `Checkbox`
-- `Radio`
-- `Button`
-- `FormField`
-
-### Navigation
-
-- `FocusList`
-- `Viewport`
-- `List`
-- `ListViewport`
-- `ListFilter`
-- `ColumnList`
-- `SelectableList`
-- `MultiSelectList`
-- `Menu`
-- `Tabs`
-- `Breadcrumbs`
-- `Accordion`
-- `BlockViewport`
-
-### Structure
-
-- `Box`
-- `Panel`
-- `Modal`
-- `Overlay`
-- `Table`
-- `Tree`
-
-### Display
-
-- `Spinner`
-- `ProgressBar`
-- `Gauge`
-- `Toast`
-- `Rating`
-- `Badge`
-- `Alert`
-- `Divider`
-- `Label`
-- `Paragraph`
-- `StatusLine`
-- `key_hint`
-- `MessageBlock`
-
-## Loading Indicators
-
-Run the gallery (64x24 minimum; 80x24 recommended):
-
-```sh
-zig build run-loading_indicators
-```
-
-The gallery starts with all five animations at their minimum 1x1-cell size.
-Space pauses/resumes; `[` slows down and `]` speeds up; `s` cycles
-tiny → small → medium → large for all five; `c` cycles colors; `r` resets the
-phase; Esc exits. Periods are
-400/800/1200/1600 milliseconds per cycle, initially 1200. Speed changes preserve
-phase. Pausing stops frame requests, resuming ignores the first idle delta, and
-changing settings or resetting while paused keeps the gallery paused.
-
-| Display | API | Tiny | Small | Medium | Large |
-| --- | --- | --- | --- | --- | --- |
-| Dots / Wave | existing `chasen_ui.Spinner` | 1x1 | 5x1 | 5x1 | 5x1 |
-| Blocks | `chasen_ui_graphics.LoadingIndicator` | 1x1 | 8x5 | 14x8 | 20x11 |
-| Arc / Ripple | `chasen_ui_graphics.LoadingIndicator` | 1x1 | 8x4 | 12x6 | 16x8 |
-
-Dimensions exclude labels. Dots/Wave accept the static
-`chasen_graphics.glyph.spinner.linear_dots` / `wave` frame lists through
-`Spinner.init(.{ .frames = &graphics.glyph.spinner.wave, .label = "Loading" })`;
-pass a frame index and `frame_style` to `view`.
-Use `linear_dots_tiny` / `wave_tiny` for their one-cell variants. At 1x1,
-Blocks rotates a quadrant, Arc rotates three dots, and Ripple expands from
-center to outer dots before fading. Labels are additional text, outside that cell.
-
-Multiline indicators live in the **optional** `chasen_ui_graphics` module.
-The main `chasen_ui` module does not import graphics or anim. In your build,
-register the adapter from the same UI dependency:
-
-```zig
-exe.root_module.addImport("chasen_ui_graphics", ui_dep.module("chasen_ui_graphics"));
-```
-
-Then draw into an app-positioned, dedicated child Surface:
-
-```zig
-const Indicator = @import("chasen_ui_graphics").LoadingIndicator;
-const indicator = Indicator.init(.{ .kind = .arc, .label = "Loading" });
-indicator.view(&region, .{
-    .phase = 0.25,
-    .size = .tiny, // Minimum; omit this option to use the adapter default, medium.
-    .style = .{ .fg = .{ .index = 14 } },
-});
-```
-
-The app owns elapsed time, period, pause policy, and frame requests. The gallery
-uses `chasen_anim.blink.phase(cycle_ns, period_ns)` with both arguments in
-nanoseconds. Components contain no timers or animation state.
-`LoadingIndicator.view` clears its entire supplied Surface using `style`, draws
-at the top left, clips to its bounds, and puts the borrowed label below the
-nominal shape. Reserve one extra row for a label; moving or shrinking the Surface
-requires the app to clear its old region. Glyphs have static lifetime; labels
-must outlive the component and render. Low-intensity cells add the terminal dim
-attribute. Unicode Braille/block coverage, dim appearance, and circle proportions
-depend on the terminal font (circles assume cells twice as tall as wide).
-
-Focused checks: `zig build test-loading-indicator test-loading_indicators`.
-The gallery is also included in `check-examples`, and its tests in `test`.
+The loading gallery uses `chasen_graphics` and `chasen_anim`. Its controls,
+sizes, and timing policy are in [Loading Indicators](docs/LOADING_INDICATORS.md).
 
 ## Development
 
-Source files are grouped by component role:
-
-```text
-src/input
-src/navigation
-src/display
-src/structure
-```
-
-`src/root.zig` re-exports the public API, so callers can use top-level names
-such as `ui.TextInput`, `ui.Panel`, and `ui.Table`.
-
-Run tests:
-
 ```sh
 zig build test
-```
-
-Build one example without running it:
-
-```sh
 zig build check-panel
+zig build check-examples
 ```
 
-Individual example build steps use the same name as run steps with
-`check-<name>`.
+See [Development](docs/DEVELOPMENT.md) for focused test commands, optional
+example dependencies, and the source map. Dependencies are fetched from the public
+Git URLs pinned in `build.zig.zon`; no sibling checkouts are required.
