@@ -149,7 +149,9 @@ fn testFrame(delta_ns: u64) App.Msg {
 
 test "gallery pauses requests and ignores paused time on resume" {
     var app: App = .{};
-    var tc: chasen.testing.TestCtx(App.Msg) = .{};
+    var tc: chasen.testing.TestCtx(App.Msg) = undefined;
+    tc.init(std.testing.allocator, std.testing.io);
+    defer tc.deinit();
     try app.init(&tc.ctx);
     try std.testing.expect(tc.frameRequested());
     tc.resetTransient();
@@ -174,7 +176,9 @@ test "gallery pauses requests and ignores paused time on resume" {
 
 test "gallery speed changes preserve phase and paused controls stay idle" {
     var app: App = .{ .cycle_ns = 300_000_000, .running = false };
-    var tc: chasen.testing.TestCtx(App.Msg) = .{};
+    var tc: chasen.testing.TestCtx(App.Msg) = undefined;
+    tc.init(std.testing.allocator, std.testing.io);
+    defer tc.deinit();
     try app.update(.faster, &tc.ctx);
     try std.testing.expectEqual(@as(u64, 800_000_000), app.periodNs());
     try std.testing.expectEqual(@as(f32, 0.25), app.phase());
@@ -197,7 +201,9 @@ test "gallery cycles from tiny through all sizes and redraws after resize" {
     try ts.init(64, 24);
     defer ts.deinit();
     var app: App = .{};
-    var tc: chasen.testing.TestCtx(App.Msg) = .{};
+    var tc: chasen.testing.TestCtx(App.Msg) = undefined;
+    tc.init(std.testing.allocator, std.testing.io);
+    defer tc.deinit();
     try app.view(&ts.surface);
     try std.testing.expectEqual(Indicator.Size.tiny, app.size);
     try ts.expectCellText(1, 7, "⠁");

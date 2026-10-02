@@ -19,6 +19,8 @@ pub fn build(b: *std.Build) void {
     });
 
     const mod_tests = b.addTest(.{
+        .use_llvm = true,
+        .use_lld = if (target.result.os.tag == .linux) true else null,
         .root_module = mod,
     });
 
@@ -32,6 +34,8 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     const terminal_serialization_tests = b.addTest(.{
+        .use_llvm = true,
+        .use_lld = if (target.result.os.tag == .linux) true else null,
         .root_module = b.createModule(.{
             .root_source_file = b.path("test/terminal_serialization.zig"),
             .target = target,
@@ -93,6 +97,8 @@ pub fn build(b: *std.Build) void {
 
     for (example_names) |name| {
         const example_exe = b.addExecutable(.{
+            .use_llvm = true,
+            .use_lld = if (target.result.os.tag == .linux) true else null,
             .name = name,
             .root_module = b.createModule(.{
                 .root_source_file = b.path(b.fmt("examples/{s}/main.zig", .{name})),
@@ -147,7 +153,7 @@ pub fn build(b: *std.Build) void {
                 .{ .name = "chasen_graphics", .module = graphics.module("chasen_graphics") },
             },
         });
-        const loading_tests = b.addRunArtifact(b.addTest(.{ .root_module = graphics_ui_mod }));
+        const loading_tests = b.addRunArtifact(b.addTest(.{ .use_llvm = true, .use_lld = if (target.result.os.tag == .linux) true else null, .root_module = graphics_ui_mod }));
         loading_test_step.dependOn(&loading_tests.step);
         test_step.dependOn(&loading_tests.step);
 
@@ -164,11 +170,11 @@ pub fn build(b: *std.Build) void {
                     .{ .name = "chasen_graphics", .module = graphics.module("chasen_graphics") },
                 },
             });
-            const gallery_exe = b.addExecutable(.{ .name = "loading_indicators", .root_module = gallery_mod });
+            const gallery_exe = b.addExecutable(.{ .use_llvm = true, .use_lld = if (target.result.os.tag == .linux) true else null, .name = "loading_indicators", .root_module = gallery_mod });
             gallery_check_step.dependOn(&gallery_exe.step);
             check_examples_step.dependOn(&gallery_exe.step);
             gallery_run_step.dependOn(&b.addRunArtifact(gallery_exe).step);
-            const gallery_tests = b.addRunArtifact(b.addTest(.{ .root_module = gallery_mod }));
+            const gallery_tests = b.addRunArtifact(b.addTest(.{ .use_llvm = true, .use_lld = if (target.result.os.tag == .linux) true else null, .root_module = gallery_mod }));
             gallery_test_step.dependOn(&gallery_tests.step);
             test_step.dependOn(&gallery_tests.step);
         }
@@ -176,6 +182,8 @@ pub fn build(b: *std.Build) void {
 
     if (anim_dep != null and graphics_dep != null) {
         const animated_feedback_exe = b.addExecutable(.{
+            .use_llvm = true,
+            .use_lld = if (target.result.os.tag == .linux) true else null,
             .name = "animated_feedback",
             .root_module = b.createModule(.{
                 .root_source_file = b.path("examples/animated_feedback/main.zig"),
@@ -202,6 +210,8 @@ pub fn build(b: *std.Build) void {
 
     if (graphics_dep != null) {
         const rating_exe = b.addExecutable(.{
+            .use_llvm = true,
+            .use_lld = if (target.result.os.tag == .linux) true else null,
             .name = "rating",
             .root_module = b.createModule(.{
                 .root_source_file = b.path("examples/rating/main.zig"),
@@ -227,6 +237,8 @@ pub fn build(b: *std.Build) void {
 
     if (graphics_dep != null) {
         const badge_exe = b.addExecutable(.{
+            .use_llvm = true,
+            .use_lld = if (target.result.os.tag == .linux) true else null,
             .name = "badge",
             .root_module = b.createModule(.{
                 .root_source_file = b.path("examples/badge/main.zig"),
@@ -252,6 +264,8 @@ pub fn build(b: *std.Build) void {
 
     if (graphics_dep != null) {
         const alert_exe = b.addExecutable(.{
+            .use_llvm = true,
+            .use_lld = if (target.result.os.tag == .linux) true else null,
             .name = "alert",
             .root_module = b.createModule(.{
                 .root_source_file = b.path("examples/alert/main.zig"),
