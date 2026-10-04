@@ -28,6 +28,16 @@ const App = struct {
         });
     }
 
+    pub fn deinit(self: *App, _: chasen.AppDeinitContext) void {
+        // Chasen calls this on normal shutdown and app init/update errors.
+        // Optional fields also make cleanup safe after partial initialization.
+        self.clearSubmitted();
+        if (self.input) |*input| {
+            input.deinit();
+            self.input = null;
+        }
+    }
+
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
         // App-level shortcuts get first chance. Escape quits instead of being
         // forwarded to the TextInput.
@@ -62,16 +72,7 @@ const App = struct {
                     try self.input.?.update(input_msg);
                 }
             },
-            .quit => {
-                // Chasen does not currently call an app deinit hook, so this
-                // example releases the component before requesting shutdown.
-                self.clearSubmitted();
-                if (self.input) |*input| {
-                    input.deinit();
-                    self.input = null;
-                }
-                ctx.quit();
-            },
+            .quit => ctx.quit(),
         }
     }
 

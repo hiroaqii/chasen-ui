@@ -27,6 +27,14 @@ const App = struct {
         });
     }
 
+    pub fn deinit(self: *App, _: chasen.AppDeinitContext) void {
+        self.clearStatus();
+        if (self.quantity) |*quantity| {
+            quantity.deinit();
+            self.quantity = null;
+        }
+    }
+
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
         // App-level shortcuts get first chance. Escape quits instead of being
         // forwarded to the NumberInput.
@@ -57,14 +65,7 @@ const App = struct {
                     try self.quantity.?.update(quantity_msg);
                 }
             },
-            .quit => {
-                self.clearStatus();
-                if (self.quantity) |*quantity| {
-                    quantity.deinit();
-                    self.quantity = null;
-                }
-                ctx.quit();
-            },
+            .quit => ctx.quit(),
         }
     }
 

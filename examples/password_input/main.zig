@@ -26,6 +26,14 @@ const App = struct {
         });
     }
 
+    pub fn deinit(self: *App, _: chasen.AppDeinitContext) void {
+        self.clearStatus();
+        if (self.password) |*password| {
+            password.deinit();
+            self.password = null;
+        }
+    }
+
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
         // App-level shortcuts get first chance. Escape quits instead of being
         // forwarded to the PasswordInput.
@@ -57,14 +65,7 @@ const App = struct {
                     try self.password.?.update(password_msg);
                 }
             },
-            .quit => {
-                self.clearStatus();
-                if (self.password) |*password| {
-                    password.deinit();
-                    self.password = null;
-                }
-                ctx.quit();
-            },
+            .quit => ctx.quit(),
         }
     }
 

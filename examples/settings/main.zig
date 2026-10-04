@@ -96,6 +96,14 @@ const App = struct {
         });
     }
 
+    pub fn deinit(self: *App, _: chasen.AppDeinitContext) void {
+        self.clearSaved();
+        if (self.username) |*username| {
+            username.deinit();
+            self.username = null;
+        }
+    }
+
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
         // App-level shortcuts and navigation get first chance. This keeps
         // cross-component focus policy outside the individual components.
@@ -171,14 +179,7 @@ const App = struct {
             .move_down => self.selected = self.selected.next(),
             .move_left => self.selected = self.selected.left(),
             .move_right => self.selected = self.selected.right(),
-            .quit => {
-                self.clearSaved();
-                if (self.username) |*username| {
-                    username.deinit();
-                    self.username = null;
-                }
-                ctx.quit();
-            },
+            .quit => ctx.quit(),
         }
     }
 

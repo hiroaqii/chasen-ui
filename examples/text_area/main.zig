@@ -31,6 +31,14 @@ const App = struct {
         });
     }
 
+    pub fn deinit(self: *App, _: chasen.AppDeinitContext) void {
+        self.clearSaved();
+        if (self.area) |*area| {
+            area.deinit();
+            self.area = null;
+        }
+    }
+
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
         switch (event) {
             .key_press => |key| {
@@ -64,14 +72,7 @@ const App = struct {
                     try self.setSaved(area.text());
                 }
             },
-            .quit => {
-                self.clearSaved();
-                if (self.area) |*area| {
-                    area.deinit();
-                    self.area = null;
-                }
-                ctx.quit();
-            },
+            .quit => ctx.quit(),
         }
     }
 

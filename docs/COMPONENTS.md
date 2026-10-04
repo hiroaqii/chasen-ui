@@ -56,6 +56,12 @@ framework-managed object. Call a component's `deinit` when required, including
 from the app's optional `deinit` hook at shutdown. Keep cleanup correct on error
 paths as well as normal quit.
 
+Use `.quit` to request shutdown and `App.deinit` to release app-owned components
+and buffers. Chasen also calls this hook when `App.init` or a later app callback
+returns an error, so track which resources have been initialized. The
+[TextInput example](../examples/text_input/main.zig) uses optional fields for
+this purpose; a failed init leaves uninitialized fields null.
+
 Borrowed labels, placeholders, rows, frame lists, and other borrowed values must
 remain valid for as long as the component retains them and until Chasen finishes
 rendering any cells that borrow them. A component `view` returning does not end

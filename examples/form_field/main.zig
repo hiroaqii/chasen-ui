@@ -60,6 +60,17 @@ const App = struct {
         });
     }
 
+    pub fn deinit(self: *App, _: chasen.AppDeinitContext) void {
+        if (self.username) |*username| {
+            username.deinit();
+            self.username = null;
+        }
+        if (self.project) |*project| {
+            project.deinit();
+            self.project = null;
+        }
+    }
+
     pub fn handleEvent(self: *const App, event: chasen.Event) ?Msg {
         switch (event) {
             .key_press => |key| {
@@ -100,17 +111,7 @@ const App = struct {
             },
             .move_up => self.selected = self.selected.previous(),
             .move_down => self.selected = self.selected.next(),
-            .quit => {
-                if (self.username) |*username| {
-                    username.deinit();
-                    self.username = null;
-                }
-                if (self.project) |*project| {
-                    project.deinit();
-                    self.project = null;
-                }
-                ctx.quit();
-            },
+            .quit => ctx.quit(),
         }
     }
 
