@@ -43,9 +43,10 @@ app's view returns. A component does not schedule its own rendering.
 
 An update normally requests a redraw. `ctx.redraw().skip()` suppresses the
 redraw for that message, while queued effects still drain. Returning `null`
-from `handleEvent` causes no update or redraw for that event, except that resize
-always redraws. Initial rendering and resize therefore do not require an app
-state change. See [Chasen's runtime guide](https://github.com/hiroaqii/chasen/blob/main/docs/RUNTIME.md)
+from `handleEvent` produces no app message for that event. Pending effects still
+drain, and their completion messages can trigger updates and redraws. Resize
+always redraws, even after `ctx.redraw().skip()`. Initial rendering and resize do
+not require an app state change. See [Chasen's runtime guide](https://github.com/hiroaqii/chasen/blob/v0.1.0/docs/RUNTIME.md)
 for the full runtime lifecycle.
 
 ### State and Text Lifetimes
@@ -56,7 +57,7 @@ framework-managed object. Call a component's `deinit` when required, including
 from the app's optional `deinit` hook at shutdown. Keep cleanup correct on error
 paths as well as normal quit.
 
-Use `.quit` to request shutdown and `App.deinit` to release app-owned components
+Use `ctx.quit()` to request shutdown and `App.deinit` to release app-owned components
 and buffers. Chasen also calls this hook when `App.init` or a later app callback
 returns an error, so track which resources have been initialized. The
 [TextInput example](../examples/text_input/main.zig) uses optional fields for
@@ -103,8 +104,6 @@ radio.view(&surface, .{ .marker = .ring });
 Marker colors still use `style` and `selected_style`; label colors use
 `label_style`. The label follows the marker with a one-cell gap (column 2 for
 these presets), and `show_cursor` places the cursor on the marker at column 0.
-This replaces the previous `(o)` / `( )` layout, whose label began at column 4;
-align app-owned descriptions with the new label position.
 
 Run `zig build run-radio` and press `1`, `2`, or `3` to compare the markers.
 

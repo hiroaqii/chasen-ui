@@ -42,6 +42,56 @@ region.
 
 - Zig **0.16.0**, as declared by `minimum_zig_version`.
 
+## Installation
+
+From your application's Zig project:
+
+```sh
+zig fetch --save git+https://github.com/hiroaqii/chasen-ui.git
+```
+
+Add the dependency to `build.zig`. This complete example builds `src/main.zig`.
+Obtain Chasen from the UI dependency so the application and components use the
+same Chasen module:
+
+```zig
+const std = @import("std");
+
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+    const ui_dep = b.dependency("chasen_ui", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const chasen_dep = ui_dep.builder.dependency("chasen", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const exe = b.addExecutable(.{
+        .name = "ui-demo",
+        .use_llvm = true,
+        .use_lld = if (target.result.os.tag == .linux) true else null,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "chasen", .module = chasen_dep.module("chasen") },
+                .{ .name = "chasen_ui", .module = ui_dep.module("chasen_ui") },
+            },
+        }),
+    });
+    b.installArtifact(exe);
+}
+```
+
+The main `chasen_ui` module depends on Chasen. For the optional
+`chasen_ui_graphics` module, see [Loading Indicators](docs/LOADING_INDICATORS.md).
+The package build currently resolves graphics and animation dependencies even
+when the application imports only `chasen_ui`; the main source module does not
+import either package.
+
 ## How It Fits With Chasen
 
 Chasen calls the app's input/update callbacks and decides when to call `view`.
@@ -95,6 +145,9 @@ redraw behavior, and state and text lifetimes.
 
 The app creates a region and passes that region to a component. Components draw
 inside the surface they receive; they do not decide their own screen position.
+
+Save this as `src/main.zig`, then run `zig build` and
+`./zig-out/bin/ui-demo` in an interactive terminal. Press Esc to quit.
 
 ```zig
 const std = @import("std");
@@ -206,3 +259,7 @@ zig build check-examples
 See [Development](docs/DEVELOPMENT.md) for focused test commands, optional
 example dependencies, and the source map. Dependencies are fetched from the public
 Git URLs pinned in `build.zig.zon`; no sibling checkouts are required.
+
+## License
+
+See [LICENSE](LICENSE).

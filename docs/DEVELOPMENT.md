@@ -18,6 +18,10 @@ by commit and hash in [build.zig.zon](../build.zig.zon). No sibling checkouts or
 private repository tokens are required. Update the URL revision and hash together
 when changing a dependency.
 
+The current pins correspond to the v0.1.0 releases of all three packages.
+The package build requests both lazy dependencies even for core-only builds;
+their optional status describes the source modules, not an offline build mode.
+
 ## Build and Test
 
 Run from the `chasen-ui` checkout:
@@ -27,9 +31,8 @@ zig build test
 zig build check-examples
 ```
 
-`test` runs core module and terminal-serialization tests, plus optional loading
-adapter/gallery tests when their dependencies resolve. `check-examples` compiles
-the standard examples plus optional examples whose dependencies resolve. These
+`test` runs core module, terminal-serialization, loading-adapter, and gallery
+tests. `check-examples` compiles all 40 component and integration examples. These
 steps do not launch interactive galleries. `zig build` without a named step does
 not substitute for either check.
 
@@ -46,16 +49,17 @@ zig build --help
 `test-loading-indicator` tests the optional adapter;
 `test-loading_indicators` tests the gallery's timing and controls. `check-<name>`
 builds an example; `run-<name>` launches it. Interactive examples need a terminal.
-The optional steps are wired conditionally; selecting one without its resolved
-dependencies is not proof that its code was compiled or tested.
+Zig fetches the requested lazy dependencies and reruns build configuration before
+executing these steps. A dependency download failure fails the build; it does not
+silently skip the adapter or integration examples.
 
 For drawing assertions without an interactive terminal, use
 `chasen.testing.TestSurface`; see the component
-source tests and [Chasen's component authoring guide](https://github.com/hiroaqii/chasen/blob/main/docs/AUTHORING_COMPONENTS.md).
+source tests and [Chasen's component authoring guide](https://github.com/hiroaqii/chasen/blob/v0.1.0/docs/AUTHORING_COMPONENTS.md).
 
 ## Continuous Integration
 
-The [CI workflow](../.github/workflows/ci.yml) runs on pushes, pull requests,
+The [CI workflow](https://github.com/hiroaqii/chasen-ui/blob/main/.github/workflows/ci.yml) runs on pushes, pull requests,
 and manual dispatch. It uses Ubuntu and Zig 0.16.0 to run `zig build test` and
 `zig build check-examples`, including the graphics adapter and integration
 examples. Zig resolves the dependencies from `build.zig.zon`; the workflow

@@ -13,6 +13,7 @@ pub fn build(b: *std.Build) void {
     const mod = b.addModule("chasen_ui", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
+        .optimize = optimize,
         .imports = &.{
             .{ .name = "chasen", .module = chasen_mod },
         },
@@ -105,7 +106,7 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
                 .imports = &.{
-                    .{ .name = "chasen", .module = chasen_dep.module("chasen") },
+                    .{ .name = "chasen", .module = chasen_mod },
                     .{ .name = "chasen_ui", .module = mod },
                 },
             }),
@@ -153,7 +154,11 @@ pub fn build(b: *std.Build) void {
                 .{ .name = "chasen_graphics", .module = graphics.module("chasen_graphics") },
             },
         });
-        const loading_tests = b.addRunArtifact(b.addTest(.{ .use_llvm = true, .use_lld = if (target.result.os.tag == .linux) true else null, .root_module = graphics_ui_mod }));
+        const loading_tests = b.addRunArtifact(b.addTest(.{
+            .use_llvm = true,
+            .use_lld = if (target.result.os.tag == .linux) true else null,
+            .root_module = graphics_ui_mod,
+        }));
         loading_test_step.dependOn(&loading_tests.step);
         test_step.dependOn(&loading_tests.step);
 
@@ -170,11 +175,20 @@ pub fn build(b: *std.Build) void {
                     .{ .name = "chasen_graphics", .module = graphics.module("chasen_graphics") },
                 },
             });
-            const gallery_exe = b.addExecutable(.{ .use_llvm = true, .use_lld = if (target.result.os.tag == .linux) true else null, .name = "loading_indicators", .root_module = gallery_mod });
+            const gallery_exe = b.addExecutable(.{
+                .use_llvm = true,
+                .use_lld = if (target.result.os.tag == .linux) true else null,
+                .name = "loading_indicators",
+                .root_module = gallery_mod,
+            });
             gallery_check_step.dependOn(&gallery_exe.step);
             check_examples_step.dependOn(&gallery_exe.step);
             gallery_run_step.dependOn(&b.addRunArtifact(gallery_exe).step);
-            const gallery_tests = b.addRunArtifact(b.addTest(.{ .use_llvm = true, .use_lld = if (target.result.os.tag == .linux) true else null, .root_module = gallery_mod }));
+            const gallery_tests = b.addRunArtifact(b.addTest(.{
+                .use_llvm = true,
+                .use_lld = if (target.result.os.tag == .linux) true else null,
+                .root_module = gallery_mod,
+            }));
             gallery_test_step.dependOn(&gallery_tests.step);
             test_step.dependOn(&gallery_tests.step);
         }
@@ -190,7 +204,7 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
                 .imports = &.{
-                    .{ .name = "chasen", .module = chasen_dep.module("chasen") },
+                    .{ .name = "chasen", .module = chasen_mod },
                     .{ .name = "chasen_ui", .module = mod },
                     .{ .name = "chasen_anim", .module = anim_dep.?.module("chasen_anim") },
                     .{ .name = "chasen_graphics", .module = graphics_dep.?.module("chasen_graphics") },
@@ -205,84 +219,35 @@ pub fn build(b: *std.Build) void {
         animated_feedback_run_step.dependOn(&run_animated_feedback.step);
     }
 
-    const rating_check_step = b.step("check-rating", "Build the rating example");
-    const rating_run_step = b.step("run-rating", "Run the rating example");
+    for ([_][]const u8{ "rating", "badge", "alert" }) |name| {
+        const check_example_step = b.step(
+            b.fmt("check-{s}", .{name}),
+            b.fmt("Build the {s} example", .{name}),
+        );
+        const run_example_step = b.step(
+            b.fmt("run-{s}", .{name}),
+            b.fmt("Run the {s} example", .{name}),
+        );
 
-    if (graphics_dep != null) {
-        const rating_exe = b.addExecutable(.{
-            .use_llvm = true,
-            .use_lld = if (target.result.os.tag == .linux) true else null,
-            .name = "rating",
-            .root_module = b.createModule(.{
-                .root_source_file = b.path("examples/rating/main.zig"),
-                .target = target,
-                .optimize = optimize,
-                .imports = &.{
-                    .{ .name = "chasen", .module = chasen_dep.module("chasen") },
-                    .{ .name = "chasen_ui", .module = mod },
-                    .{ .name = "chasen_graphics", .module = graphics_dep.?.module("chasen_graphics") },
-                },
-            }),
-        });
-
-        rating_check_step.dependOn(&rating_exe.step);
-        check_examples_step.dependOn(&rating_exe.step);
-
-        const run_rating = b.addRunArtifact(rating_exe);
-        rating_run_step.dependOn(&run_rating.step);
-    }
-
-    const badge_check_step = b.step("check-badge", "Build the badge example");
-    const badge_run_step = b.step("run-badge", "Run the badge example");
-
-    if (graphics_dep != null) {
-        const badge_exe = b.addExecutable(.{
-            .use_llvm = true,
-            .use_lld = if (target.result.os.tag == .linux) true else null,
-            .name = "badge",
-            .root_module = b.createModule(.{
-                .root_source_file = b.path("examples/badge/main.zig"),
-                .target = target,
-                .optimize = optimize,
-                .imports = &.{
-                    .{ .name = "chasen", .module = chasen_dep.module("chasen") },
-                    .{ .name = "chasen_ui", .module = mod },
-                    .{ .name = "chasen_graphics", .module = graphics_dep.?.module("chasen_graphics") },
-                },
-            }),
-        });
-
-        badge_check_step.dependOn(&badge_exe.step);
-        check_examples_step.dependOn(&badge_exe.step);
-
-        const run_badge = b.addRunArtifact(badge_exe);
-        badge_run_step.dependOn(&run_badge.step);
-    }
-
-    const alert_check_step = b.step("check-alert", "Build the alert example");
-    const alert_run_step = b.step("run-alert", "Run the alert example");
-
-    if (graphics_dep != null) {
-        const alert_exe = b.addExecutable(.{
-            .use_llvm = true,
-            .use_lld = if (target.result.os.tag == .linux) true else null,
-            .name = "alert",
-            .root_module = b.createModule(.{
-                .root_source_file = b.path("examples/alert/main.zig"),
-                .target = target,
-                .optimize = optimize,
-                .imports = &.{
-                    .{ .name = "chasen", .module = chasen_dep.module("chasen") },
-                    .{ .name = "chasen_ui", .module = mod },
-                    .{ .name = "chasen_graphics", .module = graphics_dep.?.module("chasen_graphics") },
-                },
-            }),
-        });
-
-        alert_check_step.dependOn(&alert_exe.step);
-        check_examples_step.dependOn(&alert_exe.step);
-
-        const run_alert = b.addRunArtifact(alert_exe);
-        alert_run_step.dependOn(&run_alert.step);
+        if (graphics_dep) |graphics| {
+            const example_exe = b.addExecutable(.{
+                .use_llvm = true,
+                .use_lld = if (target.result.os.tag == .linux) true else null,
+                .name = name,
+                .root_module = b.createModule(.{
+                    .root_source_file = b.path(b.fmt("examples/{s}/main.zig", .{name})),
+                    .target = target,
+                    .optimize = optimize,
+                    .imports = &.{
+                        .{ .name = "chasen", .module = chasen_mod },
+                        .{ .name = "chasen_ui", .module = mod },
+                        .{ .name = "chasen_graphics", .module = graphics.module("chasen_graphics") },
+                    },
+                }),
+            });
+            check_example_step.dependOn(&example_exe.step);
+            check_examples_step.dependOn(&example_exe.step);
+            run_example_step.dependOn(&b.addRunArtifact(example_exe).step);
+        }
     }
 }

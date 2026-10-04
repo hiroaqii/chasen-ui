@@ -30,8 +30,9 @@ center to outer dots before fading. Labels are additional text, outside that cel
 
 Multiline indicators live in the **optional** `chasen_ui_graphics` module.
 The main `chasen_ui` module does not import graphics or anim. The adapter uses
-`chasen_graphics`; the gallery also uses `chasen_anim`. In your build,
-register the adapter from the same UI dependency:
+`chasen_graphics`; the gallery also uses `chasen_anim`. In the
+[README build example](../README.md#installation), register the adapter before
+`b.installArtifact(exe)` using the same UI dependency:
 
 ```zig
 exe.root_module.addImport("chasen_ui_graphics", ui_dep.module("chasen_ui_graphics"));
@@ -61,6 +62,6 @@ attribute. Unicode Braille/block coverage, dim appearance, and circle proportion
 depend on the terminal font (circles assume cells twice as tall as wide).
 
 Focused checks: `zig build test-loading-indicator test-loading_indicators`.
-When both optional dependencies resolve, the gallery is included in
-`check-examples`, and its tests in `test`. The adapter tests need graphics.
+The gallery is included in `check-examples`, and its tests in `test`. These
+commands automatically resolve the graphics and animation dependencies.
 See [Development](DEVELOPMENT.md) for the dependency and check matrix.
