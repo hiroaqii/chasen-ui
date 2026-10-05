@@ -1,12 +1,12 @@
 .{
     .name = .chasen_ui,
-    .version = "0.1.0",
+    .version = "0.1.1",
     .fingerprint = 0xab736f306b123b01, // Changing this has security and trust implications.
     .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .chasen = .{
-            .url = "git+https://github.com/hiroaqii/chasen.git#fbede8063440535a01a4f5d3b42511657d231837",
-            .hash = "chasen-0.1.0-lvlHSZGdCQB6XytkvHaYinRq3oIPU3ZpH8tCabbVEMQA",
+            .url = "git+https://github.com/hiroaqii/chasen.git#b718ce0176ad9ec59e326a1347c63c0fb56151d6",
+            .hash = "chasen-0.1.1-lvlHSe3wCQDwp6LElSCAteLl3bucgfYtTZAaGpK1cybj",
         },
         // Used by integration examples. The chasen-ui module itself remains
         // independent of animation helpers.

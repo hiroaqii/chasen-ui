@@ -46,7 +46,7 @@ redraw for that message, while queued effects still drain. Returning `null`
 from `handleEvent` produces no app message for that event. Pending effects still
 drain, and their completion messages can trigger updates and redraws. Resize
 always redraws, even after `ctx.redraw().skip()`. Initial rendering and resize do
-not require an app state change. See [Chasen's runtime guide](https://github.com/hiroaqii/chasen/blob/v0.1.0/docs/RUNTIME.md)
+not require an app state change. See [Chasen's runtime guide](https://github.com/hiroaqii/chasen/blob/v0.1.1/docs/RUNTIME.md)
 for the full runtime lifecycle.
 
 ### State and Text Lifetimes
