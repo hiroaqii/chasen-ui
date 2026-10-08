@@ -14,9 +14,13 @@ concurrency:
 
 jobs:
   test:
-    name: Zig 0.16.0
-    runs-on: ubuntu-latest
+    name: Zig 0.16.0 (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-26]
 
     steps:
       - name: Checkout
