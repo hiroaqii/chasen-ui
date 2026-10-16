@@ -40,7 +40,7 @@ region.
 
 ## Requirements
 
-- Zig **0.16.0**, as declared by `minimum_zig_version`.
+- Zig **0.17.0**, as declared by `minimum_zig_version`.
 
 ## Installation
 
