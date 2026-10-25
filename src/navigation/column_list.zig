@@ -234,7 +234,7 @@ fn markerWidth(opts: ColumnList.ViewOptions) u16 {
 }
 
 fn computeWidths(columns: []const ColumnList.Column, body_width: u16, column_gap: u16) [ColumnList.max_columns]u16 {
-    var widths: [ColumnList.max_columns]u16 = @splat(0);
+    var widths = [_]u16{0} ** ColumnList.max_columns;
     const count = @min(columns.len, ColumnList.max_columns);
     if (count == 0 or body_width == 0) return widths;
 
@@ -515,8 +515,8 @@ test "ColumnList drawTextInCell handles saturated target columns" {
 }
 
 test "ColumnList ignores columns beyond max_columns" {
-    const columns: [ColumnList.max_columns + 1]ColumnList.Column = @splat(.{ .width = .{ .fixed = 1 } });
-    const cells = @as([ColumnList.max_columns]ColumnList.Cell, @splat(.{ .text = "A" })) ++ [_]ColumnList.Cell{.{ .text = "Z" }};
+    const columns = [_]ColumnList.Column{.{ .width = .{ .fixed = 1 } }} ** (ColumnList.max_columns + 1);
+    const cells = [_]ColumnList.Cell{.{ .text = "A" }} ** ColumnList.max_columns ++ [_]ColumnList.Cell{.{ .text = "Z" }};
     const rows = [_]ColumnList.Row{&cells};
     const list = ColumnList.init(.{ .columns = &columns, .rows = &rows });
 

@@ -198,7 +198,7 @@ test "MultiSelectList initializes with clamped selected mask" {
 }
 
 test "MultiSelectList limits selection and focus to max items" {
-    const items: [MultiSelectList.max_items + 1][]const u8 = @splat("Item");
+    const items = [_][]const u8{"Item"} ** (MultiSelectList.max_items + 1);
     var list = MultiSelectList.init(.{
         .items = &items,
         .selected_mask = std.math.maxInt(u64),

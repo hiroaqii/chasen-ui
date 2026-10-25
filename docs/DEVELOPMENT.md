@@ -18,9 +18,8 @@ by commit and hash in [build.zig.zon](../build.zig.zon). No sibling checkouts or
 private repository tokens are required. Update the URL revision and hash together
 when changing a dependency.
 
-The current pins use the release commits for Chasen v0.1.3, chasen-anim v0.1.1,
-and chasen-graphics v0.1.2. All three require Zig 0.17.0. Chasen v0.1.3 also
-includes the fix for aligned task results.
+The current pins correspond to Chasen v0.1.4, chasen-anim v0.1.2, and
+chasen-graphics v0.1.3.
 The package build requests both lazy dependencies even for core-only builds;
 their optional status describes the source modules, not an offline build mode.
 
@@ -57,12 +56,12 @@ silently skip the adapter or integration examples.
 
 For drawing assertions without an interactive terminal, use
 `chasen.testing.TestSurface`; see the component
-source tests and [Chasen's component authoring guide](https://github.com/hiroaqii/chasen/blob/v0.1.3/docs/AUTHORING_COMPONENTS.md).
+source tests and [Chasen's component authoring guide](https://github.com/hiroaqii/chasen/blob/v0.1.4/docs/AUTHORING_COMPONENTS.md).
 
 ## Continuous Integration
 
 The [CI workflow](https://github.com/hiroaqii/chasen-ui/blob/main/.github/workflows/ci.yml) runs on pushes, pull requests,
-and manual dispatch. It uses Ubuntu, macOS, and Zig 0.17.0 to run `zig build test` and
+and manual dispatch. It uses Ubuntu, macOS, and Zig 0.16.0 to run `zig build test` and
 `zig build check-examples`, including the graphics adapter and integration
 examples. Zig resolves the dependencies from `build.zig.zon`; the workflow
 only checks out chasen-ui. Fork pull requests can run the same checks without

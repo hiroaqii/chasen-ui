@@ -1,25 +1,25 @@
 .{
     .name = .chasen_ui,
-    .version = "0.1.3",
+    .version = "0.1.4",
     .fingerprint = 0xab736f306b123b01, // Changing this has security and trust implications.
-    .minimum_zig_version = "0.17.0",
+    .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .chasen = .{
-            .url = "git+https://github.com/hiroaqii/chasen.git#353f8c9c98211f134ae5b38c0cc37f04e58d07c6",
-            .hash = "chasen-0.1.3-lvlHSadPCgAiPPs6R1vajFPrhUcr84ZClM8idsg1WBBE",
+            .url = "git+https://github.com/hiroaqii/chasen.git#741f85cfd9a4f08ecfaa544d781c8e1040c46a0d",
+            .hash = "chasen-0.1.4-lvlHSQM8CgB11Ql05hXQcP0HtDxYSBuLGIQ7NAYrNR0v",
         },
         // Used by integration examples. The chasen-ui module itself remains
         // independent of animation helpers.
         .chasen_anim = .{
-            .url = "git+https://github.com/hiroaqii/chasen-anim.git#4c45233796aa0c3ebdcc64aee182cdc179c44385",
-            .hash = "chasen_anim-0.1.1-EKZpPtz-AADilxYh9GOWcOFBjtEMDfWB2EEn_XeE6K-z",
+            .url = "git+https://github.com/hiroaqii/chasen-anim.git#f10be536fdebd6984ceb10d575acb0d6bad24879",
+            .hash = "chasen_anim-0.1.2-EKZpPqD-AAD2yB25PeumB0o28uhJ8zlEmDX2XEWspss7",
             .lazy = true,
         },
         // Used by the optional graphics adapter and integration examples.
         // The main chasen_ui module remains independent of graphics.
         .chasen_graphics = .{
-            .url = "git+https://github.com/hiroaqii/chasen-graphics.git#b0502a7d887514f069db4d10eee83641b2fadd8b",
-            .hash = "chasen_graphics-0.1.2-VJW4uhlgAwB3UhhbVzum5eEF_M3Y2WKuODp7ZtHoHzWz",
+            .url = "git+https://github.com/hiroaqii/chasen-graphics.git#029b024288b4f5932e6f25f79c645aa84fd7283c",
+            .hash = "chasen_graphics-0.1.3-VJW4uuxfAwBnNjjVl5oW7uNJELMcJ2co02L9c_X5tXII",
             .lazy = true,
         },
     },
