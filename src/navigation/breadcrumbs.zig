@@ -135,7 +135,7 @@ test "Breadcrumbs displayWidth uses display width" {
 
 test "Breadcrumbs displayWidth saturates for oversized trails" {
     const long = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
-    const items = [_][]const u8{long} ** 1000;
+    const items: [1000][]const u8 = @splat(long);
     const breadcrumbs = Breadcrumbs.init(.{ .items = &items });
 
     try std.testing.expectEqual(std.math.maxInt(u16), breadcrumbs.displayWidth(" / "));
