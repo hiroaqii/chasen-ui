@@ -18,8 +18,8 @@ by commit and hash in [build.zig.zon](../build.zig.zon). No sibling checkouts or
 private repository tokens are required. Update the URL revision and hash together
 when changing a dependency.
 
-The current pins correspond to Chasen v0.1.5, chasen-anim v0.1.3, and
-chasen-graphics v0.1.4.
+The current pins correspond to Chasen v0.1.6, chasen-anim v0.1.3, and
+chasen-graphics v0.1.5.
 The package build requests both lazy dependencies even for core-only builds;
 their optional status describes the source modules, not an offline build mode.
 
@@ -56,7 +56,7 @@ silently skip the adapter or integration examples.
 
 For drawing assertions without an interactive terminal, use
 `chasen.testing.TestSurface`; see the component
-source tests and [Chasen's component authoring guide](https://github.com/hiroaqii/chasen/blob/v0.1.5/docs/AUTHORING_COMPONENTS.md).
+source tests and [Chasen's component authoring guide](https://github.com/hiroaqii/chasen/blob/v0.1.6/docs/AUTHORING_COMPONENTS.md).
 
 ## Continuous Integration
 
